@@ -61,6 +61,39 @@ export type Database = {
           },
         ]
       }
+      api_keys: {
+        Row: {
+          created_at: string | null
+          encrypted_key: string
+          id: string
+          is_active: boolean | null
+          key_name: string
+          last_used_at: string | null
+          provider: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          encrypted_key: string
+          id?: string
+          is_active?: boolean | null
+          key_name: string
+          last_used_at?: string | null
+          provider: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          encrypted_key?: string
+          id?: string
+          is_active?: boolean | null
+          key_name?: string
+          last_used_at?: string | null
+          provider?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       audit_recommendations: {
         Row: {
           created_at: string
@@ -653,6 +686,56 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "crawl_jobs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "seo_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crawl_results: {
+        Row: {
+          crawled_at: string | null
+          created_at: string | null
+          h1_tags: string[] | null
+          id: string
+          issues: Json | null
+          meta_description: string | null
+          page_url: string
+          project_id: string
+          status_code: number | null
+          title: string | null
+          word_count: number | null
+        }
+        Insert: {
+          crawled_at?: string | null
+          created_at?: string | null
+          h1_tags?: string[] | null
+          id?: string
+          issues?: Json | null
+          meta_description?: string | null
+          page_url: string
+          project_id: string
+          status_code?: number | null
+          title?: string | null
+          word_count?: number | null
+        }
+        Update: {
+          crawled_at?: string | null
+          created_at?: string | null
+          h1_tags?: string[] | null
+          id?: string
+          issues?: Json | null
+          meta_description?: string | null
+          page_url?: string
+          project_id?: string
+          status_code?: number | null
+          title?: string | null
+          word_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crawl_results_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "seo_projects"
@@ -1818,6 +1901,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_settings: {
+        Row: {
+          ai_model_preference: string | null
+          created_at: string | null
+          id: string
+          language: string | null
+          theme: string | null
+          timezone: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          ai_model_preference?: string | null
+          created_at?: string | null
+          id?: string
+          language?: string | null
+          theme?: string | null
+          timezone?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          ai_model_preference?: string | null
+          created_at?: string | null
+          id?: string
+          language?: string | null
+          theme?: string | null
+          timezone?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       voice_search_tracking: {
         Row: {
