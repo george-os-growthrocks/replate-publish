@@ -52,9 +52,8 @@ export const useDashboardData = (user: User | null) => {
           .select("id")
           .eq("user_id", user.id),
         supabase
-          .from("ai_recommendations")
-          .select("id, title, priority, confidence_score")
-          .eq("user_id", user.id)
+          .from("ai_recommendations" as any)
+          .select("id, title, priority")
           .eq("status", "pending")
           .order("priority", { ascending: true })
           .limit(3),

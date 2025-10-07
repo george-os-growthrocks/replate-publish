@@ -173,7 +173,7 @@ export class APIClient {
       cacheKey,
       async () => {
         let query = supabase
-          .from('serp_rankings')
+          .from('serp_rankings' as any)
           .select('*')
           .eq('project_id', projectId)
           .order('checked_at', { ascending: false });
@@ -193,12 +193,12 @@ export class APIClient {
               .lte('volume', filters.volumeRange[1]);
           }
           if (filters.difficultyRange) {
-            query = query
+            query = (query as any)
               .gte('difficulty', filters.difficultyRange[0])
               .lte('difficulty', filters.difficultyRange[1]);
           }
           if (filters.trend) {
-            query = query.eq('trend', filters.trend);
+            query = (query as any).eq('trend', filters.trend);
           }
           if (filters.limit) {
             query = query.limit(filters.limit);
@@ -321,7 +321,7 @@ export class APIClient {
       CACHE_KEYS.BACKLINKS(projectId),
       async () => {
         const { data, error } = await supabase
-          .from('backlink_data')
+          .from('backlink_analysis' as any)
           .select('*')
           .eq('project_id', projectId)
           .order('created_at', { ascending: false });

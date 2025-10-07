@@ -12,7 +12,7 @@ export async function checkTableExists(tableName: string): Promise<TableCheckRes
   try {
     // Try to select from the table with a limit of 0 to check if it exists
     const { error } = await supabase
-      .from(tableName)
+      .from(tableName as any)
       .select('*', { count: 'exact', head: true })
       .limit(0);
 

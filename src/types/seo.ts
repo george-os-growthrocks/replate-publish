@@ -259,25 +259,3 @@ export interface PositionDistribution {
   value: number;
   color: string;
 }
-
-// Export all types
-export type {
-  SEOProject,
-  KeywordData,
-  Analytics,
-  CompetitorAnalysis,
-  BacklinkData,
-  AIRecommendation,
-  SERPAnalysis,
-  ContentAnalysis,
-  TechnicalAudit,
-  UserProfile,
-  Subscription,
-  APIResponse,
-  KeywordFilters,
-  ProjectFilters,
-  ChartDataPoint,
-  KeywordTrendData,
-  TrafficData,
-  PositionDistribution,
-};

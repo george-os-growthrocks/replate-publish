@@ -74,7 +74,7 @@ export function useRealTimeData<T = any>(
 
       // Use safe query wrapper to handle missing tables
       const result = await safeQuery(table, async () => {
-        let query = supabase.from(table).select('*');
+        let query = supabase.from(table as any).select('*');
         
         // Apply filters
         if (projectId) {
@@ -126,7 +126,7 @@ export function useRealTimeData<T = any>(
         throw new Error(fetchError.message);
       }
 
-      setData(fetchedData || []);
+      setData((fetchedData || []) as T[]);
       setLastUpdated(new Date());
 
       // Cache the data if cacheKey is provided

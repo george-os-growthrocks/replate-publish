@@ -77,12 +77,21 @@ export const APISettings = () => {
         .select('*')
         .eq('user_id', user.id);
 
-      // Load Google API settings
-      const { data: googleSettings } = await supabase
+      // Get first project for Google settings
+      const { data: projects } = await supabase
+        .from('seo_projects')
+        .select('id')
+        .eq('user_id', user.id)
+        .limit(1);
+
+      const firstProjectId = projects?.[0]?.id;
+
+      // Load Google API settings (requires project_id)
+      const { data: googleSettings } = firstProjectId ? await supabase
         .from('google_api_settings')
         .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
+        .eq('project_id', firstProjectId)
+        .maybeSingle() : { data: null };
 
       const newSettings: APISettings = {
         dataforseo: {
@@ -200,11 +209,29 @@ export const APISettings = () => {
 
       const field = type === 'search_console' ? 'google_search_console_site_url' : 'google_analytics_property_id';
 
+      // Get first project for settings
+      const { data: projects } = await supabase
+        .from('seo_projects')
+        .select('id')
+        .eq('user_id', user.id)
+        .limit(1);
+
+      const firstProjectId = projects?.[0]?.id;
+
+      if (!firstProjectId) {
+        toast({
+          title: "No project found",
+          description: "Please create an SEO project first",
+          variant: "destructive"
+        });
+        return;
+      }
+
       // Check if settings already exist
       const { data: existing } = await supabase
         .from('google_api_settings')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('project_id', firstProjectId)
         .maybeSingle();
 
       if (existing) {
@@ -218,7 +245,7 @@ export const APISettings = () => {
         await supabase
           .from('google_api_settings')
           .insert({
-            user_id: user.id,
+            project_id: firstProjectId,
             [field]: value
           });
       }

@@ -237,7 +237,7 @@ function SEODashboardContent() {
       case "team-collaboration":
         return <TeamCollaborationSuite projectId={selectedProject} />;
       case "internal-linking":
-        return <InternalLinkingAnalyzer projectId={selectedProject} />;
+        return <InternalLinkingAnalyzer />;
       case "advanced-analytics":
         return <AdvancedSEOAnalytics projectId={selectedProject} />;
       case "dataforseo-test":

@@ -65,11 +65,6 @@ export default defineConfig(({ mode }) => ({
   // CSS optimizations
   css: {
     devSourcemap: true,
-    preprocessorOptions: {
-      css: {
-        charset: false,
-      },
-    },
   },
 
   // Performance optimizations

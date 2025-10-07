@@ -74,14 +74,14 @@ export default function ProjectOverview({ projectId }: ProjectOverviewProps) {
       const avgPosition = rankings?.length ? 
         rankings.reduce((sum, r) => sum + (r.position || 0), 0) / rankings.length : 0;
 
-      const totalClicks = rankings?.reduce((sum, r) => sum + (r.clicks || 0), 0) || 0;
-      const totalImpressions = rankings?.reduce((sum, r) => sum + (r.impressions || 0), 0) || 0;
-      const ctr = totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : 0;
+      const totalClicks = 0; // Temporarily disabled - SERP rankings don't have clicks
+      const totalImpressions = 0; // Temporarily disabled - SERP rankings don't have impressions  
+      const ctr = 0;
 
       setProjectData({
         id: project.id,
         name: project.name,
-        url: project.url,
+        url: project.domain, // Use domain instead of url
         created_at: project.created_at,
         keywords_count: keywordsCount || 0,
         avg_position: Math.round(avgPosition),
