@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Loader as Loader2, Search, Users, CircleHelp as HelpCircle, Info, MapPin, Wrench } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { PolarArea } from "recharts/Polar";
 import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer } from "recharts";
 
 interface QueryWheelData {
