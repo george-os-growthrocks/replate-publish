@@ -42,7 +42,8 @@ import {
   Cell,
   ComposedChart,
   ScatterChart,
-  Scatter
+  Scatter,
+  Legend
 } from 'recharts';
 import { ExportMenu } from "@/components/ExportMenu";
 

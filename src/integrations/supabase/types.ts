@@ -70,6 +70,7 @@ export type Database = {
           key_name: string
           last_used_at: string | null
           provider: string
+          usage_count: number | null
           user_id: string
         }
         Insert: {
@@ -80,6 +81,7 @@ export type Database = {
           key_name: string
           last_used_at?: string | null
           provider: string
+          usage_count?: number | null
           user_id: string
         }
         Update: {
@@ -90,6 +92,7 @@ export type Database = {
           key_name?: string
           last_used_at?: string | null
           provider?: string
+          usage_count?: number | null
           user_id?: string
         }
         Relationships: []
@@ -893,6 +896,8 @@ export type Database = {
           google_analytics_property_id: string | null
           google_search_console_site_url: string | null
           id: string
+          last_ga4_sync: string | null
+          last_gsc_sync: string | null
           project_id: string
           updated_at: string
         }
@@ -903,6 +908,8 @@ export type Database = {
           google_analytics_property_id?: string | null
           google_search_console_site_url?: string | null
           id?: string
+          last_ga4_sync?: string | null
+          last_gsc_sync?: string | null
           project_id: string
           updated_at?: string
         }
@@ -913,6 +920,8 @@ export type Database = {
           google_analytics_property_id?: string | null
           google_search_console_site_url?: string | null
           id?: string
+          last_ga4_sync?: string | null
+          last_gsc_sync?: string | null
           project_id?: string
           updated_at?: string
         }
@@ -966,6 +975,149 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "gsc_analytics_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "seo_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      internal_linking_analyses: {
+        Row: {
+          analysis_name: string
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          project_id: string
+          status: string | null
+          total_keywords_extracted: number | null
+          total_opportunities_found: number | null
+          total_pages_crawled: number | null
+        }
+        Insert: {
+          analysis_name: string
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          project_id: string
+          status?: string | null
+          total_keywords_extracted?: number | null
+          total_opportunities_found?: number | null
+          total_pages_crawled?: number | null
+        }
+        Update: {
+          analysis_name?: string
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          project_id?: string
+          status?: string | null
+          total_keywords_extracted?: number | null
+          total_opportunities_found?: number | null
+          total_pages_crawled?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "internal_linking_analyses_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "seo_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      internal_linking_opportunities: {
+        Row: {
+          analysis_id: string | null
+          anchor_text: string | null
+          created_at: string | null
+          id: string
+          opportunity_type: string | null
+          project_id: string
+          relevance_score: number | null
+          source_page: string
+          target_page: string
+        }
+        Insert: {
+          analysis_id?: string | null
+          anchor_text?: string | null
+          created_at?: string | null
+          id?: string
+          opportunity_type?: string | null
+          project_id: string
+          relevance_score?: number | null
+          source_page: string
+          target_page: string
+        }
+        Update: {
+          analysis_id?: string | null
+          anchor_text?: string | null
+          created_at?: string | null
+          id?: string
+          opportunity_type?: string | null
+          project_id?: string
+          relevance_score?: number | null
+          source_page?: string
+          target_page?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "internal_linking_opportunities_analysis_id_fkey"
+            columns: ["analysis_id"]
+            isOneToOne: false
+            referencedRelation: "internal_linking_analyses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "internal_linking_opportunities_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "seo_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      internal_linking_pages: {
+        Row: {
+          analysis_id: string | null
+          created_at: string | null
+          id: string
+          inbound_links: number | null
+          keywords: Json | null
+          outbound_links: number | null
+          page_url: string
+          project_id: string
+        }
+        Insert: {
+          analysis_id?: string | null
+          created_at?: string | null
+          id?: string
+          inbound_links?: number | null
+          keywords?: Json | null
+          outbound_links?: number | null
+          page_url: string
+          project_id: string
+        }
+        Update: {
+          analysis_id?: string | null
+          created_at?: string | null
+          id?: string
+          inbound_links?: number | null
+          keywords?: Json | null
+          outbound_links?: number | null
+          page_url?: string
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "internal_linking_pages_analysis_id_fkey"
+            columns: ["analysis_id"]
+            isOneToOne: false
+            referencedRelation: "internal_linking_analyses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "internal_linking_pages_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "seo_projects"
@@ -1906,8 +2058,11 @@ export type Database = {
         Row: {
           ai_model_preference: string | null
           created_at: string | null
+          email_notifications: boolean | null
           id: string
           language: string | null
+          notification_frequency: string | null
+          notifications_enabled: boolean | null
           theme: string | null
           timezone: string | null
           updated_at: string | null
@@ -1916,8 +2071,11 @@ export type Database = {
         Insert: {
           ai_model_preference?: string | null
           created_at?: string | null
+          email_notifications?: boolean | null
           id?: string
           language?: string | null
+          notification_frequency?: string | null
+          notifications_enabled?: boolean | null
           theme?: string | null
           timezone?: string | null
           updated_at?: string | null
@@ -1926,8 +2084,11 @@ export type Database = {
         Update: {
           ai_model_preference?: string | null
           created_at?: string | null
+          email_notifications?: boolean | null
           id?: string
           language?: string | null
+          notification_frequency?: string | null
+          notifications_enabled?: boolean | null
           theme?: string | null
           timezone?: string | null
           updated_at?: string | null

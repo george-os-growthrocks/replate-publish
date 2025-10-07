@@ -39,7 +39,8 @@ import {
   Cell,
   ComposedChart,
   ScatterChart,
-  Scatter
+  Scatter,
+  Legend
 } from 'recharts';
 
 interface BacklinkMonitorProps {
