@@ -165,85 +165,98 @@ function SEODashboardContent() {
       );
     }
 
+    // ✅ Updated routing for consolidated sidebar
     switch (activeTab) {
+      // Overview & Reporting
       case "overview":
         return <ProjectOverviewMinimal projectId={selectedProject} />;
+      case "analytics": // Merged analytics hub
+        return (
+          <ErrorBoundary>
+            <AdvancedAnalytics projectId={selectedProject} />
+          </ErrorBoundary>
+        );
+      case "seo-report":
+        return <SeoReport projectId={selectedProject} />;
+
+      // AI Intelligence
       case "ai-recommendations":
         return <AIRecommendations projectId={selectedProject} userId={user?.id || ""} />;
-      case "serp":
+      case "content-strategy":
+        return <AIContentStrategyGenerator projectId={selectedProject} />;
+      case "predictive-analytics": // Merged predictions
+        return <PredictiveSEOAnalytics projectId={selectedProject} />;
+      case "serp-optimizer": // Merged SERP intelligence
+        return <AISERPOptimizer projectId={selectedProject} />;
+
+      // Keywords & Rankings
+      case "keyword-research": // Unified keyword view
+        return <KeywordResearchMatrix projectId={selectedProject} />;
+      case "serp": // Rank tracking
         return <SERPTrackerMinimal projectId={selectedProject} />;
-      case "monitoring":
-        return <SERPMonitoring projectId={selectedProject} />;
       case "competitors":
         return <CompetitorAnalysis projectId={selectedProject} />;
+      case "opportunities":
+        return <KeywordOpportunityAnalyzer projectId={selectedProject} />;
+
+      // Content & Technical
+      case "calendar":
+        return <ContentCalendarView projectId={selectedProject} />;
       case "content-gaps":
         return <ContentGapAnalysis projectId={selectedProject} />;
-      case "keywords":
-        return <KeywordMatrix projectId={selectedProject} />;
-      case "predictions":
-        return <RankingPredictor projectId={selectedProject} />;
       case "content":
         return <ContentScoring projectId={selectedProject} />;
-      case "voice-search":
-        return <VoiceSearchOptimizer projectId={selectedProject} />;
+      case "audit":
+        const projectForAudit = projects.find(p => p.id === selectedProject);
+        return <SiteAuditDashboard projectId={selectedProject} domain={projectForAudit?.domain || ''} />;
       case "backlinks":
         return <BacklinkMonitor projectId={selectedProject} />;
+      case "internal-linking":
+        return <InternalLinkingAnalyzer />;
+
+      // Integrations & Settings
+      case "integrations":
+        return <GoogleIntegrationsMinimal projectId={selectedProject} />;
+      case "dataforseo-test": // API Settings
+        return <DataForSEOTest projectId={selectedProject} />;
+      case "multi-location":
+        return <MultiLocationTracker projectId={selectedProject} />;
+      case "revenue":
+        return <RevenueAttribution projectId={selectedProject} />;
+
+      // Legacy routes (for backward compatibility)
+      case "monitoring":
+        return <SERPMonitoring projectId={selectedProject} />;
+      case "predictions":
+        return <RankingPredictor projectId={selectedProject} />;
+      case "voice-search":
+        return <VoiceSearchOptimizer projectId={selectedProject} />;
       case "bulk":
         return <BulkAnalysis projectId={selectedProject} />;
       case "clustering":
         return <KeywordClustering projectId={selectedProject} />;
-      case "opportunities":
-        return <KeywordOpportunityAnalyzer projectId={selectedProject} />;
-      case "audit":
-        const projectForAudit = projects.find(p => p.id === selectedProject);
-        return <SiteAuditDashboard projectId={selectedProject} domain={projectForAudit?.domain || ''} />;
       case "comprehensive-audit":
         const project = projects.find(p => p.id === selectedProject);
         return <ComprehensiveAudit projectId={selectedProject} domain={project?.domain || ''} />;
       case "technical":
         return <TechnicalAudit projectId={selectedProject} />;
-      case "integrations":
-        return <GoogleIntegrationsMinimal projectId={selectedProject} />;
-      case "calendar":
-        return <ContentCalendarView projectId={selectedProject} />;
-      case "multi-location":
-        return <MultiLocationTracker projectId={selectedProject} />;
-      case "revenue":
-        return <RevenueAttribution projectId={selectedProject} />;
       case "query-wheel":
         return <QueryWheel />;
       case "intent-matcher":
         return <IntentMatcher />;
       case "aio-optimizer":
         return <AIOOptimizer />;
-      case "seo-report":
-        return <SeoReport projectId={selectedProject} />;
       case "public-research":
         return <PublicResearchRealTime />;
-      case "analytics":
-        return (
-          <ErrorBoundary>
-            <AdvancedAnalytics projectId={selectedProject} />
-          </ErrorBoundary>
-        );
-      case "content-strategy":
-        return <AIContentStrategyGenerator projectId={selectedProject} />;
-      case "predictive-analytics":
-        return <PredictiveSEOAnalytics projectId={selectedProject} />;
-      case "serp-optimizer":
-        return <AISERPOptimizer projectId={selectedProject} />;
       case "performance-dashboard":
         return <AdvancedPerformanceDashboard projectId={selectedProject} />;
       case "team-collaboration":
         return <TeamCollaborationSuite projectId={selectedProject} />;
-      case "internal-linking":
-        return <InternalLinkingAnalyzer />;
       case "advanced-analytics":
         return <AdvancedSEOAnalytics projectId={selectedProject} />;
-      case "dataforseo-test":
-        return <DataForSEOTest projectId={selectedProject} />;
+      case "keywords":
       case "keyword-matrix":
-        return <KeywordResearchMatrix projectId={selectedProject} />;
+        return <KeywordResearchMatrix projectId={selectedProject} />; // Redirect duplicates
       default:
         return <ProjectOverview projectId={selectedProject} />;
     }

@@ -98,51 +98,13 @@ export const SEOProjectOnboarding = ({ userId, onComplete }: SEOProjectOnboardin
   };
 
   const connectGSC = async () => {
-    if (!gscPropertyUrl.trim()) {
-      toast({
-        title: "Property URL Required",
-        description: "Please enter your Google Search Console property URL",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      // Save GSC settings
-      const { data: existing } = await supabase
-        .from('google_api_settings')
-        .select('*')
-        .eq('project_id', projectId!)
-        .maybeSingle();
-
-      if (existing) {
-        await supabase
-          .from('google_api_settings')
-          .update({ google_search_console_site_url: gscPropertyUrl })
-          .eq('project_id', projectId!);
-      } else {
-        await supabase
-          .from('google_api_settings')
-          .insert({
-            project_id: projectId!,
-            google_search_console_site_url: gscPropertyUrl,
-          });
-      }
-
-      setGscConnected(true);
-      setShowGSCDialog(false);
-      toast({
-        title: "Search Console Connected ✅",
-        description: "SERP data will sync automatically",
-      });
-      setStep(3);
-    } catch (error: any) {
-      toast({
-        title: "Connection Failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
+    // Open Google Property Selector instead of manual input
+    toast({
+      title: "Redirecting...",
+      description: "Opening Google property selector",
+    });
+    setShowGSCDialog(false);
+    setStep(3); // Move to next step where full selector will be shown
   };
 
   const connectGA4 = async () => {

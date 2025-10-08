@@ -137,6 +137,30 @@ Deno.serve(async (req) => {
       }).then(res => res.ok ? res.json() : { properties: [] }),
     ]);
 
+    console.log('Fetched GSC properties:', gscProperties.siteEntry?.length || 0);
+    console.log('Fetched GA4 properties:', gaProperties.properties?.length || 0);
+
+    // Store properties in credentials_json for later reference
+    const credentialsWithProperties = {
+      ...tokens,
+      access_token: tokens.access_token,
+      refresh_token: tokens.refresh_token,
+      expires_at: Date.now() + (tokens.expires_in * 1000),
+      token_type: tokens.token_type,
+      gsc_properties: gscProperties.siteEntry || [],
+      ga4_properties: gaProperties.properties || [],
+    };
+
+    // Update stored credentials with properties
+    if (!refreshOnly) {
+      await supabase
+        .from('google_api_settings')
+        .update({
+          credentials_json: credentialsWithProperties,
+        })
+        .eq('project_id', projectId);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
