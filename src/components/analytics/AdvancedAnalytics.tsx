@@ -93,38 +93,19 @@ export function AdvancedAnalytics({ projectId }: AdvancedAnalyticsProps) {
   const hasCriticalError = keywordsError || analyticsError || competitorsError || recommendationsError;
   const isLoading = keywordsLoading || analyticsLoading || competitorsLoading || recommendationsLoading;
 
-  // Show loading state or error state
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading analytics data...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (hasCriticalError) {
-    return (
-      <div className="space-y-6">
-        <Card className="border-destructive">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-2 text-destructive mb-2">
-              <AlertTriangle className="w-5 h-5" />
-              <h3 className="font-semibold">Analytics Error</h3>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Unable to load analytics data. Please check your connection and try again.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Process data for charts
+  // Process data for charts - ALWAYS call this hook before any returns
   const chartData = useMemo(() => {
+    // Return empty data if loading or no data
+    if (!keywords || !analytics || !competitors) {
+      return {
+        keywordTrends: [],
+        trafficData: [],
+        positionDistribution: [],
+        volumeDifficultyData: [],
+        competitorRadarData: [],
+        trendData: {},
+      };
+    }
     // Keyword trends over time
     const keywordTrends = keywords.map(k => ({
       date: new Date(k.checked_at).toLocaleDateString(),
@@ -186,11 +167,24 @@ export function AdvancedAnalytics({ projectId }: AdvancedAnalyticsProps) {
     };
   }, [keywords, analytics, competitors]);
 
-  // Calculate key metrics
+  // Calculate key metrics - ALWAYS call this hook before any returns
   const metrics = useMemo(() => {
+    // Return default metrics if no data
+    if (!keywords || !analytics || !recommendations) {
+      return {
+        totalKeywords: 0,
+        avgPosition: 0,
+        top10Keywords: 0,
+        totalTraffic: 0,
+        improvingKeywords: 0,
+        decliningKeywords: 0,
+        pendingRecommendations: 0,
+      };
+    }
+
     const totalKeywords = keywords.length;
-    const avgPosition = totalKeywords > 0 
-      ? keywords.reduce((sum, k) => sum + k.position, 0) / totalKeywords 
+    const avgPosition = totalKeywords > 0
+      ? keywords.reduce((sum, k) => sum + k.position, 0) / totalKeywords
       : 0;
     const top10Keywords = keywords.filter(k => k.position <= 10).length;
     const totalTraffic = analytics.reduce((sum, a) => sum + (a.clicks || 0), 0);
@@ -208,6 +202,36 @@ export function AdvancedAnalytics({ projectId }: AdvancedAnalyticsProps) {
       pendingRecommendations,
     };
   }, [keywords, analytics, recommendations]);
+
+  // Show loading state or error state AFTER all hooks are called
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading analytics data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (hasCriticalError) {
+    return (
+      <div className="space-y-6">
+        <Card className="border-destructive">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-2 text-destructive mb-2">
+              <AlertTriangle className="w-5 h-5" />
+              <h3 className="font-semibold">Analytics Error</h3>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Unable to load analytics data. Please check your connection and try again.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <motion.div
