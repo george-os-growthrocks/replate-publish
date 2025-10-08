@@ -1030,33 +1030,42 @@ export type Database = {
         Row: {
           analysis_id: string | null
           anchor_text: string | null
+          confidence_level: string | null
+          context_snippet: string | null
           created_at: string | null
           id: string
           opportunity_type: string | null
           project_id: string
           relevance_score: number | null
+          semantic_score: number | null
           source_page: string
           target_page: string
         }
         Insert: {
           analysis_id?: string | null
           anchor_text?: string | null
+          confidence_level?: string | null
+          context_snippet?: string | null
           created_at?: string | null
           id?: string
           opportunity_type?: string | null
           project_id: string
           relevance_score?: number | null
+          semantic_score?: number | null
           source_page: string
           target_page: string
         }
         Update: {
           analysis_id?: string | null
           anchor_text?: string | null
+          confidence_level?: string | null
+          context_snippet?: string | null
           created_at?: string | null
           id?: string
           opportunity_type?: string | null
           project_id?: string
           relevance_score?: number | null
+          semantic_score?: number | null
           source_page?: string
           target_page?: string
         }
@@ -1081,30 +1090,54 @@ export type Database = {
         Row: {
           analysis_id: string | null
           created_at: string | null
+          embedding: string | null
+          embedding_model: string | null
+          embedding_updated_at: string | null
+          entities: Json | null
+          h1_tags: string[] | null
+          h2_tags: string[] | null
           id: string
           inbound_links: number | null
           keywords: Json | null
           outbound_links: number | null
+          page_content: string | null
+          page_title: string | null
           page_url: string
           project_id: string
         }
         Insert: {
           analysis_id?: string | null
           created_at?: string | null
+          embedding?: string | null
+          embedding_model?: string | null
+          embedding_updated_at?: string | null
+          entities?: Json | null
+          h1_tags?: string[] | null
+          h2_tags?: string[] | null
           id?: string
           inbound_links?: number | null
           keywords?: Json | null
           outbound_links?: number | null
+          page_content?: string | null
+          page_title?: string | null
           page_url: string
           project_id: string
         }
         Update: {
           analysis_id?: string | null
           created_at?: string | null
+          embedding?: string | null
+          embedding_model?: string | null
+          embedding_updated_at?: string | null
+          entities?: Json | null
+          h1_tags?: string[] | null
+          h2_tags?: string[] | null
           id?: string
           inbound_links?: number | null
           keywords?: Json | null
           outbound_links?: number | null
+          page_content?: string | null
+          page_title?: string | null
           page_url?: string
           project_id?: string
         }
@@ -1240,36 +1273,45 @@ export type Database = {
       }
       keyword_clusters: {
         Row: {
+          avg_embedding: string | null
           avg_search_volume: number | null
           center_keyword: string | null
           cluster_label: string | null
           cluster_name: string
+          cohesion_score: number | null
           created_at: string
           id: string
           keywords: string[]
           project_id: string | null
+          topic_strength: number | null
           updated_at: string
         }
         Insert: {
+          avg_embedding?: string | null
           avg_search_volume?: number | null
           center_keyword?: string | null
           cluster_label?: string | null
           cluster_name: string
+          cohesion_score?: number | null
           created_at?: string
           id?: string
           keywords: string[]
           project_id?: string | null
+          topic_strength?: number | null
           updated_at?: string
         }
         Update: {
+          avg_embedding?: string | null
           avg_search_volume?: number | null
           center_keyword?: string | null
           cluster_label?: string | null
           cluster_name?: string
+          cohesion_score?: number | null
           created_at?: string
           id?: string
           keywords?: string[]
           project_id?: string | null
+          topic_strength?: number | null
           updated_at?: string
         }
         Relationships: [
@@ -1287,6 +1329,9 @@ export type Database = {
           cpc: number | null
           created_at: string
           difficulty: number | null
+          embedding: string | null
+          embedding_model: string | null
+          embedding_updated_at: string | null
           id: string
           keyword: string
           lsi_keywords: string[] | null
@@ -1301,6 +1346,9 @@ export type Database = {
           cpc?: number | null
           created_at?: string
           difficulty?: number | null
+          embedding?: string | null
+          embedding_model?: string | null
+          embedding_updated_at?: string | null
           id?: string
           keyword: string
           lsi_keywords?: string[] | null
@@ -1315,6 +1363,9 @@ export type Database = {
           cpc?: number | null
           created_at?: string
           difficulty?: number | null
+          embedding?: string | null
+          embedding_model?: string | null
+          embedding_updated_at?: string | null
           id?: string
           keyword?: string
           lsi_keywords?: string[] | null
@@ -2210,12 +2261,136 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      high_potential_keywords: {
+        Row: {
+          cpc: number | null
+          created_at: string | null
+          difficulty: number | null
+          difficulty_score: number | null
+          embedding: string | null
+          id: string | null
+          keyword: string | null
+          opportunity_level: string | null
+          opportunity_score: number | null
+          project_id: string | null
+          search_intent: string | null
+          search_volume: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "keyword_tracking_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "seo_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
+      binary_quantize: {
+        Args: { "": string } | { "": unknown }
+        Returns: unknown
+      }
+      cosine_similarity: {
+        Args: { a: string; b: string }
+        Returns: number
+      }
       deduct_credits: {
         Args: { credits_to_deduct: number; user_id_param: string }
         Returns: boolean
+      }
+      halfvec_avg: {
+        Args: { "": number[] }
+        Returns: unknown
+      }
+      halfvec_out: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      halfvec_send: {
+        Args: { "": unknown }
+        Returns: string
+      }
+      halfvec_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
+      }
+      hnsw_bit_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnsw_halfvec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnsw_sparsevec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnswhandler: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      ivfflat_bit_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      ivfflat_halfvec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      ivfflathandler: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      l2_norm: {
+        Args: { "": unknown } | { "": unknown }
+        Returns: number
+      }
+      l2_normalize: {
+        Args: { "": string } | { "": unknown } | { "": unknown }
+        Returns: string
+      }
+      refresh_high_potential_keywords: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      sparsevec_out: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      sparsevec_send: {
+        Args: { "": unknown }
+        Returns: string
+      }
+      sparsevec_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
+      }
+      vector_avg: {
+        Args: { "": number[] }
+        Returns: string
+      }
+      vector_dims: {
+        Args: { "": string } | { "": unknown }
+        Returns: number
+      }
+      vector_norm: {
+        Args: { "": string }
+        Returns: number
+      }
+      vector_out: {
+        Args: { "": string }
+        Returns: unknown
+      }
+      vector_send: {
+        Args: { "": string }
+        Returns: string
+      }
+      vector_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
       }
     }
     Enums: {

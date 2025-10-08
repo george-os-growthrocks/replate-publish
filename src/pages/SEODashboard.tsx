@@ -212,7 +212,7 @@ function SEODashboardContent() {
       case "backlinks":
         return <BacklinkMonitor projectId={selectedProject} />;
       case "internal-linking":
-        return <InternalLinkingAnalyzer />;
+        return <InternalLinkingAnalyzer projectId={selectedProject} />;
 
       // Integrations & Settings
       case "integrations":

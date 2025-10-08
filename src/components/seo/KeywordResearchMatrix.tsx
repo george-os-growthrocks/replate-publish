@@ -163,11 +163,11 @@ export default function KeywordResearchMatrix({ projectId }: KeywordMatrixProps)
 
     setLoading(true);
     try {
-      // Use existing dataforseo-advanced function
+      // Use dataforseo-advanced function with correct operation
       const { data, error } = await supabase.functions.invoke('dataforseo-advanced', {
         body: {
           projectId,
-          operation: 'keywords',
+          operation: 'keyword_research',
           params: {
             keywords: [searchTerm],
             location: 'United States',
@@ -178,21 +178,21 @@ export default function KeywordResearchMatrix({ projectId }: KeywordMatrixProps)
 
       if (error) throw error;
 
-      // Process the response data
-      const result = data?.results || data?.data || {};
+      // Process the response data - it's an array of keyword results
+      const keywords = Array.isArray(data) ? data : [data];
+      const result = keywords[0] || {};
       
-      // Calculate difficulty (simplified version)
-      const difficulty = result.difficulty || Math.floor(Math.random() * 100);
-      const opportunityScore = calculateOpportunityScore(result, difficulty);
+      const difficulty = result.keyword_difficulty || result.difficulty || 50;
+      const opportunityScore = result.opportunity_score || calculateOpportunityScore(result, difficulty);
 
       const newKeyword: KeywordData = {
-        keyword: searchTerm,
-        searchVolume: result.search_volume || result.volume || 0,
+        keyword: result.keyword || searchTerm,
+        searchVolume: result.search_volume || 0,
         difficulty: difficulty,
         cpc: result.cpc || 0,
         competition: getCompetitionLevel(difficulty),
-        intent: analyzeIntent(searchTerm),
-        trend: 'Stable' as const,
+        intent: result.search_intent || analyzeIntent(searchTerm),
+        trend: result.trend_score > 0.7 ? 'Rising' : result.trend_score < 0.3 ? 'Declining' : 'Stable',
         opportunity_score: opportunityScore,
         priority: getPriorityLevel(opportunityScore),
         notes: `Researched on ${new Date().toLocaleDateString()}`
