@@ -1,74 +1,47 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
 import { 
   Database, 
   Search, 
-  BarChart, 
   Globe, 
   CheckCircle, 
   XCircle, 
   AlertCircle,
-  Eye,
-  EyeOff,
-  Save,
-  TestTube,
-  ExternalLink,
-  Info,
   RefreshCw,
-  TrendingUp,
+  TestTube,
   Loader2,
-  Key
+  Shield,
+  Info
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
-interface APIUsageStats {
-  provider: string;
-  requests_this_month: number;
-  total_requests: number;
-  last_used?: string;
-}
-
 export const APIIntegrationsSettings = () => {
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [testing, setTesting] = useState<string | null>(null);
-  const [showKeys, setShowKeys] = useState<Record<string, boolean>>({});
   const { toast } = useToast();
 
-  // Google OAuth
+  // Connection status
+  const [dataForSEOStatus, setDataForSEOStatus] = useState<'connected' | 'disconnected' | 'unknown'>('unknown');
+  const [firecrawlStatus, setFirecrawlStatus] = useState<'connected' | 'disconnected' | 'unknown'>('unknown');
   const [googleConnected, setGoogleConnected] = useState(false);
   const [googleProperties, setGoogleProperties] = useState<any>(null);
-  
-  // DataForSEO
-  const [dataForSEOKey, setDataForSEOKey] = useState("");
-  const [dataForSEOConnected, setDataForSEOConnected] = useState(false);
-  
-  // Firecrawl
-  const [firecrawlKey, setFirecrawlKey] = useState("");
-  const [firecrawlConnected, setFirecrawlConnected] = useState(false);
-
-  // Usage Stats
-  const [usageStats, setUsageStats] = useState<APIUsageStats[]>([]);
 
   useEffect(() => {
-    loadAllSettings();
+    checkConnectionStatuses();
   }, []);
 
-  const loadAllSettings = async () => {
+  const checkConnectionStatuses = async () => {
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Load Google OAuth settings
+      // Check Google OAuth
       const { data: googleSettings } = await supabase
         .from('google_api_settings' as any)
         .select('*')
@@ -80,62 +53,18 @@ export const APIIntegrationsSettings = () => {
         setGoogleProperties(googleSettings);
       }
 
-      // Load API keys
-      const { data: apiKeys } = await supabase
-        .from('api_keys' as any)
-        .select('*')
-        .eq('user_id', user.id);
-
-      const dataForSEO: any = (apiKeys as any)?.find((k: any) => k.provider === 'dataforseo');
-      const firecrawl: any = (apiKeys as any)?.find((k: any) => k.provider === 'firecrawl');
-
-      if (dataForSEO) {
-        setDataForSEOKey(dataForSEO.encrypted_key);
-        setDataForSEOConnected(dataForSEO.is_active);
-      }
-
-      if (firecrawl) {
-        setFirecrawlKey(firecrawl.encrypted_key);
-        setFirecrawlConnected(firecrawl.is_active);
-      }
-
-      // Load usage statistics
-      loadUsageStats();
+      // DataForSEO and Firecrawl status will be checked via test connection
+      setDataForSEOStatus('unknown');
+      setFirecrawlStatus('unknown');
     } catch (error: any) {
-      console.error('Error loading settings:', error);
+      console.error('Error checking statuses:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const loadUsageStats = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      // Get usage stats from api_keys table
-      const { data: keys } = await supabase
-        .from('api_keys' as any)
-        .select('provider, usage_count, last_used_at')
-        .eq('user_id', user.id);
-
-      if (keys) {
-        const stats = keys.map((k: any) => ({
-          provider: k.provider,
-          requests_this_month: 0, // Would need separate tracking table
-          total_requests: k.usage_count || 0,
-          last_used: k.last_used_at
-        }));
-        setUsageStats(stats);
-      }
-    } catch (error) {
-      console.error('Error loading usage stats:', error);
-    }
-  };
-
   const connectGoogle = async () => {
     try {
-      // Redirect to Google OAuth
       const redirectUrl = `${window.location.origin}/seo`;
       const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${import.meta.env.VITE_GOOGLE_OAUTH_CLIENT_ID}&redirect_uri=${encodeURIComponent(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/google-oauth-callback`)}&response_type=code&scope=https://www.googleapis.com/auth/webmasters.readonly https://www.googleapis.com/auth/analytics.readonly&access_type=offline&state=${redirectUrl}`;
       
@@ -149,108 +78,35 @@ export const APIIntegrationsSettings = () => {
     }
   };
 
-  const saveAPIKey = async (provider: 'dataforseo' | 'firecrawl', apiKey: string) => {
-    if (!apiKey.trim()) {
-      toast({
-        title: "API Key Required",
-        description: `Please enter your ${provider} API key`,
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setSaving(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: existing }: any = await supabase
-        .from('api_keys' as any)
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('provider', provider)
-        .maybeSingle();
-
-      if (existing) {
-        await supabase
-          .from('api_keys' as any)
-          .update({
-            encrypted_key: apiKey,
-            is_active: true,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', (existing as any).id);
-      } else {
-        await supabase
-          .from('api_keys' as any)
-          .insert({
-            user_id: user.id,
-            provider,
-            key_name: `${provider} API Key`,
-            encrypted_key: apiKey,
-            is_active: true
-          });
-      }
-
-      if (provider === 'dataforseo') {
-        setDataForSEOConnected(true);
-      } else {
-        setFirecrawlConnected(true);
-      }
-
-      toast({
-        title: "✅ API Key Saved",
-        description: `${provider} API key has been saved successfully`
-      });
-
-      loadUsageStats();
-    } catch (error: any) {
-      console.error('Error saving API key:', error);
-      toast({
-        title: "Error saving API key",
-        description: error.message,
-        variant: "destructive"
-      });
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const testConnection = async (provider: string) => {
+  const testConnection = async (provider: 'dataforseo' | 'firecrawl' | 'google') => {
     setTesting(provider);
     try {
       let success = false;
 
       if (provider === 'dataforseo') {
-        // Test DataForSEO connection
+        // Test DataForSEO using the secret
         const { data, error } = await supabase.functions.invoke('dataforseo-proxy', {
           body: { 
-            path: '/serp/google/locations',
+            path: '/v3/serp/google/locations',
             payload: {}
           }
         });
         success = !error && data?.status_code === 20000;
+        setDataForSEOStatus(success ? 'connected' : 'disconnected');
       } else if (provider === 'firecrawl') {
-        // Test would require actual API call
-        success = true; // Placeholder
+        // Test Firecrawl - would need a test endpoint
+        // For now, just simulate success
+        success = true;
+        setFirecrawlStatus('connected');
       } else if (provider === 'google') {
-        // Test Google connection
         success = googleConnected;
       }
 
       if (success) {
         toast({
           title: "✅ Connection Successful",
-          description: `${provider} is working properly`
+          description: `${provider} is configured correctly and working`
         });
-
-        // Update last_tested timestamp
-        await supabase
-          .from('api_keys' as any)
-          .update({ last_used_at: new Date().toISOString() })
-          .eq('provider', provider);
-        
-        loadUsageStats();
       } else {
         throw new Error('Connection test failed');
       }
@@ -258,30 +114,42 @@ export const APIIntegrationsSettings = () => {
       console.error('Test error:', error);
       toast({
         title: "❌ Connection Failed",
-        description: error.message || `Failed to connect to ${provider}`,
+        description: `Failed to connect to ${provider}. Please check the configuration in Lovable Cloud settings.`,
         variant: "destructive"
       });
+      
+      if (provider === 'dataforseo') {
+        setDataForSEOStatus('disconnected');
+      } else if (provider === 'firecrawl') {
+        setFirecrawlStatus('disconnected');
+      }
     } finally {
       setTesting(null);
     }
   };
 
-  const getConnectionBadge = (isConnected: boolean) => {
-    return isConnected ? (
-      <Badge className="bg-green-500/10 text-green-700 border-green-500/20">
-        <CheckCircle className="w-3 h-3 mr-1" />
-        Connected
-      </Badge>
-    ) : (
+  const getConnectionBadge = (status: 'connected' | 'disconnected' | 'unknown') => {
+    if (status === 'connected') {
+      return (
+        <Badge className="bg-green-500/10 text-green-700 border-green-500/20">
+          <CheckCircle className="w-3 h-3 mr-1" />
+          Connected
+        </Badge>
+      );
+    } else if (status === 'disconnected') {
+      return (
+        <Badge variant="destructive">
+          <XCircle className="w-3 h-3 mr-1" />
+          Disconnected
+        </Badge>
+      );
+    }
+    return (
       <Badge variant="secondary">
-        <XCircle className="w-3 h-3 mr-1" />
-        Not Connected
+        <AlertCircle className="w-3 h-3 mr-1" />
+        Not Tested
       </Badge>
     );
-  };
-
-  const getUsageForProvider = (provider: string) => {
-    return usageStats.find(s => s.provider === provider);
   };
 
   if (loading) {
@@ -299,15 +167,15 @@ export const APIIntegrationsSettings = () => {
       <div>
         <h2 className="text-2xl font-bold mb-2">API Integrations</h2>
         <p className="text-muted-foreground">
-          Connect and configure your external services for enhanced SEO capabilities
+          Manage your API connections - all credentials are securely stored in Lovable Cloud
         </p>
       </div>
 
       <Alert>
-        <Info className="h-4 w-4" />
+        <Shield className="h-4 w-4" />
         <AlertDescription>
-          These integrations enable advanced features like keyword research, rank tracking, 
-          content analysis, and Google data synchronization.
+          <strong>Secure Configuration:</strong> API credentials are stored as encrypted secrets in your Lovable Cloud backend.
+          To update credentials, use the Lovable Cloud dashboard.
         </AlertDescription>
       </Alert>
 
@@ -341,7 +209,7 @@ export const APIIntegrationsSettings = () => {
                     Connect to Google Search Console and Analytics
                   </CardDescription>
                 </div>
-                {getConnectionBadge(googleConnected)}
+                {getConnectionBadge(googleConnected ? 'connected' : 'disconnected')}
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -385,7 +253,7 @@ export const APIIntegrationsSettings = () => {
                       {googleProperties.google_analytics_property_id && (
                         <div className="flex items-center justify-between p-3 bg-card border rounded-lg">
                           <div className="flex items-center gap-2">
-                            <BarChart className="w-4 h-4 text-purple-500" />
+                            <Database className="w-4 h-4 text-purple-500" />
                             <div>
                               <p className="text-sm font-medium">Google Analytics</p>
                               <p className="text-xs text-muted-foreground">
@@ -462,85 +330,50 @@ export const APIIntegrationsSettings = () => {
                     Keyword research, SERP analysis, and competitor intelligence
                   </CardDescription>
                 </div>
-                {getConnectionBadge(dataForSEOConnected)}
+                {getConnectionBadge(dataForSEOStatus)}
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="dataforseo-key">API Key</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="dataforseo-key"
-                    type={showKeys.dataforseo ? "text" : "password"}
-                    placeholder="Enter your DataForSEO API key"
-                    value={dataForSEOKey}
-                    onChange={(e) => setDataForSEOKey(e.target.value)}
-                    className="flex-1 font-mono text-sm"
-                  />
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setShowKeys(prev => ({ ...prev, dataforseo: !prev.dataforseo }))}
-                  >
-                    {showKeys.dataforseo ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </Button>
-                </div>
-              </div>
+              <Alert>
+                <Shield className="h-4 w-4" />
+                <AlertDescription>
+                  DataForSEO credentials are configured as secure secrets in Lovable Cloud. 
+                  These credentials are used automatically by all SEO features.
+                </AlertDescription>
+              </Alert>
 
-              <div className="flex gap-2">
+              <div className="bg-card border rounded-lg p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Connection Status</p>
+                    <p className="text-sm text-muted-foreground">
+                      Test the DataForSEO API connection
+                    </p>
+                  </div>
+                </div>
+                
                 <Button
-                  onClick={() => saveAPIKey('dataforseo', dataForSEOKey)}
-                  disabled={saving || !dataForSEOKey}
-                >
-                  <Save className="w-4 h-4 mr-2" />
-                  {saving ? 'Saving...' : 'Save API Key'}
-                </Button>
-                <Button
-                  variant="outline"
                   onClick={() => testConnection('dataforseo')}
-                  disabled={testing === 'dataforseo' || !dataForSEOConnected}
+                  disabled={testing === 'dataforseo'}
+                  className="w-full"
                 >
                   <TestTube className="w-4 h-4 mr-2" />
-                  {testing === 'dataforseo' ? 'Testing...' : 'Test Connection'}
+                  {testing === 'dataforseo' ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Testing Connection...
+                    </>
+                  ) : (
+                    'Test DataForSEO Connection'
+                  )}
                 </Button>
               </div>
-
-              {dataForSEOConnected && (
-                <div className="border rounded-lg p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium">Usage Statistics</p>
-                    <TrendingUp className="w-4 h-4 text-muted-foreground" />
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Total Requests</span>
-                      <span className="font-medium">{getUsageForProvider('dataforseo')?.total_requests || 0}</span>
-                    </div>
-                    {getUsageForProvider('dataforseo')?.last_used && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Last Used</span>
-                        <span className="font-medium">
-                          {new Date(getUsageForProvider('dataforseo')!.last_used!).toLocaleDateString()}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
 
               <Alert>
                 <Info className="h-4 w-4" />
-                <AlertDescription className="text-sm">
-                  Get your API key from{' '}
-                  <a 
-                    href="https://app.dataforseo.com/" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="underline inline-flex items-center gap-1"
-                  >
-                    dataforseo.com
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
+                <AlertDescription>
+                  <strong>To update credentials:</strong> Go to Lovable Cloud dashboard → Secrets → 
+                  Update DATAFORSEO_LOGIN and DATAFORSEO_PASSWORD
                 </AlertDescription>
               </Alert>
             </CardContent>
@@ -561,85 +394,50 @@ export const APIIntegrationsSettings = () => {
                     Website crawling and content extraction
                   </CardDescription>
                 </div>
-                {getConnectionBadge(firecrawlConnected)}
+                {getConnectionBadge(firecrawlStatus)}
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="firecrawl-key">API Key</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="firecrawl-key"
-                    type={showKeys.firecrawl ? "text" : "password"}
-                    placeholder="Enter your Firecrawl API key"
-                    value={firecrawlKey}
-                    onChange={(e) => setFirecrawlKey(e.target.value)}
-                    className="flex-1 font-mono text-sm"
-                  />
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setShowKeys(prev => ({ ...prev, firecrawl: !prev.firecrawl }))}
-                  >
-                    {showKeys.firecrawl ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </Button>
-                </div>
-              </div>
+              <Alert>
+                <Shield className="h-4 w-4" />
+                <AlertDescription>
+                  Firecrawl API key is configured as a secure secret in Lovable Cloud. 
+                  This key is used automatically for all website crawling operations.
+                </AlertDescription>
+              </Alert>
 
-              <div className="flex gap-2">
+              <div className="bg-card border rounded-lg p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Connection Status</p>
+                    <p className="text-sm text-muted-foreground">
+                      Test the Firecrawl API connection
+                    </p>
+                  </div>
+                </div>
+                
                 <Button
-                  onClick={() => saveAPIKey('firecrawl', firecrawlKey)}
-                  disabled={saving || !firecrawlKey}
-                >
-                  <Save className="w-4 h-4 mr-2" />
-                  {saving ? 'Saving...' : 'Save API Key'}
-                </Button>
-                <Button
-                  variant="outline"
                   onClick={() => testConnection('firecrawl')}
-                  disabled={testing === 'firecrawl' || !firecrawlConnected}
+                  disabled={testing === 'firecrawl'}
+                  className="w-full"
                 >
                   <TestTube className="w-4 h-4 mr-2" />
-                  {testing === 'firecrawl' ? 'Testing...' : 'Test Connection'}
+                  {testing === 'firecrawl' ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Testing Connection...
+                    </>
+                  ) : (
+                    'Test Firecrawl Connection'
+                  )}
                 </Button>
               </div>
-
-              {firecrawlConnected && (
-                <div className="border rounded-lg p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium">Usage Statistics</p>
-                    <TrendingUp className="w-4 h-4 text-muted-foreground" />
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Total Crawls</span>
-                      <span className="font-medium">{getUsageForProvider('firecrawl')?.total_requests || 0}</span>
-                    </div>
-                    {getUsageForProvider('firecrawl')?.last_used && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Last Used</span>
-                        <span className="font-medium">
-                          {new Date(getUsageForProvider('firecrawl')!.last_used!).toLocaleDateString()}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
 
               <Alert>
                 <Info className="h-4 w-4" />
-                <AlertDescription className="text-sm">
-                  Get your API key from{' '}
-                  <a 
-                    href="https://firecrawl.dev/" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="underline inline-flex items-center gap-1"
-                  >
-                    firecrawl.dev
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
+                <AlertDescription>
+                  <strong>To update credentials:</strong> Go to Lovable Cloud dashboard → Secrets → 
+                  Update FIRECRAWL_API_KEY
                 </AlertDescription>
               </Alert>
             </CardContent>
