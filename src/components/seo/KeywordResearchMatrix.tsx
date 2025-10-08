@@ -515,60 +515,118 @@ export default function KeywordResearchMatrix({ projectId }: KeywordMatrixProps)
   };
 
   return (
-    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
-      {/* Minimal Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Keyword Research Matrix</h1>
-          <p className="text-gray-600 mt-1">Research and analyze keywords for your SEO strategy</p>
-        </div>
-        <div className="flex gap-3">
-          <Input
-            placeholder="Enter keyword..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && researchKeywords()}
-            className="w-64"
-          />
-          <Button 
-            onClick={researchKeywords} 
-            disabled={loading}
-            className="px-6"
-          >
-            {loading ? (
-              <RefreshCw className="w-4 h-4 animate-spin" />
-            ) : (
-              <>
-                <Search className="w-4 h-4 mr-2" />
-                Research
-              </>
-            )}
-          </Button>
+    <div className="space-y-8 animate-in fade-in duration-500">
+      {/* Enhanced Header */}
+      <div className="flex items-start justify-between gap-6">
+        <div className="space-y-2">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+            Keyword Research Matrix
+          </h1>
+          <p className="text-muted-foreground text-lg">Comprehensive keyword analysis and competitive intelligence</p>
         </div>
       </div>
 
-      {/* Minimal Stats */}
-      <div className="grid grid-cols-4 gap-6">
-        <div className="bg-white p-4 rounded-lg border">
-          <div className="text-sm text-gray-600">Total Keywords</div>
-          <div className="text-2xl font-semibold text-gray-900">{keywords.length}</div>
-        </div>
-        <div className="bg-white p-4 rounded-lg border">
-          <div className="text-sm text-gray-600">High Priority</div>
-          <div className="text-2xl font-semibold text-red-600">
-            {keywords.filter(k => k.priority === 'High').length}
+      {/* Enhanced Search Card */}
+      <Card className="rounded-2xl border-border shadow-xl overflow-hidden">
+        <CardHeader className="pb-6 bg-gradient-to-r from-card to-muted/20">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10">
+              <Brain className="w-6 h-6 text-primary" />
+            </div>
+            <div>
+              <CardTitle className="text-2xl font-bold">AI-Powered Keyword Research</CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                Enter keywords to analyze search volume, difficulty, and opportunities
+              </p>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-6 p-8">
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <Input
+                placeholder="Enter keyword or phrase (e.g., 'best seo tools', 'content optimization')"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && researchKeywords()}
+                className="h-14 text-lg rounded-xl border-2 focus:border-primary transition-all"
+              />
+            </div>
+            <Button
+              onClick={researchKeywords}
+              disabled={loading}
+              className="h-14 px-8 rounded-xl bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg shadow-primary/25"
+            >
+              {loading ? (
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
+              ) : (
+                <>
+                  <Search className="w-5 h-5 mr-2" />
+                  Research Keywords
+                </>
+              )}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Stunning Metric Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-transparent border border-blue-500/20 hover:border-blue-500/40 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/10">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <div className="relative p-6 space-y-4">
+            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-blue-500/10 group-hover:bg-blue-500/20 transition-colors">
+              <Hash className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-muted-foreground">Total Keywords</p>
+              <p className="text-3xl font-bold">{keywords.length}</p>
+            </div>
           </div>
         </div>
-        <div className="bg-white p-4 rounded-lg border">
-          <div className="text-sm text-gray-600">Avg. Volume</div>
-          <div className="text-2xl font-semibold text-gray-900">
-            {Math.round(keywords.reduce((sum, k) => sum + k.searchVolume, 0) / keywords.length) || 0}
+
+        <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-red-500/10 via-red-500/5 to-transparent border border-red-500/20 hover:border-red-500/40 transition-all duration-300 hover:shadow-xl hover:shadow-red-500/10">
+          <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <div className="relative p-6 space-y-4">
+            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-red-500/10 group-hover:bg-red-500/20 transition-colors">
+              <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-muted-foreground">High Priority</p>
+              <p className="text-3xl font-bold text-red-600">
+                {keywords.filter(k => k.priority === 'High').length}
+              </p>
+            </div>
           </div>
         </div>
-        <div className="bg-white p-4 rounded-lg border">
-          <div className="text-sm text-gray-600">Avg. Difficulty</div>
-          <div className="text-2xl font-semibold text-gray-900">
-            {Math.round(keywords.reduce((sum, k) => sum + k.difficulty, 0) / keywords.length) || 0}%
+
+        <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent border border-emerald-500/20 hover:border-emerald-500/40 transition-all duration-300 hover:shadow-xl hover:shadow-emerald-500/10">
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <div className="relative p-6 space-y-4">
+            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-500/10 group-hover:bg-emerald-500/20 transition-colors">
+              <TrendingUp className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-muted-foreground">Avg. Volume</p>
+              <p className="text-3xl font-bold">
+                {Math.round(keywords.reduce((sum, k) => sum + k.searchVolume, 0) / keywords.length) || 0}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/20 hover:border-amber-500/40 transition-all duration-300 hover:shadow-xl hover:shadow-amber-500/10">
+          <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <div className="relative p-6 space-y-4">
+            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-amber-500/10 group-hover:bg-amber-500/20 transition-colors">
+              <Target className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-muted-foreground">Avg. Difficulty</p>
+              <p className="text-3xl font-bold">
+                {Math.round(keywords.reduce((sum, k) => sum + k.difficulty, 0) / keywords.length) || 0}%
+              </p>
+            </div>
           </div>
         </div>
       </div>

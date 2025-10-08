@@ -145,97 +145,119 @@ Respond with JSON: { snippet: "...", entities: ["entity1", "entity2", ...] }`,
         </CardHeader>
       </Card>
 
-      {/* Input Section */}
-      <Card className="border-0 shadow-lg bg-gradient-to-br from-background via-background to-primary/5">
-        <CardContent className="p-6">
-          <div className="space-y-6">
-            <div className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Target Query</label>
-            <Input
-              placeholder="e.g., 'What are the best AI tools for SEO?'"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
+      {/* Enhanced Input Section */}
+      <Card className="rounded-2xl border-border shadow-xl overflow-hidden">
+        <CardHeader className="pb-6 bg-gradient-to-r from-card to-muted/20">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10">
+              <Sparkles className="w-6 h-6 text-primary" />
+            </div>
+            <div>
+              <CardTitle className="text-2xl font-bold">Optimize for AI Overviews</CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                Create snippets optimized for Google's Gemini AI Overview
+              </p>
+            </div>
           </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Your Content</label>
-            <Textarea
-              placeholder="Paste your content here..."
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              rows={6}
-              className="resize-none"
-            />
-          </div>
-        </div>
-
-        <Button onClick={optimizeForAIO} disabled={loading} className="w-full">
-          {loading ? (
-            <Loader2 className="w-4 h-4 animate-spin mr-2" />
-          ) : (
-            <Sparkles className="w-4 h-4 mr-2" />
-          )}
-          Generate AI Overview Snippet
-        </Button>
-
-        {optimizedSnippet && (
+        </CardHeader>
+        <CardContent className="p-8 space-y-6">
           <div className="space-y-4">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold">Optimized Snippet</h3>
-                <Button variant="outline" size="sm" onClick={copyToClipboard}>
-                  {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
-                  {copied ? "Copied!" : "Copy"}
-                </Button>
-              </div>
-              <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
-                <p className="text-sm leading-relaxed">{optimizedSnippet}</p>
-              </div>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Badge variant="secondary">{optimizedSnippet.split(" ").length} words</Badge>
-                <Badge variant="secondary">{optimizedSnippet.length} characters</Badge>
-              </div>
+            <div className="space-y-3">
+              <label className="text-sm font-semibold flex items-center gap-2">
+                Target Search Query
+                <Badge variant="secondary" className="text-xs">Required</Badge>
+              </label>
+              <Input
+                placeholder="Enter your target query (e.g., 'What are the best AI tools for SEO?')"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className="h-12 text-base rounded-xl border-2 focus:border-primary transition-all"
+              />
             </div>
 
-            {entities.length > 0 && (
-              <div className="space-y-2">
-                <h3 className="font-semibold text-sm">Key Entities to Emphasize</h3>
-                <div className="flex flex-wrap gap-2">
-                  {entities.map((entity, idx) => (
-                    <Badge key={idx} variant="outline" className="text-xs">
-                      {entity}
-                    </Badge>
-                  ))}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Make sure these entities are prominent in your content with clear context and definitions.
-                </p>
-              </div>
+            <div className="space-y-3">
+              <label className="text-sm font-semibold flex items-center gap-2">
+                Your Content
+                <Badge variant="secondary" className="text-xs">Required</Badge>
+              </label>
+              <Textarea
+                placeholder="Paste your content here to optimize for AI Overview visibility..."
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                rows={8}
+                className="resize-none rounded-xl border-2 focus:border-primary transition-all text-base"
+              />
+            </div>
+          </div>
+
+          <Button
+            onClick={optimizeForAIO}
+            disabled={loading}
+            className="w-full h-14 rounded-xl bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg shadow-primary/25 text-base"
+          >
+            {loading ? (
+              <Loader2 className="w-5 h-5 animate-spin mr-2" />
+            ) : (
+              <Sparkles className="w-5 h-5 mr-2" />
             )}
+            Generate AI Overview Snippet
+          </Button>
 
-            <div className="space-y-2 p-4 rounded-lg bg-accent/5 border">
-              <h4 className="font-medium text-sm">AI Overview Best Practices</h4>
-              <ul className="text-xs text-muted-foreground space-y-1">
-                <li>• Direct answer in first sentence</li>
-                <li>• Conversational, natural language</li>
-                <li>• Clear entity definitions and context</li>
-                <li>• Structured with lists or steps when applicable</li>
-                <li>• Scannable format with short paragraphs</li>
-                <li>• E-E-A-T signals (expertise, authoritativeness, trustworthiness)</li>
-              </ul>
+          {optimizedSnippet && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold">Optimized Snippet</h3>
+                  <Button variant="outline" size="sm" onClick={copyToClipboard}>
+                    {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+                    {copied ? "Copied!" : "Copy"}
+                  </Button>
+                </div>
+                <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
+                  <p className="text-sm leading-relaxed">{optimizedSnippet}</p>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Badge variant="secondary">{optimizedSnippet.split(" ").length} words</Badge>
+                  <Badge variant="secondary">{optimizedSnippet.length} characters</Badge>
+                </div>
+              </div>
+
+              {entities.length > 0 && (
+                <div className="space-y-2">
+                  <h3 className="font-semibold text-sm">Key Entities to Emphasize</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {entities.map((entity, idx) => (
+                      <Badge key={idx} variant="outline" className="text-xs">
+                        {entity}
+                      </Badge>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Make sure these entities are prominent in your content with clear context and definitions.
+                  </p>
+                </div>
+              )}
+
+              <div className="space-y-2 p-4 rounded-lg bg-accent/5 border">
+                <h4 className="font-medium text-sm">AI Overview Best Practices</h4>
+                <ul className="text-xs text-muted-foreground space-y-1">
+                  <li>• Direct answer in first sentence</li>
+                  <li>• Conversational, natural language</li>
+                  <li>• Clear entity definitions and context</li>
+                  <li>• Structured with lists or steps when applicable</li>
+                  <li>• Scannable format with short paragraphs</li>
+                  <li>• E-E-A-T signals (expertise, authoritativeness, trustworthiness)</li>
+                </ul>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {!optimizedSnippet && !loading && (
-          <div className="text-center py-12 text-muted-foreground">
-            <Sparkles className="w-12 h-12 mx-auto mb-3 opacity-50" />
-            <p>Enter your content and query to optimize for AI Overview</p>
-          </div>
-        )}
-          </div>
+          {!optimizedSnippet && !loading && (
+            <div className="text-center py-12 text-muted-foreground">
+              <Sparkles className="w-12 h-12 mx-auto mb-3 opacity-50" />
+              <p>Enter your content and query to optimize for AI Overview</p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -176,35 +176,51 @@ export function PredictiveSEOAnalytics({ projectId }: { projectId: string }) {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Brain className="h-5 w-5" />
-            Predictive SEO Analytics
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+    <div className="space-y-8 animate-in fade-in duration-500">
+      {/* Enhanced Header */}
+      <div className="space-y-3">
+        <h1 className="text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+          Predictive SEO Analytics
+        </h1>
+        <p className="text-muted-foreground text-lg">
+          AI-powered forecasting for rankings, traffic, and algorithm changes
+        </p>
+      </div>
+
+      {/* Enhanced Action Card */}
+      <Card className="rounded-2xl border-border shadow-xl overflow-hidden">
+        <CardHeader className="pb-6 bg-gradient-to-r from-card to-muted/20">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
-              AI-powered predictions for rankings, traffic, and algorithm changes
-            </p>
-            <Button onClick={generatePredictions} disabled={isAnalyzing}>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10">
+                <Brain className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-2xl font-bold">Future Performance Predictions</CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Advanced ML-powered forecasting for your SEO strategy
+                </p>
+              </div>
+            </div>
+            <Button
+              onClick={generatePredictions}
+              disabled={isAnalyzing}
+              className="h-12 px-6 rounded-xl bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg shadow-primary/25"
+            >
               {isAnalyzing ? (
                 <>
-                  <Brain className="h-4 w-4 mr-2 animate-pulse" />
+                  <Brain className="h-5 w-5 mr-2 animate-pulse" />
                   Analyzing...
                 </>
               ) : (
                 <>
-                  <Zap className="h-4 w-4 mr-2" />
+                  <Zap className="h-5 w-5 mr-2" />
                   Generate Predictions
                 </>
               )}
             </Button>
           </div>
-        </CardContent>
+        </CardHeader>
       </Card>
 
       {predictiveData && (

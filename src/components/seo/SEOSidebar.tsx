@@ -51,8 +51,6 @@ export function SEOSidebar({ onTabChange, activeTab }: SEOSidebarProps) {
 
   const integrationsSettingsItems = [
     { id: "integrations", title: "Google Tools", icon: Globe, color: "text-blue-600 dark:text-blue-400" },
-    { id: "dataforseo-test", title: "API Settings", icon: Database, color: "text-slate-600 dark:text-slate-400" },
-    { id: "multi-location", title: "Multi-Location", icon: MapPin, color: "text-green-600 dark:text-green-400" },
     { id: "revenue", title: "Revenue Attribution", icon: DollarSign, color: "text-emerald-600 dark:text-emerald-400" },
   ];
 
