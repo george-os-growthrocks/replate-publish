@@ -89,7 +89,7 @@ interface ReportData {
   }>;
 }
 
-const COLORS = ['#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#6366f1'];
+const COLORS = ['#3b82f6', '#10b981', '#06b6d4', '#f59e0b', '#ef4444', '#8b5cf6'];
 
 export const SeoReport = ({ projectId }: SeoReportProps) => {
   const [loading, setLoading] = useState(true);
@@ -323,41 +323,45 @@ export const SeoReport = ({ projectId }: SeoReportProps) => {
   if (loading || !reportData) {
     return (
       <div className="flex items-center justify-center py-12">
-        <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+        <div className="flex flex-col items-center gap-4">
+          <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Loading comprehensive report...</p>
+        </div>
       </div>
     );
   }
 
-  const MetricCard = ({ title, value, change, icon: Icon, trend }: any) => (
-    <Card>
-      <CardContent className="pt-6">
+  const MetricCard = ({ title, value, change, icon: Icon, colorClass }: any) => (
+    <div className={`group relative overflow-hidden rounded-2xl border transition-all duration-300 hover:shadow-xl ${colorClass}`}>
+      <div className="absolute inset-0 bg-gradient-to-br from-current/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      <div className="relative p-6 space-y-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <Icon className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">{title}</p>
-              <p className="text-2xl font-bold">{value}</p>
-            </div>
+          <div className={`flex items-center justify-center w-12 h-12 rounded-xl bg-current/10 group-hover:bg-current/20 transition-colors`}>
+            <Icon className="w-6 h-6" style={{ color: 'inherit' }} />
           </div>
           {change !== undefined && (
-            <Badge variant={change >= 0 ? "default" : "destructive"} className="flex items-center gap-1">
-              {change >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-              {Math.abs(change).toFixed(1)}%
-            </Badge>
+            <div className={`flex items-center gap-1 text-sm font-medium ${change >= 0 ? 'text-success' : 'text-destructive'}`}>
+              {change >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+              <span>{Math.abs(change).toFixed(1)}%</span>
+            </div>
           )}
         </div>
-      </CardContent>
-    </Card>
+        <div className="space-y-1">
+          <p className="text-sm font-medium text-muted-foreground">{title}</p>
+          <p className="text-3xl font-bold">{value}</p>
+        </div>
+      </div>
+    </div>
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold">Comprehensive SEO Report</h2>
-          <p className="text-muted-foreground">Detailed analytics and performance insights</p>
+    <div className="space-y-8 animate-in fade-in duration-500">
+      <div className="flex items-start justify-between gap-6">
+        <div className="space-y-2">
+          <h2 className="text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+            Comprehensive SEO Report
+          </h2>
+          <p className="text-muted-foreground text-lg">Detailed analytics and performance insights for your project</p>
         </div>
         <div className="flex items-center gap-2">
           <Select value={dateRange} onValueChange={(v: any) => setDateRange(v)}>
@@ -389,62 +393,70 @@ export const SeoReport = ({ projectId }: SeoReportProps) => {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6 mt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <MetricCard
               title="Total Clicks"
               value={reportData.gscMetrics.totalClicks.toLocaleString()}
               change={reportData.gscMetrics.clicksChange}
               icon={MousePointerClick}
+              colorClass="text-blue-600 dark:text-blue-400 border-blue-500/20 hover:border-blue-500/40 hover:shadow-blue-500/10"
             />
             <MetricCard
               title="Total Impressions"
               value={reportData.gscMetrics.totalImpressions.toLocaleString()}
               change={reportData.gscMetrics.impressionsChange}
               icon={Eye}
+              colorClass="text-emerald-600 dark:text-emerald-400 border-emerald-500/20 hover:border-emerald-500/40 hover:shadow-emerald-500/10"
             />
             <MetricCard
               title="Average CTR"
               value={`${reportData.gscMetrics.avgCTR.toFixed(2)}%`}
               change={reportData.gscMetrics.ctrChange}
               icon={Target}
+              colorClass="text-amber-600 dark:text-amber-400 border-amber-500/20 hover:border-amber-500/40 hover:shadow-amber-500/10"
             />
             <MetricCard
               title="Average Position"
               value={reportData.gscMetrics.avgPosition.toFixed(1)}
               change={-reportData.gscMetrics.positionChange}
               icon={TrendingUp}
+              colorClass="text-violet-600 dark:text-violet-400 border-violet-500/20 hover:border-violet-500/40 hover:shadow-violet-500/10"
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <MetricCard
               title="Total Users"
               value={Math.round(reportData.gaMetrics.totalUsers).toLocaleString()}
               change={reportData.gaMetrics.usersChange}
               icon={Users}
+              colorClass="text-cyan-600 dark:text-cyan-400 border-cyan-500/20 hover:border-cyan-500/40 hover:shadow-cyan-500/10"
             />
             <MetricCard
               title="Total Sessions"
               value={Math.round(reportData.gaMetrics.totalSessions).toLocaleString()}
               change={reportData.gaMetrics.sessionsChange}
               icon={BarChart3}
+              colorClass="text-indigo-600 dark:text-indigo-400 border-indigo-500/20 hover:border-indigo-500/40 hover:shadow-indigo-500/10"
             />
             <MetricCard
               title="Bounce Rate"
               value={`${reportData.gaMetrics.bounceRate.toFixed(1)}%`}
               icon={TrendingDown}
+              colorClass="text-rose-600 dark:text-rose-400 border-rose-500/20 hover:border-rose-500/40 hover:shadow-rose-500/10"
             />
             <MetricCard
               title="Avg Session Duration"
               value={`${Math.floor(reportData.gaMetrics.avgSessionDuration / 60)}m ${reportData.gaMetrics.avgSessionDuration % 60}s`}
               icon={Clock}
+              colorClass="text-teal-600 dark:text-teal-400 border-teal-500/20 hover:border-teal-500/40 hover:shadow-teal-500/10"
             />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Performance Trends</CardTitle>
+            <Card className="rounded-2xl border-border shadow-lg">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-xl font-bold">Performance Trends</CardTitle>
                 <CardDescription>Clicks and impressions over time</CardDescription>
               </CardHeader>
               <CardContent>

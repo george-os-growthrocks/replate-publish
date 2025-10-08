@@ -194,12 +194,14 @@ export default function SERPTracker({ projectId }: SERPTrackerProps) {
   const uniqueKeywords = Array.from(new Set(rankings.map(r => r.keyword)));
 
   return (
-    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
-      {/* Minimal Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-900">SERP Tracker</h1>
-          <p className="text-gray-600 mt-1">Monitor your keyword rankings and track SERP changes</p>
+    <div className="space-y-8 animate-in fade-in duration-500">
+      {/* Enhanced Header */}
+      <div className="flex items-start justify-between gap-6">
+        <div className="space-y-2">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+            SERP Rank Tracker
+          </h1>
+          <p className="text-muted-foreground text-lg">Monitor keyword rankings and track SERP performance</p>
         </div>
         <div className="flex gap-3">
           <Input
@@ -207,12 +209,12 @@ export default function SERPTracker({ projectId }: SERPTrackerProps) {
             value={newKeyword}
             onChange={(e) => setNewKeyword(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && addKeyword()}
-            className="w-64"
+            className="w-64 rounded-xl"
           />
-          <Button 
-            onClick={addKeyword} 
+          <Button
+            onClick={addKeyword}
             disabled={loading || !newKeyword.trim()}
-            className="px-6"
+            className="px-6 rounded-xl bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg shadow-primary/25"
           >
             {loading ? (
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
@@ -226,56 +228,99 @@ export default function SERPTracker({ projectId }: SERPTrackerProps) {
         </div>
       </div>
 
-      {/* Minimal Stats */}
-      <div className="grid grid-cols-4 gap-6">
-        <div className="bg-white p-4 rounded-lg border">
-          <div className="text-sm text-gray-600">Total Keywords</div>
-          <div className="text-2xl font-semibold text-gray-900">{uniqueKeywords.length}</div>
-        </div>
-        <div className="bg-white p-4 rounded-lg border">
-          <div className="text-sm text-gray-600">Avg. Position</div>
-          <div className="text-2xl font-semibold text-gray-900">
-            {rankings.length > 0 ? Math.round(rankings.reduce((sum, r) => sum + (r.position || 0), 0) / rankings.length) : 0}
+      {/* Stunning Metric Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-transparent border border-blue-500/20 hover:border-blue-500/40 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/10">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <div className="relative p-6 space-y-4">
+            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-blue-500/10 group-hover:bg-blue-500/20 transition-colors">
+              <Search className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-muted-foreground">Total Keywords</p>
+              <p className="text-3xl font-bold">{uniqueKeywords.length}</p>
+            </div>
           </div>
         </div>
-        <div className="bg-white p-4 rounded-lg border">
-          <div className="text-sm text-gray-600">Improvements</div>
-          <div className="text-2xl font-semibold text-green-600">
-            {rankings.filter(r => getPositionChange(r.keyword) && getPositionChange(r.keyword)! > 0).length}
+
+        <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent border border-emerald-500/20 hover:border-emerald-500/40 transition-all duration-300 hover:shadow-xl hover:shadow-emerald-500/10">
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <div className="relative p-6 space-y-4">
+            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-500/10 group-hover:bg-emerald-500/20 transition-colors">
+              <Target className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-muted-foreground">Avg. Position</p>
+              <p className="text-3xl font-bold">
+                {rankings.length > 0 ? Math.round(rankings.reduce((sum, r) => sum + (r.position || 0), 0) / rankings.length) : 0}
+              </p>
+            </div>
           </div>
         </div>
-        <div className="bg-white p-4 rounded-lg border">
-          <div className="text-sm text-gray-600">Declines</div>
-          <div className="text-2xl font-semibold text-red-600">
-            {rankings.filter(r => getPositionChange(r.keyword) && getPositionChange(r.keyword)! < 0).length}
+
+        <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-green-500/10 via-green-500/5 to-transparent border border-green-500/20 hover:border-green-500/40 transition-all duration-300 hover:shadow-xl hover:shadow-green-500/10">
+          <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <div className="relative p-6 space-y-4">
+            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-green-500/10 group-hover:bg-green-500/20 transition-colors">
+              <TrendingUp className="w-6 h-6 text-green-600 dark:text-green-400" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-muted-foreground">Improvements</p>
+              <p className="text-3xl font-bold text-green-600">
+                {rankings.filter(r => getPositionChange(r.keyword) && getPositionChange(r.keyword)! > 0).length}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-red-500/10 via-red-500/5 to-transparent border border-red-500/20 hover:border-red-500/40 transition-all duration-300 hover:shadow-xl hover:shadow-red-500/10">
+          <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <div className="relative p-6 space-y-4">
+            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-red-500/10 group-hover:bg-red-500/20 transition-colors">
+              <TrendingDown className="w-6 h-6 text-red-600 dark:text-red-400" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-muted-foreground">Declines</p>
+              <p className="text-3xl font-bold text-red-600">
+                {rankings.filter(r => getPositionChange(r.keyword) && getPositionChange(r.keyword)! < 0).length}
+              </p>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Minimal Rankings Table */}
-      <div className="bg-white rounded-lg border">
-        <div className="p-4 border-b">
-          <h3 className="text-lg font-semibold text-gray-900">Keyword Rankings ({uniqueKeywords.length})</h3>
+      {/* Enhanced Rankings Table */}
+      <div className="rounded-2xl bg-card border border-border overflow-hidden shadow-lg">
+        <div className="p-6 border-b border-border bg-gradient-to-r from-card to-muted/20">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10">
+              <Activity className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold">Keyword Rankings</h3>
+              <p className="text-sm text-muted-foreground">{uniqueKeywords.length} keywords tracked</p>
+            </div>
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-muted/30">
               <tr>
-                <th className="text-left p-3 text-sm font-medium text-gray-700">Keyword</th>
-                <th className="text-left p-3 text-sm font-medium text-gray-700">Current Position</th>
-                <th className="text-left p-3 text-sm font-medium text-gray-700">Change</th>
-                <th className="text-left p-3 text-sm font-medium text-gray-700">URL</th>
-                <th className="text-left p-3 text-sm font-medium text-gray-700">Last Updated</th>
-                <th className="text-left p-3 text-sm font-medium text-gray-700">Actions</th>
+                <th className="text-left p-4 text-sm font-semibold text-foreground">Keyword</th>
+                <th className="text-left p-4 text-sm font-semibold text-foreground">Position</th>
+                <th className="text-left p-4 text-sm font-semibold text-foreground">Change</th>
+                <th className="text-left p-4 text-sm font-semibold text-foreground">URL</th>
+                <th className="text-left p-4 text-sm font-semibold text-foreground">Updated</th>
+                <th className="text-left p-4 text-sm font-semibold text-foreground">Actions</th>
               </tr>
             </thead>
             <tbody>
               {uniqueKeywords.map((keyword) => {
                 const latestRanking = rankings.filter(r => r.keyword === keyword).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
                 const change = getPositionChange(keyword);
-                
+
                 return (
-                  <tr key={keyword} className="border-b hover:bg-gray-50">
+                  <tr key={keyword} className="border-b border-border hover:bg-accent/30 transition-colors">
                     <td className="p-3 font-medium text-gray-900">{keyword}</td>
                     <td className="p-3">
                       <div className="flex items-center gap-2">
