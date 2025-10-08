@@ -264,40 +264,40 @@ function SEODashboardContent() {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full relative">
+      <div className="min-h-screen flex w-full relative bg-gradient-to-br from-background via-background to-muted/20">
         {selectedProject && <SEOSidebar onTabChange={setActiveTab} activeTab={activeTab} />}
-        
+
         <div className="flex-1 flex flex-col">
-          {/* SEO Suite Sub-Header */}
-          <div className="sticky top-16 z-[10000] flex h-14 items-center gap-4 border-b bg-white dark:bg-gray-900 px-4 md:px-6 shadow-sm">
-            {selectedProject && <SidebarTrigger className="mr-2 flex-shrink-0" />}
+          {/* Enhanced SEO Suite Header */}
+          <div className="sticky top-16 z-[10000] flex h-16 items-center gap-4 border-b border-border/50 bg-background/80 backdrop-blur-xl px-4 md:px-8 shadow-sm">
+            {selectedProject && <SidebarTrigger className="mr-2 flex-shrink-0 hover:bg-accent rounded-lg transition-colors" />}
             <div className="flex-1 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-7 h-7 rounded-md bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                  <Zap className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/20">
+                  <Zap className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  <h1 className="text-lg font-bold text-foreground tracking-tight">
                     SEO Suite
                   </h1>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 hidden sm:block">
-                    Professional SEO management platform
+                  <p className="text-xs text-muted-foreground hidden sm:block">
+                    Professional SEO Intelligence Platform
                   </p>
                 </div>
               </div>
               {selectedProject && (
                 <div className="flex items-center gap-3">
-                  <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-md bg-gray-100 dark:bg-gray-800">
-                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Active</span>
+                  <div className="hidden md:flex items-center gap-2 px-4 py-2 rounded-lg bg-success/10 border border-success/20">
+                    <div className="w-2 h-2 rounded-full bg-success animate-pulse"></div>
+                    <span className="text-sm font-semibold text-success">Active</span>
                   </div>
-                  <Button 
-                    onClick={handleNewProject} 
-                    size="sm" 
-                    className="gap-2 bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 text-white dark:text-gray-900"
+                  <Button
+                    onClick={handleNewProject}
+                    size="sm"
+                    className="gap-2 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all duration-200"
                   >
                     <Plus className="w-4 h-4" />
-                    <span className="hidden sm:inline">New Project</span>
+                    <span className="hidden sm:inline font-semibold">New Project</span>
                     <span className="sm:hidden">New</span>
                   </Button>
                 </div>
@@ -305,13 +305,13 @@ function SEODashboardContent() {
             </div>
           </div>
 
-          {/* Professional Main Content */}
-          <main className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-900">
-            <div className="p-4 sm:p-6 lg:p-8">
-              <div className="max-w-7xl mx-auto space-y-6">
+          {/* Enhanced Main Content */}
+          <main className="flex-1 overflow-auto bg-gradient-to-b from-background to-muted/10">
+            <div className="p-6 sm:p-8 lg:p-10">
+              <div className="max-w-[1600px] mx-auto space-y-8">
                 <Breadcrumb />
                 {selectedProject && (
-                  <div className="mb-6 lg:mb-8">
+                  <div className="mb-8">
                     <ProjectSelector
                       projects={projects}
                       selectedProject={selectedProject}
@@ -320,7 +320,7 @@ function SEODashboardContent() {
                     />
                   </div>
                 )}
-                <div className="relative">
+                <div className="relative animate-in fade-in duration-500">
                   {renderContent()}
                 </div>
               </div>
