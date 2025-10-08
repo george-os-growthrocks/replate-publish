@@ -435,7 +435,7 @@ export const ContentCalendarView = ({ projectId }: ContentCalendarViewProps) => 
                             <div className="text-lg font-bold text-primary">
                               {item.value}{item.title === "Avg Time to Publish" ? " days" : item.title === "Completion Rate" ? "%" : ""}
                             </div>
-                            <Progress value={item.title === "Completion Rate" ? Number(item.value) : 75} className="w-16 h-2" />
+                            <Progress value={item.title === "Completion Rate" ? (typeof item.value === 'number' ? item.value : parseFloat(String(item.value)) || 0) : 75} className="w-16 h-2" />
                           </div>
                         </div>
                       </div>

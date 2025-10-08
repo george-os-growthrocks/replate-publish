@@ -36,19 +36,19 @@ export const useDashboardData = (user: User | null) => {
 
       const [usageResult, projectsResult, keysResult, recsResult] = await Promise.all([
         supabase
-          .from("usage_tracking")
+          .from("usage_tracking" as any)
           .select("content_generated_count")
           .eq("user_id", user.id)
           .eq("month_year", currentMonth)
           .maybeSingle(),
         supabase
-          .from("seo_projects")
+          .from("seo_projects" as any)
           .select("id, name, domain, status, created_at")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false })
           .limit(4),
         supabase
-          .from("api_keys")
+          .from("api_keys" as any)
           .select("id")
           .eq("user_id", user.id),
         supabase

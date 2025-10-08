@@ -79,16 +79,16 @@ export const APISettings = () => {
 
       // Get first project for Google settings
       const { data: projects } = await supabase
-        .from('seo_projects')
+        .from('seo_projects' as any)
         .select('id')
         .eq('user_id', user.id)
         .limit(1);
 
-      const firstProjectId = projects?.[0]?.id;
+      const firstProjectId = (projects as any)?.[0]?.id;
 
       // Load Google API settings (requires project_id)
       const { data: googleSettings } = firstProjectId ? await supabase
-        .from('google_api_settings')
+        .from('google_api_settings' as any)
         .select('*')
         .eq('project_id', firstProjectId)
         .maybeSingle() : { data: null };
@@ -103,12 +103,12 @@ export const APISettings = () => {
           is_connected: !!apiKeys?.find(k => k.provider === 'firecrawl' && k.is_active)
         },
         google_search_console: {
-          site_url: googleSettings?.google_search_console_site_url || "",
-          is_connected: !!googleSettings?.google_search_console_site_url
+          site_url: (googleSettings as any)?.google_search_console_site_url || "",
+          is_connected: !!(googleSettings as any)?.google_search_console_site_url
         },
         google_analytics: {
-          property_id: googleSettings?.google_analytics_property_id || "",
-          is_connected: !!googleSettings?.google_analytics_property_id
+          property_id: (googleSettings as any)?.google_analytics_property_id || "",
+          is_connected: !!(googleSettings as any)?.google_analytics_property_id
         }
       };
 
