@@ -81,7 +81,7 @@ export default function GooglePropertySelector({ projectId, onComplete }: Google
     setAuthenticating(true);
     
     try {
-      const redirectUri = `${window.location.origin}/seo`;
+      const redirectUri = `${window.location.origin}/google-oauth-callback.html`;
       const clientId = import.meta.env.VITE_GOOGLE_OAUTH_CLIENT_ID;
       
       if (!clientId) {
