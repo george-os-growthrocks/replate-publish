@@ -2264,17 +2264,13 @@ export type Database = {
       high_potential_keywords: {
         Row: {
           cpc: number | null
-          created_at: string | null
           difficulty: number | null
-          difficulty_score: number | null
-          embedding: string | null
           id: string | null
           keyword: string | null
-          opportunity_level: string | null
           opportunity_score: number | null
           project_id: string | null
-          search_intent: string | null
           search_volume: number | null
+          user_id: string | null
         }
         Relationships: [
           {
@@ -2288,110 +2284,33 @@ export type Database = {
       }
     }
     Functions: {
-      binary_quantize: {
-        Args: { "": string } | { "": unknown }
-        Returns: unknown
+      check_user_credits: {
+        Args: { p_required_credits: number; p_user_id: string }
+        Returns: boolean
       }
-      cosine_similarity: {
-        Args: { a: string; b: string }
-        Returns: number
-      }
+      cosine_similarity: { Args: { a: string; b: string }; Returns: number }
       deduct_credits: {
         Args: { credits_to_deduct: number; user_id_param: string }
         Returns: boolean
       }
-      halfvec_avg: {
-        Args: { "": number[] }
-        Returns: unknown
+      get_high_opportunity_keywords: {
+        Args: { p_limit?: number; p_project_id: string }
+        Returns: {
+          difficulty: number
+          keyword: string
+          opportunity_score: number
+          search_volume: number
+        }[]
       }
-      halfvec_out: {
-        Args: { "": unknown }
-        Returns: unknown
+      get_project_stats: {
+        Args: { p_project_id: string }
+        Returns: {
+          avg_position: number
+          total_clicks: number
+          total_keywords: number
+        }[]
       }
-      halfvec_send: {
-        Args: { "": unknown }
-        Returns: string
-      }
-      halfvec_typmod_in: {
-        Args: { "": unknown[] }
-        Returns: number
-      }
-      hnsw_bit_support: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      hnsw_halfvec_support: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      hnsw_sparsevec_support: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      hnswhandler: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      ivfflat_bit_support: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      ivfflat_halfvec_support: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      ivfflathandler: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      l2_norm: {
-        Args: { "": unknown } | { "": unknown }
-        Returns: number
-      }
-      l2_normalize: {
-        Args: { "": string } | { "": unknown } | { "": unknown }
-        Returns: string
-      }
-      refresh_high_potential_keywords: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      sparsevec_out: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      sparsevec_send: {
-        Args: { "": unknown }
-        Returns: string
-      }
-      sparsevec_typmod_in: {
-        Args: { "": unknown[] }
-        Returns: number
-      }
-      vector_avg: {
-        Args: { "": number[] }
-        Returns: string
-      }
-      vector_dims: {
-        Args: { "": string } | { "": unknown }
-        Returns: number
-      }
-      vector_norm: {
-        Args: { "": string }
-        Returns: number
-      }
-      vector_out: {
-        Args: { "": string }
-        Returns: unknown
-      }
-      vector_send: {
-        Args: { "": string }
-        Returns: string
-      }
-      vector_typmod_in: {
-        Args: { "": unknown[] }
-        Returns: number
-      }
+      refresh_high_potential_keywords: { Args: never; Returns: undefined }
     }
     Enums: {
       job_status:

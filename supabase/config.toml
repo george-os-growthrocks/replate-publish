@@ -1,85 +1,86 @@
 project_id = "cabzhcbnxbnhjannbpxj"
 
+# SECURITY: Enable JWT verification for all functions except truly public ones
 [functions.generate-content]
-verify_jwt = false
+verify_jwt = true
 
 [functions.keyword-clustering]
-verify_jwt = false
+verify_jwt = true
 
 [functions.scrape-url]
-verify_jwt = false
+verify_jwt = true
 
 [functions.send-contact-email]
-verify_jwt = false
+verify_jwt = false  # Public contact form
 
 [functions.serp-tracker]
-verify_jwt = false
+verify_jwt = true
 
 [functions.dataforseo-research]
-verify_jwt = false
+verify_jwt = true
 
 [functions.competitor-analyzer]
-verify_jwt = false
+verify_jwt = true
 
 [functions.seo-content-analyzer]
-verify_jwt = false
+verify_jwt = true
 
 [functions.seo-ai-chat]
-verify_jwt = false
+verify_jwt = true
 
 [functions.job-worker]
-verify_jwt = false
+verify_jwt = true
 
 [functions.serp-monitor]
-verify_jwt = false
+verify_jwt = true
 
 [functions.content-gap-analyzer]
-verify_jwt = false
+verify_jwt = true
 
 [functions.ranking-predictor]
-verify_jwt = false
+verify_jwt = true
 
 [functions.voice-search-optimizer]
-verify_jwt = false
+verify_jwt = true
 
 [functions.content-predictor]
-verify_jwt = false
+verify_jwt = true
 
 [functions.auto-seo-fixer]
-verify_jwt = false
+verify_jwt = true
 
 [functions.smart-calendar]
-verify_jwt = false
+verify_jwt = true
 
 [functions.link-scorer]
-verify_jwt = false
+verify_jwt = true
 
 [functions.multi-location-analyzer]
-verify_jwt = false
+verify_jwt = true
 
 [functions.revenue-analyzer]
-verify_jwt = false
+verify_jwt = true
 
 [functions.white-label-generator]
-verify_jwt = false
+verify_jwt = true
 
 [functions.cross-channel-analyzer]
-verify_jwt = false
+verify_jwt = true
 
 [functions.google-oauth-callback]
-verify_jwt = false
+verify_jwt = false  # OAuth callback
 
 [functions.comprehensive-audit]
-verify_jwt = false
+verify_jwt = true
 
 [functions.fetch-gsc-data]
-verify_jwt = false
+verify_jwt = true
 
 [functions.fetch-ga4-data]
-verify_jwt = false
+verify_jwt = true
 
 [functions.keyword-opportunity-analyzer]
-verify_jwt = false
+verify_jwt = true
 
 [functions.create-checkout]
 verify_jwt = true
