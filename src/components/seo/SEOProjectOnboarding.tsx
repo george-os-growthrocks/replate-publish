@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { CircleCheck as CheckCircle, Circle, Loader as Loader2, Search, Globe, TrendingUp, Link2, Zap, CircleAlert as AlertCircle, ExternalLink, ChartBar as BarChart3 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import GooglePropertySelector from "@/components/seo/GooglePropertySelector";
 
 interface SEOProjectOnboardingProps {
   userId: string;
@@ -32,9 +33,8 @@ export const SEOProjectOnboarding = ({ userId, onComplete }: SEOProjectOnboardin
 
   const steps = [
     { id: 1, title: "Create Project", icon: Zap, description: "Set up your SEO project" },
-    { id: 2, title: "Connect Search Console", icon: Search, description: "Get real SERP data" },
-    { id: 3, title: "Connect Google Analytics", icon: TrendingUp, description: "Link GA4 for insights" },
-    { id: 4, title: "Crawl & Research", icon: Globe, description: "Audit site & keywords" },
+    { id: 2, title: "Connect Google", icon: Search, description: "GSC & Analytics" },
+    { id: 3, title: "Crawl & Research", icon: Globe, description: "Audit site & keywords" },
   ];
 
   const createProject = async () => {
@@ -271,11 +271,19 @@ export const SEOProjectOnboarding = ({ userId, onComplete }: SEOProjectOnboardin
   const skipStep = () => {
     if (step === 2) {
       setStep(3);
-    } else if (step === 3) {
-      setStep(4);
-    } else if (step === 4 && projectId) {
+    } else if (step === 3 && projectId) {
       onComplete(projectId);
     }
+  };
+
+  const handleGoogleConnectionComplete = () => {
+    setGscConnected(true);
+    setGa4Connected(true);
+    toast({
+      title: "Google Connected! ✅",
+      description: "Properties linked successfully",
+    });
+    setStep(3);
   };
 
   const openGSCDialog = () => {
@@ -308,7 +316,7 @@ export const SEOProjectOnboarding = ({ userId, onComplete }: SEOProjectOnboardin
       </div>
 
       {/* Steps Progress */}
-      <div className="grid grid-cols-4 gap-4 mb-10">
+      <div className="grid grid-cols-3 gap-4 mb-10">
         {steps.map((s) => {
           const Icon = s.icon;
           const isComplete = step > s.id;
@@ -363,94 +371,61 @@ export const SEOProjectOnboarding = ({ userId, onComplete }: SEOProjectOnboardin
         </div>
       )}
 
-      {step === 2 && (
+      {step === 2 && projectId && (
         <div className="space-y-4">
-          <div className="bg-gradient-to-br from-blue-500/5 to-blue-500/10 p-6 rounded-xl border border-blue-500/10">
+          <div className="bg-gradient-to-br from-blue-500/5 to-orange-500/5 p-6 rounded-xl border border-primary/10">
             <div className="flex items-start gap-3 mb-4">
-              <div className="p-3 rounded-lg bg-blue-500/10">
-                <Search className="w-6 h-6 text-blue-500" />
+              <div className="p-3 rounded-lg bg-gradient-to-br from-blue-500/10 to-orange-500/10">
+                <Globe className="w-6 h-6 text-primary" />
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-bold mb-2">Step 2: Connect Google Search Console</h3>
+                <h3 className="text-xl font-bold mb-2">Step 2: Connect Google Services</h3>
                 <p className="text-muted-foreground mb-4">
-                  Access real SERP data, indexing status, and search analytics
+                  Sign in with Google to access Search Console and Analytics data automatically
                 </p>
               </div>
-              {gscConnected && (
-                <Badge variant="default" className="flex items-center gap-1">
-                  <CheckCircle className="w-3 h-3" />
-                  Connected
-                </Badge>
-              )}
             </div>
             <div className="bg-accent/10 p-4 rounded-lg mb-4">
               <h4 className="font-medium mb-2 flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-blue-500" />
+                <AlertCircle className="w-4 h-4 text-primary" />
                 What you'll get:
               </h4>
-              <ul className="text-sm space-y-1">
-                <li>✓ Real SERP position data for keywords</li>
-                <li>✓ Click-through rates and impressions</li>
-                <li>✓ Index coverage and crawl errors</li>
-                <li>✓ Core Web Vitals performance</li>
-              </ul>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <p className="font-medium mb-1">Search Console:</p>
+                  <ul className="space-y-1">
+                    <li>✓ SERP position data</li>
+                    <li>✓ Click-through rates</li>
+                    <li>✓ Index coverage</li>
+                  </ul>
+                </div>
+                <div>
+                  <p className="font-medium mb-1">Analytics:</p>
+                  <ul className="space-y-1">
+                    <li>✓ Traffic insights</li>
+                    <li>✓ User behavior</li>
+                    <li>✓ Conversions</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
-          <div className="flex gap-2">
-            <Button onClick={openGSCDialog} disabled={gscConnected} className="flex-1" size="lg">
-              {gscConnected ? "✅ Connected" : "Connect Search Console"}
-            </Button>
-            <Button onClick={skipStep} variant="outline" size="lg">Skip</Button>
+          
+          <GooglePropertySelector 
+            projectId={projectId} 
+            onComplete={handleGoogleConnectionComplete}
+          />
+          
+          <div className="flex justify-end">
+            <Button onClick={skipStep} variant="outline" size="lg">Skip for Now</Button>
           </div>
         </div>
       )}
 
       {step === 3 && (
         <div className="space-y-4">
-          <div className="bg-gradient-to-br from-orange-500/5 to-orange-500/10 p-6 rounded-xl border border-orange-500/10">
-            <div className="flex items-start gap-3 mb-4">
-              <div className="p-3 rounded-lg bg-orange-500/10">
-                <BarChart3 className="w-6 h-6 text-orange-500" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-xl font-bold mb-2">Step 3: Connect Google Analytics 4</h3>
-                <p className="text-muted-foreground mb-4">
-                  Get traffic insights, conversion data, and audience analytics
-                </p>
-              </div>
-              {ga4Connected && (
-                <Badge variant="default" className="flex items-center gap-1">
-                  <CheckCircle className="w-3 h-3" />
-                  Connected
-                </Badge>
-              )}
-            </div>
-            <div className="bg-accent/10 p-4 rounded-lg mb-4">
-              <h4 className="font-medium mb-2 flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-orange-500" />
-                What you'll get:
-              </h4>
-              <ul className="text-sm space-y-1">
-                <li>✓ User behavior & engagement metrics</li>
-                <li>✓ Traffic sources & channel performance</li>
-                <li>✓ Conversion tracking & goal completions</li>
-                <li>✓ Landing page performance analysis</li>
-              </ul>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <Button onClick={openGA4Dialog} disabled={ga4Connected} className="flex-1" size="lg">
-              {ga4Connected ? "✅ Connected" : "Connect Google Analytics"}
-            </Button>
-            <Button onClick={skipStep} variant="outline" size="lg">Skip</Button>
-          </div>
-        </div>
-      )}
-
-      {step === 4 && (
-        <div className="space-y-4">
           <div className="bg-gradient-to-br from-primary/5 to-secondary/5 p-6 rounded-xl border border-primary/10">
-            <h3 className="text-2xl font-bold mb-2">Step 4: Comprehensive Site Audit & Research</h3>
+            <h3 className="text-2xl font-bold mb-2">Step 3: Comprehensive Site Audit & Research</h3>
             <p className="text-muted-foreground mb-4">
               We'll crawl your website with Firecrawl and research keywords with DataForSEO
             </p>
