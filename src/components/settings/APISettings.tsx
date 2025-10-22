@@ -89,7 +89,7 @@ export const APISettings = () => {
       // Load Google API settings (requires project_id)
       const { data: googleSettings } = firstProjectId ? await supabase
         .from('google_api_settings' as any)
-        .select('*')
+        .select('id, project_id, google_search_console_site_url, google_analytics_property_id, google_ads_customer_id, credentials_json, created_at, updated_at')
         .eq('project_id', firstProjectId)
         .maybeSingle() : { data: null };
 

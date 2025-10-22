@@ -84,7 +84,11 @@ export const APIKeysSettings = () => {
           setApiKeys([]);
         }
       } else {
-        setApiKeys(data || []);
+        // Map data to include usage_count with default value
+        setApiKeys((data || []).map(key => ({
+          ...key,
+          usage_count: key.usage_count ?? 0
+        })));
       }
     } catch (err) {
       console.error("Unexpected error loading API keys:", err);
