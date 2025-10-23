@@ -62,17 +62,21 @@ export default function GooglePropertySelector({ projectId, onComplete }: Google
     }
 
     if (data) {
-      setIsConnected(!!data.credentials_json);
+      const creds = data.credentials_json as any;
+      const gscProps = creds?.gsc_properties || [];
+      const ga4Props = creds?.ga4_properties || [];
+      
+      // Only mark as connected if we have actual properties available
+      setIsConnected(!!data.credentials_json && (gscProps.length > 0 || ga4Props.length > 0));
       setSelectedGSC(data.google_search_console_site_url || "");
       setSelectedGA4(data.google_analytics_property_id || "");
       
       // Load properties from metadata if available
-      const creds = data.credentials_json as any;
-      if (creds?.gsc_properties) {
-        setGscProperties(creds.gsc_properties);
+      if (gscProps.length > 0) {
+        setGscProperties(gscProps);
       }
-      if (creds?.ga4_properties) {
-        setGA4Properties(creds.ga4_properties);
+      if (ga4Props.length > 0) {
+        setGA4Properties(ga4Props);
       }
     }
   };
