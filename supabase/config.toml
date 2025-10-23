@@ -90,3 +90,6 @@ verify_jwt = true
 
 [functions.dataforseo-proxy]
 verify_jwt = false
+
+[functions.google-oauth-auth-url]
+verify_jwt = false

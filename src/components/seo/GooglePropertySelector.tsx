@@ -86,9 +86,11 @@ export default function GooglePropertySelector({ projectId, onComplete }: Google
     
     try {
       const redirectUri = `${window.location.origin}/google-oauth-callback.html`;
-      const clientId = import.meta.env.VITE_GOOGLE_OAUTH_CLIENT_ID;
-      
-      if (!clientId) {
+      const { data: urlData, error: urlError } = await supabase.functions.invoke('google-oauth-auth-url', {
+        body: { redirectUri, projectId }
+      });
+
+      if (urlError || !urlData?.authUrl) {
         toast({
           title: "Configuration Error",
           description: "Google OAuth client ID is not configured",
@@ -97,21 +99,7 @@ export default function GooglePropertySelector({ projectId, onComplete }: Google
         return;
       }
 
-      const scopes = [
-        'https://www.googleapis.com/auth/webmasters.readonly',
-        'https://www.googleapis.com/auth/analytics.readonly'
-      ].join(' ');
-
-      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
-        `client_id=${clientId}&` +
-        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-        `response_type=code&` +
-        `scope=${encodeURIComponent(scopes)}&` +
-        `access_type=offline&` +
-        `prompt=consent&` +
-        `state=${projectId}`;
-
-      const popup = window.open(authUrl, 'google-oauth', 'width=600,height=600');
+      const popup = window.open(urlData.authUrl, 'google-oauth', 'width=600,height=600');
 
       // Listen for OAuth completion
       const messageListener = async (event: MessageEvent) => {
