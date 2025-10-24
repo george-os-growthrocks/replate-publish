@@ -85,6 +85,28 @@ export function SEOIntelligenceDashboard({
 
       setAnalysisData(data);
 
+      // Store recommendations in database
+      if (data.recommendations && data.recommendations.length > 0 && projectId) {
+        const recsToInsert = data.recommendations.map((rec: any) => ({
+          project_id: projectId,
+          recommendation_type: rec.category?.toLowerCase().replace(/\s+/g, '_') || 'general',
+          title: rec.title,
+          description: rec.description,
+          priority: rec.priorityLevel || 'medium',
+          status: 'pending',
+          impact_score: rec.impactScore || 50,
+          effort_score: rec.effortLevel === 'low' ? 20 : rec.effortLevel === 'medium' ? 50 : 80,
+        }));
+
+        const { error: insertError } = await supabase
+          .from('ai_recommendations')
+          .insert(recsToInsert);
+
+        if (insertError) {
+          console.error('Failed to store recommendations:', insertError);
+        }
+      }
+
       toast({
         title: "Analysis Complete!",
         description: `Generated ${data.recommendations?.length || 0} recommendations in ${(data.processingTime / 1000).toFixed(1)}s`,

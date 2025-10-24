@@ -54,6 +54,7 @@ import KeywordResearchMatrix from "@/components/seo/KeywordResearchMatrix";
 import SERPTrackerMinimal from "@/components/seo/SERPTrackerMinimal";
 import ProjectOverviewMinimal from "@/components/seo/ProjectOverviewMinimal";
 import GoogleIntegrationsMinimal from "@/components/seo/GoogleIntegrationsMinimal";
+import { QuickKeywordResearch } from "@/components/seo/QuickKeywordResearch";
 
 export default function SEODashboard() {
   return (
@@ -256,7 +257,17 @@ function SEODashboardContent() {
         return <AdvancedSEOAnalytics projectId={selectedProject} />;
       case "keywords":
       case "keyword-matrix":
-        return <KeywordResearchMatrix projectId={selectedProject} />; // Redirect duplicates
+        return (
+          <div className="space-y-6">
+            <QuickKeywordResearch projectId={selectedProject} onKeywordsFound={(count) => {
+              toast({
+                title: "Keywords Added!",
+                description: `${count} keywords have been added to your analysis`,
+              });
+            }} />
+            <KeywordResearchMatrix projectId={selectedProject} />
+          </div>
+        );
       default:
         return <ProjectOverview projectId={selectedProject} />;
     }

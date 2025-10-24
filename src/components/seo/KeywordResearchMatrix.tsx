@@ -83,10 +83,65 @@ export default function KeywordResearchMatrix({ projectId }: KeywordMatrixProps)
   const [editForm, setEditForm] = useState<Partial<KeywordData>>({});
   const { toast } = useToast();
 
-  // Load keywords from database
+  // Load keywords from database and GSC data
   useEffect(() => {
     loadKeywords();
+    loadGSCData();
   }, [projectId]);
+
+  const loadGSCData = async () => {
+    try {
+      // Fetch recent GSC data which has keyword, position, clicks, impressions
+      const { data, error } = await supabase
+        .from('gsc_analytics')
+        .select('*')
+        .eq('project_id', projectId)
+        .order('date', { ascending: false })
+        .limit(100);
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        // Transform GSC data into keyword data
+        const gscKeywords = data.map(item => ({
+          keyword: item.keyword,
+          searchVolume: 0, // GSC doesn't provide this
+          difficulty: 50, // Default
+          cpc: 0,
+          competition: 'Medium' as const,
+          intent: 'Informational' as const,
+          trend: 'Stable' as const,
+          position: item.position || 0,
+          impressions: item.impressions || 0,
+          clicks: item.clicks || 0,
+          ctr: item.ctr || 0,
+          cluster: undefined,
+          opportunity_score: calculateGSCOpportunityScore(item.position, item.impressions, item.ctr),
+          priority: getPriorityLevel(calculateGSCOpportunityScore(item.position, item.impressions, item.ctr)),
+        }));
+
+        // Merge with existing keywords (avoid duplicates)
+        setKeywords(prev => {
+          const existingKeywords = new Set(prev.map(k => k.keyword.toLowerCase()));
+          const newKeywords = gscKeywords.filter(k => !existingKeywords.has(k.keyword.toLowerCase()));
+          return [...prev, ...newKeywords];
+        });
+      }
+    } catch (error: any) {
+      console.error('Error loading GSC data:', error);
+    }
+  };
+
+  const calculateGSCOpportunityScore = (position: number, impressions: number, ctr: number): number => {
+    // Calculate opportunity score based on position and CTR
+    if (!position || position === 0) return 0;
+    
+    const positionScore = position <= 3 ? 0.9 : position <= 10 ? 0.7 : position <= 20 ? 0.5 : 0.3;
+    const impressionScore = impressions > 1000 ? 0.9 : impressions > 100 ? 0.6 : 0.3;
+    const ctrScore = ctr > 0.05 ? 0.9 : ctr > 0.02 ? 0.6 : 0.3;
+    
+    return (positionScore + impressionScore + ctrScore) / 3;
+  };
 
   const loadKeywords = async () => {
     try {

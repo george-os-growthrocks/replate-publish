@@ -137,12 +137,12 @@ export const SeoReport = ({ projectId }: SeoReportProps) => {
           .eq('project_id', projectId)
           .maybeSingle();
 
-        if (settings?.site_url) {
+        if (settings?.google_search_console_site_url) {
           const startISO = startDate.toISOString().split('T')[0];
           const endISO = endDate.toISOString().split('T')[0];
 
           const { error: fetchError } = await supabase.functions.invoke('fetch-gsc-data', {
-            body: { projectId, siteUrl: settings.site_url, startDate: startISO, endDate: endISO },
+            body: { projectId, siteUrl: settings.google_search_console_site_url, startDate: startISO, endDate: endISO },
           });
 
           if (fetchError) {
