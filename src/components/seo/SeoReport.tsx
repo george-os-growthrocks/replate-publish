@@ -120,7 +120,7 @@ export const SeoReport = ({ projectId }: SeoReportProps) => {
           break;
       }
 
-      const { data: gscData, error: gscError } = await supabase
+      let { data: gscData, error: gscError } = await supabase
         .from('gsc_analytics')
         .select('*')
         .eq('project_id', projectId)
@@ -128,6 +128,40 @@ export const SeoReport = ({ projectId }: SeoReportProps) => {
         .lte('date', endDate.toISOString().split('T')[0]);
 
       if (gscError) throw gscError;
+
+      // Auto-fetch from Google Search Console if no data is stored yet
+      if (!gscData || gscData.length === 0) {
+        const { data: settings } = await supabase
+          .from('google_api_settings')
+          .select('*')
+          .eq('project_id', projectId)
+          .maybeSingle();
+
+        if (settings?.site_url) {
+          const startISO = startDate.toISOString().split('T')[0];
+          const endISO = endDate.toISOString().split('T')[0];
+
+          const { error: fetchError } = await supabase.functions.invoke('fetch-gsc-data', {
+            body: { projectId, siteUrl: settings.site_url, startDate: startISO, endDate: endISO },
+          });
+
+          if (fetchError) {
+            console.error('GSC sync failed:', fetchError);
+            toast({ title: 'GSC sync failed', description: 'Could not fetch data from Google Search Console.', variant: 'destructive' });
+          } else {
+            // Re-query after successful sync
+            const res = await supabase
+              .from('gsc_analytics')
+              .select('*')
+              .eq('project_id', projectId)
+              .gte('date', startISO)
+              .lte('date', endISO);
+            gscData = res.data || [];
+          }
+        } else {
+          toast({ title: 'Connect Google', description: 'No GSC property found for this project. Connect Google in Settings.', variant: 'destructive' });
+        }
+      }
 
       const { data: auditData } = await supabase
         .from('crawl_results')

@@ -56,7 +56,7 @@ async function performKeywordResearch(
   location: string = 'United States',
   language: string = 'English'
 ): Promise<KeywordData[]> {
-  const username = Deno.env.get('DATAFORSEO_USERNAME');
+  const username = Deno.env.get('DATAFORSEO_LOGIN') ?? Deno.env.get('DATAFORSEO_USERNAME');
   const password = Deno.env.get('DATAFORSEO_PASSWORD');
 
   if (!username || !password) {
@@ -153,7 +153,7 @@ async function performSERPAnalysis(
   location: string = 'United States',
   language: string = 'English'
 ): Promise<SERPData[]> {
-  const username = Deno.env.get('DATAFORSEO_USERNAME');
+  const username = Deno.env.get('DATAFORSEO_LOGIN') ?? Deno.env.get('DATAFORSEO_USERNAME');
   const password = Deno.env.get('DATAFORSEO_PASSWORD');
 
   try {
@@ -217,7 +217,7 @@ async function performCompetitorAnalysis(
   competitors: string[],
   location: string = 'United States'
 ): Promise<CompetitorData[]> {
-  const username = Deno.env.get('DATAFORSEO_USERNAME');
+  const username = Deno.env.get('DATAFORSEO_LOGIN') ?? Deno.env.get('DATAFORSEO_USERNAME');
   const password = Deno.env.get('DATAFORSEO_PASSWORD');
 
   try {
