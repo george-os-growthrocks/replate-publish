@@ -1,1 +1,10 @@
 project_id = "rrnkobmmvrfscxqybcbg"
+
+[functions.gsc-sites]
+verify_jwt = true
+
+[functions.gsc-query]
+verify_jwt = true
+
+[functions.gemini-insights]
+verify_jwt = true
