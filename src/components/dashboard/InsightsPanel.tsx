@@ -8,6 +8,8 @@ import { toast } from "sonner";
 
 interface InsightsPanelProps {
   propertyUrl: string;
+  startDate: string;
+  endDate: string;
 }
 
 interface Insight {
@@ -19,35 +21,113 @@ interface Insight {
   items: any[];
 }
 
-const InsightsPanel = ({ propertyUrl }: InsightsPanelProps) => {
+const InsightsPanel = ({ propertyUrl, startDate, endDate }: InsightsPanelProps) => {
   const [insights, setInsights] = useState<Insight[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [debugLog, setDebugLog] = useState<string[]>([]);
+  const [showDebug, setShowDebug] = useState(false);
+
+  const addDebugLog = (message: string) => {
+    const timestamp = new Date().toLocaleTimeString();
+    const logMessage = `[${timestamp}] ${message}`;
+    setDebugLog(prev => [...prev, logMessage]);
+    console.log(logMessage);
+  };
 
   const fetchInsights = async () => {
     try {
       setIsLoading(true);
-      const endDate = new Date().toISOString().split("T")[0];
-      const startDate = new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+      setDebugLog([]);
+      addDebugLog("🚀 Starting AI Insights generation...");
+      addDebugLog(`Property: ${propertyUrl}`);
+      addDebugLog(`Date range: ${startDate} to ${endDate}`);
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      addDebugLog(`Session check: ${session ? 'Found' : 'Not found'}`);
+      addDebugLog(`Provider token: ${session?.provider_token ? 'Available' : 'Missing'}`);
+      
+      if (!session?.provider_token) {
+        addDebugLog("❌ ERROR: No Google access token");
+        toast.error("No Google access token. Please sign out and sign in again.");
+        return;
+      }
+
+      addDebugLog("📤 Calling gemini-insights function...");
+      const requestBody = {
+        provider_token: session.provider_token,
+        siteUrl: propertyUrl,
+        startDate,
+        endDate,
+      };
+      addDebugLog(`Request body: ${JSON.stringify(Object.keys(requestBody))}`);
 
       const { data, error } = await supabase.functions.invoke("gemini-insights", {
-        body: {
-          siteUrl: propertyUrl,
-          startDate,
-          endDate,
-        },
+        body: requestBody,
       });
 
-      if (error) throw error;
+      addDebugLog("📥 Response received");
+      addDebugLog(`Response data: ${data ? JSON.stringify(Object.keys(data)) : 'null'}`);
+      addDebugLog(`Response error: ${error ? JSON.stringify(error) : 'none'}`);
+
+      if (error) {
+        addDebugLog(`❌ Supabase function error: ${JSON.stringify(error)}`);
+        throw error;
+      }
+
+      if (data?.error) {
+        addDebugLog(`❌ API error: ${data.error}`);
+        throw new Error(data.error);
+      }
+
+      // Log debug info from backend
+      if (data?.debug) {
+        addDebugLog("=== Backend Debug Info ===");
+        addDebugLog(`Model used: ${data.debug.modelUsed}`);
+        addDebugLog(`GSC data rows: ${data.debug.dataRows}`);
+        addDebugLog(`Gemini response length: ${data.debug.geminiResponseLength}`);
+        addDebugLog(`Parsed successfully: ${data.debug.parsedSuccessfully ? '✅ YES - Gemini returned valid JSON!' : '❌ NO - Using intelligent fallback'}`);
+        addDebugLog(`Used fallback: ${data.debug.usedFallback ? '⚠️ YES (Gemini response failed to parse)' : '✅ NO (Gemini working perfectly)'}`);
+        addDebugLog(`Actions generated: ${data.debug.actionsCount || 'unknown'}`);
+        addDebugLog(`Total recommendations: ${data.debug.totalRecommendations || 'unknown'}`);
+        
+        if (data.debug.geminiResponsePreview) {
+          addDebugLog("--- Gemini Response Preview (first 500 chars) ---");
+          addDebugLog(data.debug.geminiResponsePreview);
+        }
+        
+        if (data.debug.geminiResponseEnd) {
+          addDebugLog("--- Gemini Response End (last 200 chars) ---");
+          addDebugLog(data.debug.geminiResponseEnd);
+        }
+      }
 
       if (data?.actions) {
+        addDebugLog(`✅ Success! Received ${data.actions.length} insights`);
+        data.actions.forEach((action: Insight, idx: number) => {
+          addDebugLog(`  Insight ${idx + 1}: ${action.type} - ${action.title} (${action.impact} impact, ${action.effort} effort, ${action.items?.length || 0} items)`);
+        });
         setInsights(data.actions);
-        toast.success("AI insights generated successfully");
+        
+        if (data.debug?.usedFallback) {
+          toast.warning(`Generated ${data.actions.length} insights (using fallback - Gemini JSON parse failed)`);
+        } else {
+          toast.success(`Generated ${data.actions.length} AI insights from Gemini`);
+        }
+      } else {
+        addDebugLog("⚠️ No actions in response");
+        addDebugLog(`Full response: ${JSON.stringify(data)}`);
+        toast.warning("No insights generated");
       }
     } catch (error: any) {
+      addDebugLog(`❌ ERROR: ${error.message}`);
+      if (error.stack) {
+        addDebugLog(`Stack: ${error.stack}`);
+      }
       console.error("Error fetching insights:", error);
-      toast.error("Failed to generate insights");
+      toast.error(`Failed to generate insights: ${error.message}`);
     } finally {
       setIsLoading(false);
+      addDebugLog("🏁 AI Insights generation ended");
     }
   };
 
@@ -91,25 +171,65 @@ const InsightsPanel = ({ propertyUrl }: InsightsPanelProps) => {
           <Sparkles className="h-5 w-5 text-accent" />
           <h3 className="text-lg font-semibold">AI Insights</h3>
         </div>
-        <Button
-          onClick={fetchInsights}
-          disabled={isLoading}
-          size="sm"
-          className="gradient-primary"
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Analyzing...
-            </>
-          ) : (
-            <>
-              <Sparkles className="h-4 w-4 mr-2" />
-              Generate
-            </>
+        <div className="flex gap-2">
+          <Button
+            onClick={fetchInsights}
+            disabled={isLoading}
+            size="sm"
+            className="gradient-primary"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Analyzing...
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-4 w-4 mr-2" />
+                Generate
+              </>
+            )}
+          </Button>
+          {debugLog.length > 0 && (
+            <Button
+              onClick={() => setShowDebug(!showDebug)}
+              size="sm"
+              variant="outline"
+            >
+              {showDebug ? "Hide" : "Show"} Debug
+            </Button>
           )}
-        </Button>
+        </div>
       </div>
+
+      {/* Debug Panel */}
+      {showDebug && debugLog.length > 0 && (
+        <div className="mb-4 p-3 bg-slate-900/50 border border-blue-500/30 rounded-lg max-h-96 overflow-y-auto">
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="text-xs font-semibold text-blue-300">Debug Log ({debugLog.length} entries)</h4>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setDebugLog([])}
+              className="h-6 text-xs"
+            >
+              Clear
+            </Button>
+          </div>
+          <div className="space-y-1 font-mono text-xs text-slate-300">
+            {debugLog.map((log, idx) => (
+              <div key={idx} className={
+                log.includes('ERROR') || log.includes('❌') ? 'text-red-300' :
+                log.includes('Success') || log.includes('✅') ? 'text-emerald-300' :
+                log.includes('⚠️') ? 'text-amber-300' :
+                'text-slate-400'
+              }>
+                {log}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {insights.length === 0 && !isLoading && (
         <div className="text-center py-8">

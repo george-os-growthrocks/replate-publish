@@ -12,57 +12,72 @@ serve(async (req) => {
   }
 
   try {
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('No authorization header provided');
+    }
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+    
     const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_PUBLISHABLE_KEY') ?? '',
+      supabaseUrl,
+      supabaseKey,
       {
         global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
+          headers: { Authorization: authHeader },
         },
       }
     );
 
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    if (!user) {
-      throw new Error('Unauthorized');
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    if (userError) throw new Error(`Auth error: ${userError.message}`);
+    if (!user) throw new Error('Unauthorized - no user found');
+
+    const { provider_token } = await req.json();
+    if (!provider_token) {
+      throw new Error('No Google access token provided. Please sign out and sign in again with Google.');
     }
 
-    // Get the user's session to extract the Google access token
-    const authHeader = req.headers.get('Authorization')!;
-    const token = authHeader.replace('Bearer ', '');
-    
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    const providerToken = session?.provider_token;
-
-    if (!providerToken) {
-      throw new Error('No Google access token found');
-    }
-
-    // Fetch sites from Google Search Console API
     const response = await fetch('https://www.googleapis.com/webmasters/v3/sites', {
       headers: {
-        'Authorization': `Bearer ${providerToken}`,
+        'Authorization': `Bearer ${provider_token}`,
         'Content-Type': 'application/json',
       },
     });
 
+    const responseText = await response.text();
+
     if (!response.ok) {
-      const error = await response.text();
-      console.error('GSC API error:', error);
-      throw new Error(`Failed to fetch sites: ${response.status}`);
+      console.error('GSC API error:', responseText);
+      throw new Error(`Google Search Console API error (${response.status}): ${responseText}`);
     }
 
-    const data = await response.json();
+    const data = JSON.parse(responseText);
 
-    return new Response(JSON.stringify(data), {
+    // Transform to match expected format (API returns siteEntry, frontend expects sites)
+    const transformedData = {
+      sites: data.siteEntry || []
+    };
+
+    return new Response(JSON.stringify(transformedData), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
     console.error('Error in gsc-sites function:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    
+    return new Response(
+      JSON.stringify({ 
+        error: errorMessage,
+        stack: errorStack,
+        timestamp: new Date().toISOString(),
+      }), 
+      {
+        status: 200, // Return 200 so the client can read the error details
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
   }
 });

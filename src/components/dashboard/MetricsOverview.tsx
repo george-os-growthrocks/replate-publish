@@ -2,9 +2,12 @@ import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, MousePointer, Eye, BarChart3, Target } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface MetricsOverviewProps {
   propertyUrl: string;
+  startDate: string;
+  endDate: string;
 }
 
 interface MetricData {
@@ -13,7 +16,7 @@ interface MetricData {
   trend: "up" | "down" | "neutral";
 }
 
-const MetricsOverview = ({ propertyUrl }: MetricsOverviewProps) => {
+const MetricsOverview = ({ propertyUrl, startDate, endDate }: MetricsOverviewProps) => {
   const [metrics, setMetrics] = useState<{
     clicks: MetricData;
     impressions: MetricData;
@@ -29,16 +32,29 @@ const MetricsOverview = ({ propertyUrl }: MetricsOverviewProps) => {
 
   useEffect(() => {
     fetchMetrics();
-  }, [propertyUrl]);
+  }, [propertyUrl, startDate, endDate]);
 
   const fetchMetrics = async () => {
     try {
       setIsLoading(true);
-      const endDate = new Date().toISOString().split("T")[0];
-      const startDate = new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.provider_token) {
+        toast.error("No Google access token. Please sign out and sign in again.");
+        return;
+      }
 
+      // Calculate previous period (same duration)
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const duration = end.getTime() - start.getTime();
+      const prevEnd = new Date(start.getTime() - 1);
+      const prevStart = new Date(prevEnd.getTime() - duration);
+
+      // Fetch current period
       const { data, error } = await supabase.functions.invoke("gsc-query", {
         body: {
+          provider_token: session.provider_token,
           siteUrl: propertyUrl,
           startDate,
           endDate,
@@ -48,17 +64,56 @@ const MetricsOverview = ({ propertyUrl }: MetricsOverviewProps) => {
 
       if (error) throw error;
 
+      // Fetch previous period
+      const { data: prevData } = await supabase.functions.invoke("gsc-query", {
+        body: {
+          provider_token: session.provider_token,
+          siteUrl: propertyUrl,
+          startDate: prevStart.toISOString().split("T")[0],
+          endDate: prevEnd.toISOString().split("T")[0],
+          dimensions: ["date"],
+        },
+      });
+
       if (data?.rows) {
         const totalClicks = data.rows.reduce((sum: number, row: any) => sum + row.clicks, 0);
         const totalImpressions = data.rows.reduce((sum: number, row: any) => sum + row.impressions, 0);
         const avgCtr = (totalClicks / totalImpressions) * 100;
         const avgPosition = data.rows.reduce((sum: number, row: any) => sum + row.position, 0) / data.rows.length;
 
+        // Calculate previous period metrics
+        const prevClicks = prevData?.rows?.reduce((sum: number, row: any) => sum + row.clicks, 0) || 0;
+        const prevImpressions = prevData?.rows?.reduce((sum: number, row: any) => sum + row.impressions, 0) || 0;
+        const prevCtr = prevImpressions > 0 ? (prevClicks / prevImpressions) * 100 : 0;
+        const prevPosition = prevData?.rows?.reduce((sum: number, row: any) => sum + row.position, 0) / (prevData?.rows?.length || 1);
+
+        // Calculate deltas
+        const clicksChange = prevClicks > 0 ? ((totalClicks - prevClicks) / prevClicks) * 100 : 0;
+        const impressionsChange = prevImpressions > 0 ? ((totalImpressions - prevImpressions) / prevImpressions) * 100 : 0;
+        const ctrChange = prevCtr > 0 ? ((avgCtr - prevCtr) / prevCtr) * 100 : 0;
+        const positionChange = prevPosition > 0 ? ((avgPosition - prevPosition) / prevPosition) * 100 : 0;
+
         setMetrics({
-          clicks: { value: totalClicks, change: 5.2, trend: "up" },
-          impressions: { value: totalImpressions, change: 3.8, trend: "up" },
-          ctr: { value: avgCtr, change: 1.5, trend: "up" },
-          position: { value: avgPosition, change: -0.8, trend: "up" },
+          clicks: { 
+            value: totalClicks, 
+            change: clicksChange, 
+            trend: clicksChange > 0 ? "up" : clicksChange < 0 ? "down" : "neutral" 
+          },
+          impressions: { 
+            value: totalImpressions, 
+            change: impressionsChange, 
+            trend: impressionsChange > 0 ? "up" : impressionsChange < 0 ? "down" : "neutral" 
+          },
+          ctr: { 
+            value: avgCtr, 
+            change: ctrChange, 
+            trend: ctrChange > 0 ? "up" : ctrChange < 0 ? "down" : "neutral" 
+          },
+          position: { 
+            value: avgPosition, 
+            change: positionChange, 
+            trend: positionChange < 0 ? "up" : positionChange > 0 ? "down" : "neutral" // Lower position is better
+          },
         });
       }
     } catch (error) {

@@ -5,24 +5,31 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface TimeSeriesChartProps {
   propertyUrl: string;
+  startDate: string;
+  endDate: string;
 }
 
-const TimeSeriesChart = ({ propertyUrl }: TimeSeriesChartProps) => {
+const TimeSeriesChart = ({ propertyUrl, startDate, endDate }: TimeSeriesChartProps) => {
   const [chartData, setChartData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     fetchTimeSeriesData();
-  }, [propertyUrl]);
+  }, [propertyUrl, startDate, endDate]);
 
   const fetchTimeSeriesData = async () => {
     try {
       setIsLoading(true);
-      const endDate = new Date().toISOString().split("T")[0];
-      const startDate = new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.provider_token) {
+        toast.error("No Google access token. Please sign out and sign in again.");
+        return;
+      }
 
       const { data, error } = await supabase.functions.invoke("gsc-query", {
         body: {
+          provider_token: session.provider_token,
           siteUrl: propertyUrl,
           startDate,
           endDate,

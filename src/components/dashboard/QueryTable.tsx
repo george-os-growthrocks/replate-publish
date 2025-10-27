@@ -14,9 +14,11 @@ import { Button } from "@/components/ui/button";
 
 interface QueryTableProps {
   propertyUrl: string;
+  startDate: string;
+  endDate: string;
 }
 
-const QueryTable = ({ propertyUrl }: QueryTableProps) => {
+const QueryTable = ({ propertyUrl, startDate, endDate }: QueryTableProps) => {
   const [queries, setQueries] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [sortBy, setSortBy] = useState<"clicks" | "impressions" | "ctr" | "position">("clicks");
@@ -24,16 +26,21 @@ const QueryTable = ({ propertyUrl }: QueryTableProps) => {
 
   useEffect(() => {
     fetchQueries();
-  }, [propertyUrl]);
+  }, [propertyUrl, startDate, endDate]);
 
   const fetchQueries = async () => {
     try {
       setIsLoading(true);
-      const endDate = new Date().toISOString().split("T")[0];
-      const startDate = new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.provider_token) {
+        toast.error("No Google access token. Please sign out and sign in again.");
+        return;
+      }
 
       const { data, error } = await supabase.functions.invoke("gsc-query", {
         body: {
+          provider_token: session.provider_token,
           siteUrl: propertyUrl,
           startDate,
           endDate,
