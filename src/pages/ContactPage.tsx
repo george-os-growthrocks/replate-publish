@@ -42,7 +42,7 @@ export default function ContactPage() {
           <div className="container mx-auto px-4">
             {/* Hero */}
             <div className="max-w-4xl mx-auto text-center mb-20">
-              <h1 className="text-5xl md:text-6xl font-bold mb-6">
+              <h1 className="text-5xl md:text-6xl font-bold mb-6 text-foreground">
                 Get in{" "}
                 <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                   Touch
@@ -57,10 +57,10 @@ export default function ContactPage() {
               {/* Contact Form */}
               <div>
                 <div className="rounded-3xl border border-border bg-card p-8">
-                  <h2 className="text-2xl font-bold mb-6">Send us a message</h2>
+                  <h2 className="text-2xl font-bold mb-6 text-foreground">Send us a message</h2>
                   <form onSubmit={handleSubmit} className="space-y-6">
                     <div>
-                      <label className="text-sm font-medium mb-2 block">
+                      <label className="text-sm font-medium mb-2 block text-foreground">
                         Your Name
                       </label>
                       <Input 
@@ -70,7 +70,7 @@ export default function ContactPage() {
                     </div>
                     
                     <div>
-                      <label className="text-sm font-medium mb-2 block">
+                      <label className="text-sm font-medium mb-2 block text-foreground">
                         Email Address
                       </label>
                       <Input 
@@ -81,7 +81,7 @@ export default function ContactPage() {
                     </div>
                     
                     <div>
-                      <label className="text-sm font-medium mb-2 block">
+                      <label className="text-sm font-medium mb-2 block text-foreground">
                         Subject
                       </label>
                       <Input 
@@ -91,7 +91,7 @@ export default function ContactPage() {
                     </div>
                     
                     <div>
-                      <label className="text-sm font-medium mb-2 block">
+                      <label className="text-sm font-medium mb-2 block text-foreground">
                         Message
                       </label>
                       <Textarea 
@@ -120,7 +120,7 @@ export default function ContactPage() {
                       <Mail className="w-6 h-6 text-primary" />
                     </div>
                     <div>
-                      <h3 className="font-semibold mb-2">Email Us</h3>
+                      <h3 className="font-semibold mb-2 text-foreground">Email Us</h3>
                       <p className="text-muted-foreground text-sm mb-2">
                         Our team typically responds within 24 hours.
                       </p>
@@ -140,7 +140,7 @@ export default function ContactPage() {
                       <MessageSquare className="w-6 h-6 text-primary" />
                     </div>
                     <div>
-                      <h3 className="font-semibold mb-2">Live Chat</h3>
+                      <h3 className="font-semibold mb-2 text-foreground">Live Chat</h3>
                       <p className="text-muted-foreground text-sm mb-2">
                         Chat with our AI assistant 24/7.
                       </p>
@@ -157,7 +157,7 @@ export default function ContactPage() {
                       <Phone className="w-6 h-6 text-primary" />
                     </div>
                     <div>
-                      <h3 className="font-semibold mb-2">Enterprise Support</h3>
+                      <h3 className="font-semibold mb-2 text-foreground">Enterprise Support</h3>
                       <p className="text-muted-foreground text-sm mb-2">
                         For Enterprise customers only.
                       </p>
@@ -177,7 +177,7 @@ export default function ContactPage() {
                       <MapPin className="w-6 h-6 text-primary" />
                     </div>
                     <div>
-                      <h3 className="font-semibold mb-2">Office</h3>
+                      <h3 className="font-semibold mb-2 text-foreground">Office</h3>
                       <p className="text-muted-foreground text-sm">
                         123 SEO Street<br />
                         Digital City, DC 10001<br />

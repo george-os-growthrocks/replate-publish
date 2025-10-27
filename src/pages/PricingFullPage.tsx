@@ -59,7 +59,7 @@ export default function PricingFullPage() {
 
           {/* Feature Comparison */}
           <div className="container mx-auto px-4 mt-20">
-            <h2 className="text-3xl font-bold text-center mb-12">
+            <h2 className="text-3xl font-bold text-center mb-12 text-foreground">
               Compare Plans
             </h2>
 
@@ -68,23 +68,23 @@ export default function PricingFullPage() {
                 <table className="w-full border-collapse">
                   <thead>
                     <tr className="border-b border-border">
-                      <th className="text-left p-4 font-semibold">Features</th>
-                      <th className="text-center p-4 font-semibold">Starter</th>
-                      <th className="text-center p-4 font-semibold bg-primary/5">Professional</th>
-                      <th className="text-center p-4 font-semibold">Enterprise</th>
+                      <th className="text-left p-4 font-semibold text-foreground">Features</th>
+                      <th className="text-center p-4 font-semibold text-foreground">Starter</th>
+                      <th className="text-center p-4 font-semibold bg-primary/5 text-foreground">Professional</th>
+                      <th className="text-center p-4 font-semibold text-foreground">Enterprise</th>
                     </tr>
                   </thead>
                   <tbody>
                     {featureComparison.map((category, catIndex) => (
                       <>
                         <tr key={`cat-${catIndex}`} className="bg-muted/30">
-                          <td colSpan={4} className="p-4 font-semibold text-sm">
+                          <td colSpan={4} className="p-4 font-semibold text-sm text-foreground">
                             {category.category}
                           </td>
                         </tr>
                         {category.features.map((feature, featIndex) => (
                           <tr key={`feat-${catIndex}-${featIndex}`} className="border-b border-border">
-                            <td className="p-4 text-sm">{feature.name}</td>
+                            <td className="p-4 text-sm text-foreground">{feature.name}</td>
                             <td className="text-center p-4">
                               {typeof feature.starter === "boolean" ? (
                                 feature.starter ? (
@@ -93,7 +93,7 @@ export default function PricingFullPage() {
                                   <X className="w-5 h-5 text-muted-foreground mx-auto" />
                                 )
                               ) : (
-                                <span className="text-sm">{feature.starter}</span>
+                                <span className="text-sm text-foreground">{feature.starter}</span>
                               )}
                             </td>
                             <td className="text-center p-4 bg-primary/5">
@@ -104,7 +104,7 @@ export default function PricingFullPage() {
                                   <X className="w-5 h-5 text-muted-foreground mx-auto" />
                                 )
                               ) : (
-                                <span className="text-sm font-medium">{feature.pro}</span>
+                                <span className="text-sm font-medium text-foreground">{feature.pro}</span>
                               )}
                             </td>
                             <td className="text-center p-4">
@@ -115,7 +115,7 @@ export default function PricingFullPage() {
                                   <X className="w-5 h-5 text-muted-foreground mx-auto" />
                                 )
                               ) : (
-                                <span className="text-sm">{feature.enterprise}</span>
+                                <span className="text-sm text-foreground">{feature.enterprise}</span>
                               )}
                             </td>
                           </tr>
@@ -129,34 +129,34 @@ export default function PricingFullPage() {
 
             {/* FAQ */}
             <div className="max-w-3xl mx-auto mt-20">
-              <h2 className="text-3xl font-bold text-center mb-12">
+              <h2 className="text-3xl font-bold text-center mb-12 text-foreground">
                 Pricing FAQ
               </h2>
 
               <div className="space-y-6">
                 <div className="rounded-xl border border-border bg-card p-6">
-                  <h3 className="font-semibold mb-2">Can I change plans later?</h3>
+                  <h3 className="font-semibold mb-2 text-foreground">Can I change plans later?</h3>
                   <p className="text-sm text-muted-foreground">
                     Yes! You can upgrade or downgrade your plan at any time. Changes take effect immediately.
                   </p>
                 </div>
 
                 <div className="rounded-xl border border-border bg-card p-6">
-                  <h3 className="font-semibold mb-2">What payment methods do you accept?</h3>
+                  <h3 className="font-semibold mb-2 text-foreground">What payment methods do you accept?</h3>
                   <p className="text-sm text-muted-foreground">
                     We accept all major credit cards (Visa, Mastercard, American Express) and PayPal.
                   </p>
                 </div>
 
                 <div className="rounded-xl border border-border bg-card p-6">
-                  <h3 className="font-semibold mb-2">Is there a refund policy?</h3>
+                  <h3 className="font-semibold mb-2 text-foreground">Is there a refund policy?</h3>
                   <p className="text-sm text-muted-foreground">
                     Yes! We offer a 14-day money-back guarantee. If you're not satisfied, contact us for a full refund.
                   </p>
                 </div>
 
                 <div className="rounded-xl border border-border bg-card p-6">
-                  <h3 className="font-semibold mb-2">Do you offer discounts for annual payments?</h3>
+                  <h3 className="font-semibold mb-2 text-foreground">Do you offer discounts for annual payments?</h3>
                   <p className="text-sm text-muted-foreground">
                     Yes! Save 20% when you pay annually instead of monthly. Contact sales for details.
                   </p>

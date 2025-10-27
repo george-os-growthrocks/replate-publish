@@ -176,7 +176,7 @@ export default function SeoGlossaryPage() {
           <div className="container mx-auto px-4">
             {/* Hero */}
             <div className="max-w-4xl mx-auto text-center mb-12">
-              <h1 className="text-5xl md:text-6xl font-bold mb-6">
+              <h1 className="text-5xl md:text-6xl font-bold mb-6 text-foreground">
                 SEO{" "}
                 <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                   Glossary
@@ -235,14 +235,14 @@ export default function SeoGlossaryPage() {
             <div className="max-w-5xl mx-auto space-y-12">
               {Object.entries(searchFiltered).map(([letter, terms]) => (
                 <div key={letter}>
-                  <h2 className="text-4xl font-bold mb-6 text-primary">{letter}</h2>
+                  <h2 className="text-4xl font-bold mb-6 text-foreground">{letter}</h2>
                   <div className="space-y-4">
                     {terms.map((item, index) => (
                       <div
                         key={index}
                         className="rounded-xl border border-border bg-card p-6 hover:border-primary/50 transition-colors"
                       >
-                        <h3 className="text-xl font-semibold mb-2">{item.term}</h3>
+                        <h3 className="text-xl font-semibold mb-2 text-foreground">{item.term}</h3>
                         <p className="text-muted-foreground">{item.definition}</p>
                       </div>
                     ))}

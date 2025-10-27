@@ -61,7 +61,7 @@ export function PricingSection() {
     <section id="pricing" className="py-20 md:py-32 bg-muted/30">
       <div className="container mx-auto px-4">
         <div className="max-w-3xl mx-auto text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6">
+          <h2 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">
             Simple, Transparent{" "}
             <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
               Pricing
@@ -92,7 +92,7 @@ export function PricingSection() {
                 <h3 className="text-2xl font-bold mb-2 text-foreground">{plan.name}</h3>
                 <p className="text-sm text-muted-foreground mb-4">{plan.description}</p>
                 <div className="flex items-baseline justify-center">
-                  <span className="text-5xl font-bold">${plan.price}</span>
+                  <span className="text-5xl font-bold text-foreground">${plan.price}</span>
                   <span className="text-muted-foreground ml-2">/month</span>
                 </div>
               </div>

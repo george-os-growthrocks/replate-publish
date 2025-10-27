@@ -18,7 +18,7 @@ export default function AboutPage() {
           <div className="container mx-auto px-4">
             {/* Hero */}
             <div className="max-w-4xl mx-auto text-center mb-20">
-              <h1 className="text-5xl md:text-6xl font-bold mb-6">
+              <h1 className="text-5xl md:text-6xl font-bold mb-6 text-foreground">
                 About{" "}
                 <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                   AnotherSEOGuru
@@ -32,7 +32,7 @@ export default function AboutPage() {
             {/* Story */}
             <div className="max-w-4xl mx-auto mb-20">
               <div className="prose prose-lg dark:prose-invert mx-auto">
-                <h2 className="text-3xl font-bold mb-6">Our Story</h2>
+                <h2 className="text-3xl font-bold mb-6 text-foreground">Our Story</h2>
                 <p className="text-muted-foreground mb-4">
                   AnotherSEOGuru was born from frustration with expensive, complex SEO tools that only enterprise companies could afford. We believe every business deserves access to powerful SEO insights and AI-driven content generation.
                 </p>
@@ -47,13 +47,13 @@ export default function AboutPage() {
 
             {/* Values */}
             <div className="max-w-6xl mx-auto mb-20">
-              <h2 className="text-3xl font-bold text-center mb-12">Our Values</h2>
+              <h2 className="text-3xl font-bold text-center mb-12 text-foreground">Our Values</h2>
               <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
                 <div className="text-center">
                   <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
                     <Target className="w-8 h-8 text-primary" />
                   </div>
-                  <h3 className="text-xl font-semibold mb-3">Mission-Driven</h3>
+                  <h3 className="text-xl font-semibold mb-3 text-foreground">Mission-Driven</h3>
                   <p className="text-muted-foreground">
                     Democratizing professional SEO for businesses of all sizes.
                   </p>
@@ -63,7 +63,7 @@ export default function AboutPage() {
                   <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
                     <Users className="w-8 h-8 text-primary" />
                   </div>
-                  <h3 className="text-xl font-semibold mb-3">User-First</h3>
+                  <h3 className="text-xl font-semibold mb-3 text-foreground">User-First</h3>
                   <p className="text-muted-foreground">
                     Every feature is designed with user experience in mind.
                   </p>
@@ -73,7 +73,7 @@ export default function AboutPage() {
                   <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
                     <Zap className="w-8 h-8 text-primary" />
                   </div>
-                  <h3 className="text-xl font-semibold mb-3">Innovation</h3>
+                  <h3 className="text-xl font-semibold mb-3 text-foreground">Innovation</h3>
                   <p className="text-muted-foreground">
                     Constantly pushing boundaries with AI and automation.
                   </p>
@@ -83,7 +83,7 @@ export default function AboutPage() {
                   <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
                     <Heart className="w-8 h-8 text-primary" />
                   </div>
-                  <h3 className="text-xl font-semibold mb-3">Transparency</h3>
+                  <h3 className="text-xl font-semibold mb-3 text-foreground">Transparency</h3>
                   <p className="text-muted-foreground">
                     Honest pricing, clear communication, no hidden fees.
                   </p>
