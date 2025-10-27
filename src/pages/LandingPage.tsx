@@ -1,6 +1,7 @@
 import { Helmet } from "react-helmet-async";
 import { LandingNav } from "@/components/landing/LandingNav";
 import { Hero } from "@/components/landing/Hero";
+import { ClientsSection } from "@/components/landing/ClientsSection";
 import { FeaturesSection } from "@/components/landing/FeaturesSection";
 import { PricingSection } from "@/components/landing/PricingSection";
 import { Footer } from "@/components/landing/Footer";
@@ -25,6 +26,7 @@ export default function LandingPage() {
         <LandingNav />
         <Hero />
         <FeaturesSection />
+        <ClientsSection />
         <PricingSection />
         <Footer />
       </div>
