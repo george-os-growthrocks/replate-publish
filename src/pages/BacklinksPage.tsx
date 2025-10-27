@@ -1,14 +1,15 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Link2, Search, Loader2, ExternalLink, TrendingUp, Calendar } from "lucide-react";
+import { Link2, Search, Loader2, ExternalLink, TrendingUp, Calendar, Award, Shield, AlertTriangle, Target, Zap, BarChart3 } from "lucide-react";
 import { useBacklinksLive, useBacklinksHistory } from "@/hooks/useDataForSEO";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
 
 export default function BacklinksPage() {
   const [url, setUrl] = useState("");
@@ -45,13 +46,107 @@ export default function BacklinksPage() {
   const backlinks = backlinksResult?.items || [];
   const historyItems = historyData?.tasks?.[0]?.result?.[0]?.items || [];
 
+  // Calculate Link Quality Score (0-100)
+  const calculateLinkQuality = (backlink: any): number => {
+    let score = 50; // Base score
+
+    // Domain authority (estimated from rank)
+    if (backlink.rank && backlink.rank > 0) {
+      const authorityBonus = Math.min(30, Math.floor(backlink.rank / 10));
+      score += authorityBonus;
+    }
+
+    // Dofollow bonus
+    if (backlink.dofollow) {
+      score += 20;
+    }
+
+    // Link placement bonus (content links are better)
+    if (backlink.url_from_https) {
+      score += 5;
+    }
+
+    // Anchor text relevance (not empty/generic)
+    if (backlink.anchor && backlink.anchor.length > 3 && 
+        !['click here', 'read more', 'here'].includes(backlink.anchor.toLowerCase())) {
+      score += 15;
+    }
+
+    // Penalize if too many links from same domain
+    if (backlink.links_count && backlink.links_count > 10) {
+      score -= 10;
+    }
+
+    return Math.max(0, Math.min(100, score));
+  };
+
+  // Enhanced backlinks with quality scores
+  const enrichedBacklinks = useMemo(() => {
+    return backlinks.map((bl: any) => ({
+      ...bl,
+      qualityScore: calculateLinkQuality(bl),
+      authorityLevel: bl.rank && bl.rank > 500 ? 'high' : bl.rank && bl.rank > 100 ? 'medium' : 'low'
+    }));
+  }, [backlinks]);
+
+  // Analytics
+  const analytics = useMemo(() => {
+    if (enrichedBacklinks.length === 0) return null;
+
+    const highQuality = enrichedBacklinks.filter((bl: any) => bl.qualityScore >= 70).length;
+    const mediumQuality = enrichedBacklinks.filter((bl: any) => bl.qualityScore >= 40 && bl.qualityScore < 70).length;
+    const lowQuality = enrichedBacklinks.filter((bl: any) => bl.qualityScore < 40).length;
+    
+    const avgQuality = enrichedBacklinks.reduce((sum: number, bl: any) => sum + bl.qualityScore, 0) / enrichedBacklinks.length;
+
+    // Anchor text distribution
+    const anchorMap = new Map<string, number>();
+    enrichedBacklinks.forEach((bl: any) => {
+      const anchor = bl.anchor || '(no anchor)';
+      anchorMap.set(anchor, (anchorMap.get(anchor) || 0) + 1);
+    });
+    const topAnchors = Array.from(anchorMap.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10);
+
+    // Top referring domains
+    const domainMap = new Map<string, { count: number; dofollow: number; avgQuality: number; qualities: number[] }>();
+    enrichedBacklinks.forEach((bl: any) => {
+      const domain = bl.domain_from || 'unknown';
+      const existing = domainMap.get(domain) || { count: 0, dofollow: 0, avgQuality: 0, qualities: [] };
+      existing.count++;
+      if (bl.dofollow) existing.dofollow++;
+      existing.qualities.push(bl.qualityScore);
+      domainMap.set(domain, existing);
+    });
+
+    const topDomains = Array.from(domainMap.entries())
+      .map(([domain, data]) => ({
+        domain,
+        count: data.count,
+        dofollow: data.dofollow,
+        avgQuality: Math.round(data.qualities.reduce((a, b) => a + b, 0) / data.qualities.length)
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+
+    return {
+      highQuality,
+      mediumQuality,
+      lowQuality,
+      avgQuality: Math.round(avgQuality),
+      topAnchors,
+      topDomains
+    };
+  }, [enrichedBacklinks]);
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">Backlinks Analysis</h1>
+        <h1 className="text-3xl font-bold text-foreground">Backlinks Analysis</h1>
         <p className="text-muted-foreground mt-1">
-          Discover who's linking to your site and track backlink growth
+          AI-powered backlink quality scoring, authority analysis, and link profile insights with actionable recommendations
         </p>
       </div>
 
@@ -90,40 +185,117 @@ export default function BacklinksPage() {
       {searchUrl && (
         <>
           {/* Stats Cards */}
-          {backlinksResult && (
-            <div className="grid grid-cols-4 gap-4">
-              <Card className="p-4">
-                <div className="text-sm text-muted-foreground">Total Backlinks</div>
-                <div className="text-2xl font-bold mt-1 text-emerald-400">
-                  {backlinksResult.total_count?.toLocaleString() || "0"}
+          {backlinksResult && analytics && (
+            <>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <Card className="p-4">
+                  <div className="text-sm text-muted-foreground">Total Backlinks</div>
+                  <div className="text-2xl font-bold mt-1 text-emerald-400">
+                    {backlinksResult.total_count?.toLocaleString() || "0"}
+                  </div>
+                </Card>
+                <Card className="p-4">
+                  <div className="text-sm text-muted-foreground">Referring Domains</div>
+                  <div className="text-2xl font-bold mt-1 text-blue-400">
+                    {backlinksResult.referring_domains?.toLocaleString() || "0"}
+                  </div>
+                </Card>
+                <Card className="p-4">
+                  <div className="text-sm text-muted-foreground">Dofollow Ratio</div>
+                  <div className="text-2xl font-bold mt-1">
+                    {backlinksResult.total_count > 0 
+                      ? ((backlinksResult.dofollow / backlinksResult.total_count) * 100).toFixed(0) 
+                      : "0"}%
+                  </div>
+                </Card>
+                <Card className="p-4 bg-purple-500/5 border-purple-500/20">
+                  <div className="text-sm text-purple-200 flex items-center gap-1">
+                    <Award className="h-3 w-3" />
+                    Avg Quality
+                  </div>
+                  <div className="text-2xl font-bold mt-1 text-purple-400">
+                    {analytics.avgQuality}/100
+                  </div>
+                </Card>
+                <Card className="p-4 bg-emerald-500/5 border-emerald-500/20">
+                  <div className="text-sm text-emerald-200 flex items-center gap-1">
+                    <Shield className="h-3 w-3" />
+                    High Quality
+                  </div>
+                  <div className="text-2xl font-bold mt-1 text-emerald-400">
+                    {analytics.highQuality}
+                  </div>
+                  <div className="text-xs text-emerald-300/70 mt-1">
+                    {enrichedBacklinks.length > 0 
+                      ? ((analytics.highQuality / enrichedBacklinks.length) * 100).toFixed(0) 
+                      : 0}% of total
+                  </div>
+                </Card>
+              </div>
+
+              {/* Quality Distribution */}
+              <Card className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5 text-muted-foreground" />
+                    <h3 className="font-semibold">Link Quality Distribution</h3>
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {enrichedBacklinks.length} links analyzed
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Shield className="h-4 w-4 text-emerald-400" />
+                        <span className="text-sm font-medium">High Quality (70-100)</span>
+                      </div>
+                      <span className="text-sm font-bold text-emerald-400">{analytics.highQuality} links</span>
+                    </div>
+                    <Progress 
+                      value={enrichedBacklinks.length > 0 ? (analytics.highQuality / enrichedBacklinks.length) * 100 : 0} 
+                      className="h-2 bg-slate-900"
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Target className="h-4 w-4 text-amber-400" />
+                        <span className="text-sm font-medium">Medium Quality (40-69)</span>
+                      </div>
+                      <span className="text-sm font-bold text-amber-400">{analytics.mediumQuality} links</span>
+                    </div>
+                    <Progress 
+                      value={enrichedBacklinks.length > 0 ? (analytics.mediumQuality / enrichedBacklinks.length) * 100 : 0} 
+                      className="h-2 bg-slate-900"
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle className="h-4 w-4 text-red-400" />
+                        <span className="text-sm font-medium">Low Quality (0-39)</span>
+                      </div>
+                      <span className="text-sm font-bold text-red-400">{analytics.lowQuality} links</span>
+                    </div>
+                    <Progress 
+                      value={enrichedBacklinks.length > 0 ? (analytics.lowQuality / enrichedBacklinks.length) * 100 : 0} 
+                      className="h-2 bg-slate-900"
+                    />
+                  </div>
                 </div>
               </Card>
-              <Card className="p-4">
-                <div className="text-sm text-muted-foreground">Referring Domains</div>
-                <div className="text-2xl font-bold mt-1 text-blue-400">
-                  {backlinksResult.referring_domains?.toLocaleString() || "0"}
-                </div>
-              </Card>
-              <Card className="p-4">
-                <div className="text-sm text-muted-foreground">Dofollow Links</div>
-                <div className="text-2xl font-bold mt-1">
-                  {backlinksResult.dofollow?.toLocaleString() || "0"}
-                </div>
-              </Card>
-              <Card className="p-4">
-                <div className="text-sm text-muted-foreground">Nofollow Links</div>
-                <div className="text-2xl font-bold mt-1 text-muted-foreground">
-                  {backlinksResult.nofollow?.toLocaleString() || "0"}
-                </div>
-              </Card>
-            </div>
+            </>
           )}
 
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="live">Live Backlinks</TabsTrigger>
-              <TabsTrigger value="history">History & Trends</TabsTrigger>
+              <TabsTrigger value="domains">Top Domains</TabsTrigger>
+              <TabsTrigger value="anchors">Anchor Text</TabsTrigger>
+              <TabsTrigger value="history">History</TabsTrigger>
             </TabsList>
 
             {/* Live Backlinks Tab */}
@@ -134,59 +306,81 @@ export default function BacklinksPage() {
                     <Skeleton key={i} className="h-20 w-full" />
                   ))}
                 </div>
-              ) : backlinks.length > 0 ? (
+              ) : enrichedBacklinks.length > 0 ? (
                 <Card>
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead>
+                          <div className="flex items-center gap-1">
+                            <Award className="h-3 w-3" />
+                            Quality
+                          </div>
+                        </TableHead>
                         <TableHead>Source Domain</TableHead>
                         <TableHead>Source URL</TableHead>
                         <TableHead>Anchor Text</TableHead>
                         <TableHead className="text-right">Type</TableHead>
                         <TableHead className="text-right">First Seen</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {backlinks.slice(0, 50).map((backlink: any, idx: number) => (
-                        <TableRow key={idx}>
-                          <TableCell className="font-medium">
-                            {backlink.domain_from || "-"}
-                          </TableCell>
-                          <TableCell className="max-w-xs truncate">
-                            <a
-                              href={backlink.url_from}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-primary hover:underline flex items-center gap-1"
-                            >
-                              {backlink.url_from?.substring(0, 50)}...
-                              <ExternalLink className="h-3 w-3" />
-                            </a>
-                          </TableCell>
-                          <TableCell className="max-w-xs truncate">
-                            {backlink.anchor || "-"}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Badge variant={backlink.dofollow ? "default" : "secondary"}>
-                              {backlink.dofollow ? "Dofollow" : "Nofollow"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right text-sm text-muted-foreground">
-                            {backlink.first_seen 
-                              ? new Date(backlink.first_seen).toLocaleDateString()
-                              : "-"
-                            }
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button variant="ghost" size="sm" asChild>
-                              <a href={backlink.url_from} target="_blank" rel="noopener noreferrer">
-                                <ExternalLink className="h-4 w-4" />
-                              </a>
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                      {enrichedBacklinks
+                        .sort((a: any, b: any) => b.qualityScore - a.qualityScore)
+                        .slice(0, 50)
+                        .map((backlink: any, idx: number) => {
+                          const qualityColor = backlink.qualityScore >= 70 
+                            ? 'text-emerald-400' 
+                            : backlink.qualityScore >= 40 
+                              ? 'text-amber-400' 
+                              : 'text-red-400';
+
+                          return (
+                            <TableRow key={idx}>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <div className={`text-lg font-bold ${qualityColor}`}>
+                                    {backlink.qualityScore}
+                                  </div>
+                                  {backlink.qualityScore >= 70 && (
+                                    <Shield className="h-4 w-4 text-emerald-400" />
+                                  )}
+                                  {backlink.qualityScore < 40 && (
+                                    <AlertTriangle className="h-4 w-4 text-red-400" />
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell className="font-medium">
+                                {backlink.domain_from || "-"}
+                              </TableCell>
+                              <TableCell className="max-w-xs truncate">
+                                <a
+                                  href={backlink.url_from}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-primary hover:underline flex items-center gap-1"
+                                >
+                                  {backlink.url_from?.substring(0, 40)}...
+                                  <ExternalLink className="h-3 w-3" />
+                                </a>
+                              </TableCell>
+                              <TableCell className="max-w-xs truncate">
+                                {backlink.anchor || "-"}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <Badge variant={backlink.dofollow ? "default" : "secondary"}>
+                                  {backlink.dofollow ? "Dofollow" : "Nofollow"}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-right text-sm text-muted-foreground">
+                                {backlink.first_seen 
+                                  ? new Date(backlink.first_seen).toLocaleDateString()
+                                  : "-"
+                                }
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
                     </TableBody>
                   </Table>
                 </Card>
@@ -196,6 +390,153 @@ export default function BacklinksPage() {
                   <h3 className="text-lg font-semibold mb-2">No Backlinks Found</h3>
                   <p className="text-muted-foreground">
                     No backlinks detected for this URL or domain
+                  </p>
+                </Card>
+              )}
+            </TabsContent>
+
+            {/* Top Domains Tab */}
+            <TabsContent value="domains" className="space-y-4 mt-4">
+              {analytics && analytics.topDomains.length > 0 ? (
+                <Card>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Domain</TableHead>
+                        <TableHead className="text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <Award className="h-3 w-3" />
+                            Avg Quality
+                          </div>
+                        </TableHead>
+                        <TableHead className="text-right">Total Links</TableHead>
+                        <TableHead className="text-right">Dofollow Links</TableHead>
+                        <TableHead className="text-right">Dofollow %</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {analytics.topDomains.map((domain: any, idx: number) => {
+                        const qualityColor = domain.avgQuality >= 70 
+                          ? 'text-emerald-400' 
+                          : domain.avgQuality >= 40 
+                            ? 'text-amber-400' 
+                            : 'text-red-400';
+
+                        return (
+                          <TableRow key={idx}>
+                            <TableCell className="font-medium">
+                              <div className="flex items-center gap-2">
+                                {idx < 3 && <Award className="h-4 w-4 text-amber-400" />}
+                                {domain.domain}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className={`text-xl font-bold ${qualityColor}`}>
+                                {domain.avgQuality}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Badge variant="outline" className="text-sm">
+                                {domain.count} links
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <span className="text-emerald-400 font-semibold">
+                                {domain.dofollow}
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <span className="font-medium">
+                                {((domain.dofollow / domain.count) * 100).toFixed(0)}%
+                              </span>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </Card>
+              ) : (
+                <Card className="p-12 text-center">
+                  <Target className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No Domain Data</h3>
+                  <p className="text-muted-foreground">
+                    Unable to analyze referring domains
+                  </p>
+                </Card>
+              )}
+            </TabsContent>
+
+            {/* Anchor Text Tab */}
+            <TabsContent value="anchors" className="space-y-4 mt-4">
+              {analytics && analytics.topAnchors.length > 0 ? (
+                <>
+                  <Card className="p-6">
+                    <h3 className="font-semibold mb-4 flex items-center gap-2">
+                      <Target className="h-5 w-5" />
+                      Top 10 Anchor Texts
+                    </h3>
+                    <div className="space-y-3">
+                      {analytics.topAnchors.map(([anchor, count]: [string, number], idx: number) => {
+                        const maxCount = analytics.topAnchors[0][1];
+                        const percentage = (count / maxCount) * 100;
+
+                        return (
+                          <div key={idx} className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium text-muted-foreground">
+                                  #{idx + 1}
+                                </span>
+                                <span className="font-medium truncate max-w-md">
+                                  "{anchor}"
+                                </span>
+                              </div>
+                              <Badge variant="outline">
+                                {count} {count === 1 ? 'link' : 'links'}
+                              </Badge>
+                            </div>
+                            <Progress value={percentage} className="h-2 bg-slate-900" />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </Card>
+
+                  {/* Anchor Text Recommendations */}
+                  <Card className="p-6 bg-gradient-to-r from-blue-500/10 to-purple-500/10 border-blue-500/20">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Zap className="h-5 w-5 text-blue-400" />
+                      <h3 className="font-semibold text-blue-200">Anchor Text Recommendations</h3>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-start gap-2">
+                        <span className="text-blue-400 mt-1">•</span>
+                        <p className="text-blue-100">
+                          <strong>Diversify:</strong> Mix branded, exact match, and natural anchors (70/20/10 ratio)
+                        </p>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="text-blue-400 mt-1">•</span>
+                        <p className="text-blue-100">
+                          <strong>Avoid Over-Optimization:</strong> Too many exact match anchors can trigger spam filters
+                        </p>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="text-blue-400 mt-1">•</span>
+                        <p className="text-blue-100">
+                          <strong>Natural Variations:</strong> Use LSI keywords and long-tail variations
+                        </p>
+                      </div>
+                    </div>
+                  </Card>
+                </>
+              ) : (
+                <Card className="p-12 text-center">
+                  <Target className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No Anchor Data</h3>
+                  <p className="text-muted-foreground">
+                    Unable to analyze anchor text distribution
                   </p>
                 </Card>
               )}

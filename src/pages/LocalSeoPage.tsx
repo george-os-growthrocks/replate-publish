@@ -45,7 +45,7 @@ export default function LocalSeoPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">Local SEO & Google Maps</h1>
+        <h1 className="text-3xl font-bold text-foreground">Local SEO & Google Maps</h1>
         <p className="text-muted-foreground mt-1">
           Track local rankings and analyze Google Business Profile performance
         </p>

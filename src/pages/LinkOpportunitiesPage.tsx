@@ -120,7 +120,7 @@ export default function LinkOpportunitiesPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">Link Opportunities</h1>
+        <h1 className="text-3xl font-bold text-foreground">Link Opportunities</h1>
         <p className="text-muted-foreground mt-1">
           Internal linking suggestions based on shared topics and authority
         </p>

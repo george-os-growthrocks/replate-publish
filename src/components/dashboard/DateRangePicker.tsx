@@ -42,7 +42,7 @@ export function DateRangePicker({ value, onChange }: DateRangePickerProps) {
           variant="outline"
           size="sm"
           className={cn(
-            "h-9 w-[220px] justify-start text-left font-normal text-xs rounded-xl border-white/10 hover:bg-white/5",
+            "h-9 w-[220px] justify-start text-left font-normal text-xs rounded-xl hover:bg-muted",
             !value && "text-muted-foreground"
           )}
         >

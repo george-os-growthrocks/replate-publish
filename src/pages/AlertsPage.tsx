@@ -76,7 +76,7 @@ export default function AlertsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">Performance Alerts</h1>
+        <h1 className="text-3xl font-bold text-foreground">Performance Alerts</h1>
         <p className="text-muted-foreground mt-1">
           Anomaly detection for significant changes in your metrics
         </p>

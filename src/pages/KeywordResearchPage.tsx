@@ -17,9 +17,24 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { Search, TrendingUp, Lightbulb, Target, Loader2, DollarSign, BarChart3 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Search, TrendingUp, Lightbulb, Target, Loader2, DollarSign, BarChart3, Clock, Award, Zap, Globe, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { calculateKeywordDifficulty, analyzeCtr } from "@/lib/seo-algorithms";
 
 interface KeywordResult {
   keyword?: string;
@@ -76,6 +91,10 @@ export default function KeywordResearchPage() {
   }>({});
   const [activeTab, setActiveTab] = useState("ideas");
   const [debugInfo, setDebugInfo] = useState<any>(null);
+  const [selectedKeyword, setSelectedKeyword] = useState<KeywordResult | null>(null);
+  const [showSerpDialog, setShowSerpDialog] = useState(false);
+  const [locationCode, setLocationCode] = useState(2300); // Greece default
+  const [languageCode, setLanguageCode] = useState("el"); // Greek default
 
   const fetchKeywordIdeas = async () => {
     if (!seedKeyword.trim()) {
@@ -87,16 +106,16 @@ export default function KeywordResearchPage() {
     try {
       console.log("🔍 Keyword Ideas Request:", {
         keywords: [seedKeyword],
-        location_code: 2840,
-        language_code: "en",
+        location_code: locationCode,
+        language_code: languageCode,
         limit: 100
       });
 
       const { data, error } = await supabase.functions.invoke("dataforseo-labs-keyword-ideas", {
         body: {
           keywords: [seedKeyword],
-          location_code: 2840,
-          language_code: "en",
+          location_code: locationCode,
+          language_code: languageCode,
           limit: 100
         }
       });
@@ -127,7 +146,7 @@ export default function KeywordResearchPage() {
       // Save debug info
       setDebugInfo({
         type: "Keyword Ideas",
-        request: { keywords: [seedKeyword], location_code: 2840 },
+        request: { keywords: [seedKeyword], location_code: locationCode, language_code: languageCode },
         response: data,
         itemsFound: items.length,
         sampleItems: items.slice(0, 3),
@@ -160,16 +179,16 @@ export default function KeywordResearchPage() {
     try {
       console.log("🔍 Keyword Suggestions Request:", {
         keyword: seedKeyword,
-        location_code: 2840,
-        language_code: "en",
+        location_code: locationCode,
+        language_code: languageCode,
         limit: 100
       });
 
       const { data, error } = await supabase.functions.invoke("dataforseo-labs-keyword-suggestions", {
         body: {
           keyword: seedKeyword,
-          location_code: 2840,
-          language_code: "en",
+          location_code: locationCode,
+          language_code: languageCode,
           limit: 100
         }
       });
@@ -198,7 +217,7 @@ export default function KeywordResearchPage() {
 
       setDebugInfo({
         type: "Keyword Suggestions",
-        request: { keyword: seedKeyword, location_code: 2840 },
+        request: { keyword: seedKeyword, location_code: locationCode, language_code: languageCode },
         response: data,
         itemsFound: items.length,
         sampleItems: items.slice(0, 3),
@@ -231,18 +250,18 @@ export default function KeywordResearchPage() {
     try {
       console.log("🔍 Related Keywords Request:", {
         keyword: seedKeyword,
-        location_code: 2840,
-        language_code: "en",
-        depth: 2,
+        location_code: locationCode,
+        language_code: languageCode,
+        depth: 1,
         limit: 100
       });
 
       const { data, error } = await supabase.functions.invoke("dataforseo-labs-related-keywords", {
         body: {
           keyword: seedKeyword,
-          location_code: 2840,
-          language_code: "en",
-          depth: 2,
+          location_code: locationCode,
+          language_code: languageCode,
+          depth: 1,
           limit: 100
         }
       });
@@ -271,7 +290,7 @@ export default function KeywordResearchPage() {
 
       setDebugInfo({
         type: "Related Keywords",
-        request: { keyword: seedKeyword, location_code: 2840, depth: 2 },
+        request: { keyword: seedKeyword, location_code: locationCode, language_code: languageCode, depth: 1 },
         response: data,
         itemsFound: items.length,
         sampleItems: items.slice(0, 3),
@@ -304,16 +323,16 @@ export default function KeywordResearchPage() {
     try {
       console.log("🔍 Competitor Keywords Request:", {
         target: targetDomain,
-        location_code: 2840,
-        language_code: "en",
+        location_code: locationCode,
+        language_code: languageCode,
         limit: 100
       });
 
       const { data, error } = await supabase.functions.invoke("dataforseo-labs-keywords-for-site", {
         body: {
           target: targetDomain,
-          location_code: 2840,
-          language_code: "en",
+          location_code: locationCode,
+          language_code: languageCode,
           limit: 100
         }
       });
@@ -342,7 +361,7 @@ export default function KeywordResearchPage() {
 
       setDebugInfo({
         type: "Competitor Keywords",
-        request: { target: targetDomain, location_code: 2840 },
+        request: { target: targetDomain, location_code: locationCode, language_code: languageCode },
         response: data,
         itemsFound: items.length,
         sampleItems: items.slice(0, 3),
@@ -363,6 +382,30 @@ export default function KeywordResearchPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Calculate priority score for keyword opportunities
+  const calculatePriorityScore = (params: {
+    difficulty: number;
+    searchVolume: number;
+    cpc: number;
+    potentialClicks: number;
+  }): number => {
+    const { difficulty, searchVolume, cpc, potentialClicks } = params;
+    
+    // Lower difficulty = higher score (inverted)
+    const difficultyScore = (100 - difficulty) * 0.35;
+    
+    // Higher search volume = higher score (normalized)
+    const volumeScore = Math.min(100, (searchVolume / 1000) * 10) * 0.30;
+    
+    // Higher CPC = higher value (capped at $10)
+    const cpcScore = Math.min(100, (cpc / 10) * 100) * 0.15;
+    
+    // Potential clicks
+    const clicksScore = Math.min(100, potentialClicks / 5) * 0.20;
+    
+    return Math.round(difficultyScore + volumeScore + cpcScore + clicksScore);
   };
 
   const renderKeywordTable = (keywords: KeywordResult[] | undefined) => {
@@ -443,22 +486,104 @@ export default function KeywordResearchPage() {
         <TableHeader>
           <TableRow>
             <TableHead>Keyword</TableHead>
+            <TableHead className="text-right">
+              <div className="flex items-center justify-end gap-1">
+                <Award className="h-3 w-3" />
+                Priority
+              </div>
+            </TableHead>
             <TableHead className="text-right">Search Volume</TableHead>
+            <TableHead className="text-right">
+              <div className="flex items-center justify-end gap-1">
+                <Target className="h-3 w-3" />
+                Difficulty
+              </div>
+            </TableHead>
+            <TableHead className="text-right">
+              <div className="flex items-center justify-end gap-1">
+                <Clock className="h-3 w-3" />
+                Time
+              </div>
+            </TableHead>
+            <TableHead className="text-right">
+              <div className="flex items-center justify-end gap-1">
+                <TrendingUp className="h-3 w-3" />
+                Potential
+              </div>
+            </TableHead>
             <TableHead className="text-right">CPC</TableHead>
-            <TableHead className="text-right">Competition</TableHead>
-            <TableHead className="text-right">Difficulty</TableHead>
-            <TableHead className="text-right">SERP Results</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {keywords.slice(0, 50).map((kw, idx) => {
             const { keyword, searchVolume, cpc, competition, difficulty, serpResults } = extractKeywordData(kw, idx);
             
+            // Calculate enhanced metrics using SEO algorithms
+            const difficultyAnalysis = calculateKeywordDifficulty(
+              {
+                keyword: keyword || "",
+                searchVolume: searchVolume || 0,
+                cpc: cpc || 0,
+                competition: competition || 0.5,
+              },
+              {
+                avgDomainAuthority: 50,
+                avgBacklinks: 100,
+                avgContentLength: 2000,
+                topRankingPages: 10,
+              }
+            );
+
+            // CTR analysis (assume position 10 for new keywords)
+            const ctrAnalysis = analyzeCtr({
+              currentPosition: 10,
+              searchVolume: searchVolume || 0,
+              hasRichSnippet: false,
+              hasSitelinks: false,
+              serpFeatures: [],
+            });
+
+            // Calculate priority score
+            const priorityScore = calculatePriorityScore({
+              difficulty: difficultyAnalysis.difficulty,
+              searchVolume: searchVolume || 0,
+              cpc: cpc || 0,
+              potentialClicks: ctrAnalysis.potentialClicks,
+            });
+
+            const difficultyColors = {
+              low: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+              medium: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+              high: 'bg-orange-500/10 text-orange-400 border-orange-500/20',
+              very_high: 'bg-red-500/10 text-red-400 border-red-500/20',
+            };
+
+            const priorityColor = priorityScore > 70 
+              ? 'text-emerald-400 font-bold' 
+              : priorityScore > 50 
+                ? 'text-amber-400 font-semibold' 
+                : 'text-muted-foreground';
+            
             return (
-              <TableRow key={idx}>
+              <TableRow key={idx} className={priorityScore > 70 ? 'bg-emerald-500/5' : priorityScore > 50 ? 'bg-amber-500/5' : ''}>
                 <TableCell className="font-medium max-w-md">
-                  <div className="truncate" title={keyword || "-"}>
-                    {keyword || "-"}
+                  <button 
+                    onClick={() => {
+                      setSelectedKeyword(kw);
+                      setShowSerpDialog(true);
+                    }}
+                    className="flex items-center gap-2 hover:text-primary transition-colors cursor-pointer text-left w-full"
+                  >
+                    {priorityScore > 70 && <Zap className="h-3 w-3 text-emerald-400" />}
+                    <div className="truncate" title={keyword || "-"}>
+                      {keyword || "-"}
+                    </div>
+                    <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </button>
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className={`text-2xl ${priorityColor}`}>
+                    {priorityScore}
                   </div>
                 </TableCell>
                 <TableCell className="text-right">
@@ -469,32 +594,24 @@ export default function KeywordResearchPage() {
                   )}
                 </TableCell>
                 <TableCell className="text-right">
+                  <Badge className={difficultyColors[difficultyAnalysis.competitionLevel]}>
+                    {difficultyAnalysis.difficulty}/100
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-right">
+                  <span className="text-sm font-medium">{difficultyAnalysis.estimatedTimeToRank}mo</span>
+                </TableCell>
+                <TableCell className="text-right">
+                  <span className="text-sm font-medium text-emerald-400">
+                    +{ctrAnalysis.potentialClicks.toLocaleString()}
+                  </span>
+                </TableCell>
+                <TableCell className="text-right">
                   {cpc !== undefined && cpc !== null ? (
                     <span className="font-medium text-emerald-400">${cpc.toFixed(2)}</span>
                   ) : (
                     <span className="text-muted-foreground">-</span>
                   )}
-                </TableCell>
-                <TableCell className="text-right">
-                  {competition !== undefined && competition !== null ? (
-                    <Badge variant={competition > 0.7 ? "destructive" : competition > 0.4 ? "secondary" : "default"}>
-                      {(competition * 100).toFixed(0)}%
-                    </Badge>
-                  ) : (
-                    <span className="text-muted-foreground">-</span>
-                  )}
-                </TableCell>
-                <TableCell className="text-right">
-                  {difficulty !== undefined && difficulty !== null ? (
-                    <Badge variant={difficulty > 70 ? "destructive" : difficulty > 40 ? "secondary" : "default"}>
-                      {difficulty}
-                    </Badge>
-                  ) : (
-                    <span className="text-muted-foreground">-</span>
-                  )}
-                </TableCell>
-                <TableCell className="text-right text-xs text-muted-foreground">
-                  {serpResults ? serpResults.toLocaleString() : "-"}
                 </TableCell>
               </TableRow>
             );
@@ -508,11 +625,53 @@ export default function KeywordResearchPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">Keyword Research</h1>
+        <h1 className="text-3xl font-bold text-foreground">Keyword Research</h1>
         <p className="text-muted-foreground mt-1">
-          Discover new keyword opportunities with DataForSEO Labs
+          Discover keyword opportunities with AI-powered difficulty scoring, time-to-rank estimation, and priority analysis
         </p>
       </div>
+
+      {/* Location Selector */}
+      <Card className="p-4">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Globe className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium">Target Market:</span>
+          </div>
+          <Select value={locationCode.toString()} onValueChange={(val) => setLocationCode(Number(val))}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="2300">🇬🇷 Greece (Greek)</SelectItem>
+              <SelectItem value="2840">🇺🇸 United States (English)</SelectItem>
+              <SelectItem value="2826">🇬🇧 United Kingdom</SelectItem>
+              <SelectItem value="2276">🇩🇪 Germany</SelectItem>
+              <SelectItem value="2250">🇫🇷 France</SelectItem>
+              <SelectItem value="2380">🇮🇹 Italy</SelectItem>
+              <SelectItem value="2724">🇪🇸 Spain</SelectItem>
+              <SelectItem value="2528">🇳🇱 Netherlands</SelectItem>
+              <SelectItem value="2056">🇧🇪 Belgium</SelectItem>
+              <SelectItem value="2036">🇦🇺 Australia</SelectItem>
+              <SelectItem value="2124">🇨🇦 Canada</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={languageCode} onValueChange={setLanguageCode}>
+            <SelectTrigger className="w-[150px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="el">Greek (Ελληνικά)</SelectItem>
+              <SelectItem value="en">English</SelectItem>
+              <SelectItem value="de">German (Deutsch)</SelectItem>
+              <SelectItem value="fr">French (Français)</SelectItem>
+              <SelectItem value="it">Italian (Italiano)</SelectItem>
+              <SelectItem value="es">Spanish (Español)</SelectItem>
+              <SelectItem value="nl">Dutch (Nederlands)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </Card>
 
       {/* Search Controls */}
       <div className="grid grid-cols-2 gap-4">
@@ -567,22 +726,100 @@ export default function KeywordResearchPage() {
 
       {/* Stats Cards */}
       {Object.keys(results).length > 0 && (
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <Card className="p-4">
-            <div className="text-sm text-muted-foreground">Keyword Ideas</div>
-            <div className="text-2xl font-bold mt-1">{results.ideas?.length || 0}</div>
+            <div className="text-sm text-muted-foreground">Total Keywords</div>
+            <div className="text-2xl font-bold mt-1">
+              {(results.ideas?.length || 0) + (results.suggestions?.length || 0) + 
+               (results.related?.length || 0) + (results.competitor?.length || 0)}
+            </div>
           </Card>
-          <Card className="p-4">
-            <div className="text-sm text-muted-foreground">Suggestions</div>
-            <div className="text-2xl font-bold mt-1">{results.suggestions?.length || 0}</div>
+          <Card className="p-4 bg-emerald-500/5 border-emerald-500/20">
+            <div className="text-sm text-emerald-700 dark:text-emerald-200 flex items-center gap-1">
+              <Zap className="h-3 w-3" />
+              Quick Wins
+            </div>
+            <div className="text-2xl font-bold mt-1 text-emerald-600 dark:text-emerald-400">
+              {(() => {
+                const allKeywords = [
+                  ...(results.ideas || []),
+                  ...(results.suggestions || []),
+                  ...(results.related || []),
+                  ...(results.competitor || [])
+                ];
+                return allKeywords.filter((kw: any) => {
+                  const sv = kw.search_volume || kw.keyword_info?.search_volume || 0;
+                  const diff = kw.keyword_difficulty || kw.keyword_properties?.keyword_difficulty || 50;
+                  return diff < 30 && sv > 100;
+                }).length;
+              })()}
+            </div>
+            <div className="text-xs text-emerald-700 dark:text-emerald-300/70 mt-1">Low difficulty</div>
           </Card>
-          <Card className="p-4">
-            <div className="text-sm text-muted-foreground">Related Keywords</div>
-            <div className="text-2xl font-bold mt-1">{results.related?.length || 0}</div>
+          <Card className="p-4 bg-blue-500/5 border-blue-500/20">
+            <div className="text-sm text-blue-700 dark:text-blue-200 flex items-center gap-1">
+              <Target className="h-3 w-3" />
+              High Volume
+            </div>
+            <div className="text-2xl font-bold mt-1 text-blue-600 dark:text-blue-400">
+              {(() => {
+                const allKeywords = [
+                  ...(results.ideas || []),
+                  ...(results.suggestions || []),
+                  ...(results.related || []),
+                  ...(results.competitor || [])
+                ];
+                return allKeywords.filter((kw: any) => {
+                  const sv = kw.search_volume || kw.keyword_info?.search_volume || 0;
+                  return sv > 1000;
+                }).length;
+              })()}
+            </div>
+            <div className="text-xs text-blue-700 dark:text-blue-300/70 mt-1">1000+ searches</div>
           </Card>
-          <Card className="p-4">
-            <div className="text-sm text-muted-foreground">Competitor Keywords</div>
-            <div className="text-2xl font-bold mt-1">{results.competitor?.length || 0}</div>
+          <Card className="p-4 bg-amber-500/5 border-amber-500/20">
+            <div className="text-sm text-amber-700 dark:text-amber-200 flex items-center gap-1">
+              <DollarSign className="h-3 w-3" />
+              High Value
+            </div>
+            <div className="text-2xl font-bold mt-1 text-amber-600 dark:text-amber-400">
+              {(() => {
+                const allKeywords = [
+                  ...(results.ideas || []),
+                  ...(results.suggestions || []),
+                  ...(results.related || []),
+                  ...(results.competitor || [])
+                ];
+                return allKeywords.filter((kw: any) => {
+                  const cpc = kw.cpc || kw.keyword_info?.cpc || 0;
+                  return cpc > 2;
+                }).length;
+              })()}
+            </div>
+            <div className="text-xs text-amber-700 dark:text-amber-300/70 mt-1">$2+ CPC</div>
+          </Card>
+          <Card className="p-4 bg-purple-500/5 border-purple-500/20">
+            <div className="text-sm text-purple-700 dark:text-purple-200 flex items-center gap-1">
+              <Award className="h-3 w-3" />
+              Best Opportunities
+            </div>
+            <div className="text-2xl font-bold mt-1 text-purple-600 dark:text-purple-400">
+              {(() => {
+                const allKeywords = [
+                  ...(results.ideas || []),
+                  ...(results.suggestions || []),
+                  ...(results.related || []),
+                  ...(results.competitor || [])
+                ];
+                return allKeywords.filter((kw: any) => {
+                  const sv = kw.search_volume || kw.keyword_info?.search_volume || 0;
+                  const diff = kw.keyword_difficulty || kw.keyword_properties?.keyword_difficulty || 50;
+                  const cpc = kw.cpc || kw.keyword_info?.cpc || 0;
+                  return diff < 40 && sv > 500 && cpc > 1;
+                }).length;
+              })()}
+            </div>
+            <div className="text-xs text-purple-700 dark:text-purple-300/70 mt-1">Perfect combo</div>
           </Card>
         </div>
       )}
@@ -625,7 +862,7 @@ export default function KeywordResearchPage() {
 
       {/* Debug Panel */}
       {debugInfo && (
-        <Card className="p-6 bg-slate-900/50 border-amber-500/20">
+        <Card className="p-6 bg-muted border-amber-500/20">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <div className="h-8 w-8 rounded-lg bg-amber-500/20 flex items-center justify-center">
@@ -644,14 +881,14 @@ export default function KeywordResearchPage() {
           <div className="space-y-4">
             <div>
               <div className="text-xs font-medium text-amber-300 mb-1">Request Type</div>
-              <div className="text-sm text-white bg-slate-950/50 p-2 rounded border border-white/10">
+              <div className="text-sm text-white bg-slate-950/50 p-2 rounded border border-border">
                 {debugInfo.type}
               </div>
             </div>
 
             <div>
               <div className="text-xs font-medium text-amber-300 mb-1">Items Found</div>
-              <div className="text-sm text-white bg-slate-950/50 p-2 rounded border border-white/10">
+              <div className="text-sm text-white bg-slate-950/50 p-2 rounded border border-border">
                 {debugInfo.itemsFound} keywords
               </div>
             </div>
@@ -661,7 +898,7 @@ export default function KeywordResearchPage() {
                 <div className="text-xs font-medium text-amber-300 mb-1">
                   🔑 Available Fields in Response
                 </div>
-                <div className="text-xs text-white bg-slate-950/50 p-3 rounded border border-white/10">
+                <div className="text-xs text-white bg-slate-950/50 p-3 rounded border border-border">
                   <div className="flex flex-wrap gap-2">
                     {debugInfo.availableFields.map((field: string) => (
                       <Badge key={field} variant="outline" className="text-[10px] border-amber-500/30 text-amber-200">
@@ -704,7 +941,7 @@ export default function KeywordResearchPage() {
                 <div className="text-xs font-medium text-amber-300 mb-1">
                   📝 First Item Structure (raw JSON)
                 </div>
-                <pre className="text-xs text-white bg-slate-950/50 p-3 rounded border border-white/10 overflow-x-auto max-h-48">
+                <pre className="text-xs text-white bg-slate-950/50 p-3 rounded border border-border overflow-x-auto max-h-48">
                   {JSON.stringify(debugInfo.firstItemSample, null, 2)}
                 </pre>
               </div>
@@ -712,7 +949,7 @@ export default function KeywordResearchPage() {
 
             <div>
               <div className="text-xs font-medium text-amber-300 mb-1">Request Payload</div>
-              <pre className="text-xs text-white bg-slate-950/50 p-3 rounded border border-white/10 overflow-x-auto">
+              <pre className="text-xs text-white bg-slate-950/50 p-3 rounded border border-border overflow-x-auto">
                 {JSON.stringify(debugInfo.request, null, 2)}
               </pre>
             </div>
@@ -720,7 +957,7 @@ export default function KeywordResearchPage() {
             {debugInfo.sampleItems && debugInfo.sampleItems.length > 0 && (
               <div>
                 <div className="text-xs font-medium text-amber-300 mb-1">Sample Results (first 3)</div>
-                <pre className="text-xs text-white bg-slate-950/50 p-3 rounded border border-white/10 overflow-x-auto">
+                <pre className="text-xs text-white bg-slate-950/50 p-3 rounded border border-border overflow-x-auto">
                   {JSON.stringify(debugInfo.sampleItems, null, 2)}
                 </pre>
               </div>
@@ -728,13 +965,179 @@ export default function KeywordResearchPage() {
 
             <div>
               <div className="text-xs font-medium text-amber-300 mb-1">Full API Response</div>
-              <pre className="text-xs text-white bg-slate-950/50 p-3 rounded border border-white/10 overflow-x-auto max-h-96">
+              <pre className="text-xs text-white bg-slate-950/50 p-3 rounded border border-border overflow-x-auto max-h-96">
                 {JSON.stringify(debugInfo.response, null, 2)}
               </pre>
             </div>
           </div>
         </Card>
       )}
+
+      {/* SERP Preview Dialog */}
+      <Dialog open={showSerpDialog} onOpenChange={setShowSerpDialog}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Search className="h-5 w-5" />
+              SERP Analysis: {selectedKeyword?.keyword_data?.keyword || selectedKeyword?.keyword || "-"}
+            </DialogTitle>
+            <DialogDescription>
+              Detailed SERP data and keyword metrics
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedKeyword && (
+            <div className="space-y-4">
+              {/* Keyword Overview */}
+              <Card className="p-4 bg-gradient-to-r from-blue-500/10 to-purple-500/10 border-blue-500/20">
+                <div className="grid grid-cols-4 gap-4">
+                  <div>
+                    <div className="text-xs text-muted-foreground">Search Volume</div>
+                    <div className="text-2xl font-bold text-blue-400">
+                      {(selectedKeyword.search_volume || 
+                        selectedKeyword.keyword_info?.search_volume || 
+                        selectedKeyword.keyword_data?.keyword_info?.search_volume || 
+                        0).toLocaleString()}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted-foreground">CPC</div>
+                    <div className="text-2xl font-bold text-emerald-400">
+                      ${(selectedKeyword.cpc || 
+                        selectedKeyword.keyword_info?.cpc || 
+                        selectedKeyword.keyword_data?.keyword_info?.cpc || 
+                        0).toFixed(2)}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted-foreground">Competition</div>
+                    <div className="text-2xl font-bold text-amber-400">
+                      {((selectedKeyword.competition || 
+                        selectedKeyword.keyword_info?.competition || 
+                        selectedKeyword.keyword_data?.keyword_info?.competition || 
+                        0) * 100).toFixed(0)}%
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted-foreground">SERP Results</div>
+                    <div className="text-2xl font-bold">
+                      {(selectedKeyword.serp_info?.se_results_count || 
+                        selectedKeyword.keyword_data?.serp_info?.se_results_count || 
+                        0).toLocaleString()}
+                    </div>
+                  </div>
+                </div>
+              </Card>
+
+              {/* SERP Features */}
+              {(selectedKeyword.keyword_data?.serp_info?.serp_item_types || 
+                selectedKeyword.serp_info?.serp_item_types) && (
+                <div>
+                  <h4 className="text-sm font-semibold mb-2">SERP Features</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {(selectedKeyword.keyword_data?.serp_info?.serp_item_types || 
+                      selectedKeyword.serp_info?.serp_item_types || []).map((feature: string, idx: number) => (
+                      <Badge key={idx} variant="secondary" className="bg-purple-500/20 text-purple-200 border-purple-500/30">
+                        {feature}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Search Intent */}
+              {(selectedKeyword.keyword_data?.search_intent_info || 
+                selectedKeyword.search_intent_info) && (
+                <div>
+                  <h4 className="text-sm font-semibold mb-2">Search Intent</h4>
+                  <Badge variant="outline" className="bg-blue-500/20 text-blue-200 border-blue-500/30">
+                    {selectedKeyword.keyword_data?.search_intent_info?.main_intent || 
+                     selectedKeyword.search_intent_info?.main_intent || "Unknown"}
+                  </Badge>
+                </div>
+              )}
+
+              {/* Monthly Searches Trend */}
+              {(selectedKeyword.keyword_data?.keyword_info?.monthly_searches || 
+                selectedKeyword.keyword_info?.monthly_searches) && (
+                <div>
+                  <h4 className="text-sm font-semibold mb-2">Monthly Search Trend (Last 12 Months)</h4>
+                  <div className="grid grid-cols-6 gap-2">
+                    {(selectedKeyword.keyword_data?.keyword_info?.monthly_searches || 
+                      selectedKeyword.keyword_info?.monthly_searches || []).map((month: any, idx: number) => (
+                      <div key={idx} className="bg-muted p-2 rounded border border-border">
+                        <div className="text-[10px] text-muted-foreground">
+                          {month.year}/{month.month}
+                        </div>
+                        <div className="text-sm font-bold">
+                          {month.search_volume?.toLocaleString() || "0"}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Backlinks Info */}
+              {(selectedKeyword.keyword_data?.avg_backlinks_info || 
+                selectedKeyword.avg_backlinks_info) && (
+                <div>
+                  <h4 className="text-sm font-semibold mb-2">Average Backlinks (Top Ranking Pages)</h4>
+                  <div className="grid grid-cols-4 gap-3">
+                    <div className="bg-muted p-3 rounded border border-border">
+                      <div className="text-xs text-muted-foreground">Total Backlinks</div>
+                      <div className="text-lg font-bold text-emerald-400">
+                        {Math.round(selectedKeyword.keyword_data?.avg_backlinks_info?.backlinks || 
+                                    selectedKeyword.avg_backlinks_info?.backlinks || 0)}
+                      </div>
+                    </div>
+                    <div className="bg-muted p-3 rounded border border-border">
+                      <div className="text-xs text-muted-foreground">Dofollow</div>
+                      <div className="text-lg font-bold">
+                        {Math.round(selectedKeyword.keyword_data?.avg_backlinks_info?.dofollow || 
+                                    selectedKeyword.avg_backlinks_info?.dofollow || 0)}
+                      </div>
+                    </div>
+                    <div className="bg-muted p-3 rounded border border-border">
+                      <div className="text-xs text-muted-foreground">Referring Domains</div>
+                      <div className="text-lg font-bold text-blue-400">
+                        {Math.round(selectedKeyword.keyword_data?.avg_backlinks_info?.referring_domains || 
+                                    selectedKeyword.avg_backlinks_info?.referring_domains || 0)}
+                      </div>
+                    </div>
+                    <div className="bg-muted p-3 rounded border border-border">
+                      <div className="text-xs text-muted-foreground">Domain Rank</div>
+                      <div className="text-lg font-bold text-amber-400">
+                        {Math.round(selectedKeyword.keyword_data?.avg_backlinks_info?.main_domain_rank || 
+                                    selectedKeyword.avg_backlinks_info?.main_domain_rank || 0)}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Check SERP Link */}
+              {(selectedKeyword.keyword_data?.serp_info?.check_url || 
+                selectedKeyword.serp_info?.check_url) && (
+                <div className="pt-4 border-t border-border">
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => window.open(
+                      selectedKeyword.keyword_data?.serp_info?.check_url || 
+                      selectedKeyword.serp_info?.check_url, 
+                      '_blank'
+                    )}
+                  >
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    View Live SERP Results on Google
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

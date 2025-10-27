@@ -5,9 +5,17 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { FilterProvider } from "@/contexts/FilterContext";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
-import Index from "./pages/Index";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import LandingPage from "./pages/LandingPage";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
+import AboutPage from "./pages/AboutPage";
+import ContactPage from "./pages/ContactPage";
+import FeaturesPage from "./pages/FeaturesPage";
+import PricingFullPage from "./pages/PricingFullPage";
+import SeoGlossaryPage from "./pages/SeoGlossaryPage";
+import PrivacyPage from "./pages/PrivacyPage";
+import TermsPage from "./pages/TermsPage";
 import QueriesPage from "./pages/QueriesPage";
 import PagesPage from "./pages/PagesPage";
 import CountriesPage from "./pages/CountriesPage";
@@ -22,28 +30,45 @@ import OnPageSeoPage from "./pages/OnPageSeoPage";
 import BacklinksPage from "./pages/BacklinksPage";
 import SerpAnalysisPage from "./pages/SerpAnalysisPage";
 import SiteAuditPage from "./pages/SiteAuditPage";
+import RepurposePage from "./pages/RepurposePage";
+import KeywordClusteringPage from "./pages/KeywordClusteringPage";
+import ContentGapPage from "./pages/ContentGapPage";
+import RankingTrackerPage from "./pages/RankingTrackerPage";
+import SEOIntelligencePage from "./pages/SEOIntelligencePage";
 import AlertsPage from "./pages/AlertsPage";
 import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
+import { SEOAIChatbot } from "@/components/SEOAIChatbot";
 
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <FilterProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <div className="min-h-screen bg-slate-950 text-slate-100">
-          <BrowserRouter
-            future={{
-              v7_startTransition: true,
-              v7_relativeSplatPath: true,
-            }}
-          >
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <FilterProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <div className="min-h-screen bg-slate-950 text-slate-100">
+            <BrowserRouter
+              future={{
+                v7_startTransition: true,
+                v7_relativeSplatPath: true,
+              }}
+            >
           <Routes>
-            <Route path="/" element={<Index />} />
+            {/* Public Marketing Pages */}
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/features" element={<FeaturesPage />} />
+            <Route path="/pricing" element={<PricingFullPage />} />
+            <Route path="/glossary" element={<SeoGlossaryPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/terms" element={<TermsPage />} />
             <Route path="/auth" element={<Auth />} />
+            
+            {/* Protected Dashboard Pages */}
             <Route path="/dashboard" element={<DashboardLayout><Dashboard /></DashboardLayout>} />
             <Route path="/queries" element={<DashboardLayout><QueriesPage /></DashboardLayout>} />
             <Route path="/pages" element={<DashboardLayout><PagesPage /></DashboardLayout>} />
@@ -59,16 +84,23 @@ const App = () => (
                   <Route path="/backlinks" element={<DashboardLayout><BacklinksPage /></DashboardLayout>} />
                   <Route path="/serp-analysis" element={<DashboardLayout><SerpAnalysisPage /></DashboardLayout>} />
                   <Route path="/site-audit" element={<DashboardLayout><SiteAuditPage /></DashboardLayout>} />
+                  <Route path="/repurpose" element={<DashboardLayout><RepurposePage /></DashboardLayout>} />
+                  <Route path="/keyword-clustering" element={<DashboardLayout><KeywordClusteringPage /></DashboardLayout>} />
+                  <Route path="/content-gap" element={<DashboardLayout><ContentGapPage /></DashboardLayout>} />
+                  <Route path="/ranking-tracker" element={<DashboardLayout><RankingTrackerPage /></DashboardLayout>} />
+                  <Route path="/seo-intelligence" element={<DashboardLayout><SEOIntelligencePage /></DashboardLayout>} />
                   <Route path="/alerts" element={<DashboardLayout><AlertsPage /></DashboardLayout>} />
                   <Route path="/settings" element={<DashboardLayout><SettingsPage /></DashboardLayout>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <SEOAIChatbot />
         </BrowserRouter>
         </div>
       </TooltipProvider>
     </FilterProvider>
   </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;

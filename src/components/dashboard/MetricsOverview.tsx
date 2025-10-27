@@ -181,7 +181,7 @@ const MetricsOverview = ({ propertyUrl, startDate, endDate }: MetricsOverviewPro
         const TrendIcon = metric.data.trend === "up" ? TrendingUp : TrendingDown;
         
         return (
-          <Card key={metric.title} className="p-6 shadow-card hover:shadow-elevated transition-shadow">
+          <Card key={metric.title} className="p-6 border shadow-soft hover:shadow-medium transition-all">
             <div className="flex items-center justify-between mb-4">
               <div className={`h-10 w-10 rounded-lg ${metric.bgColor} flex items-center justify-center`}>
                 <Icon className={`h-5 w-5 ${metric.color}`} />

@@ -116,7 +116,7 @@ export default function DevicesPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">Device Performance</h1>
+        <h1 className="text-3xl font-bold text-foreground">Device Performance</h1>
         <p className="text-muted-foreground mt-1">
           Compare Desktop, Mobile, and Tablet performance
         </p>

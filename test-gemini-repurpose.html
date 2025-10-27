@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Gemini Repurpose</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #00ff00;
+        }
+        button {
+            background: #00ff00;
+            color: #1a1a1a;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            margin: 5px;
+        }
+        pre {
+            background: #000;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .error { color: #ff0000; }
+        .success { color: #00ff00; }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            background: #000;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test Gemini Repurpose Edge Function</h1>
+    
+    <div>
+        <label>Supabase Anon Key:</label>
+        <input type="text" id="anonKey" placeholder="Paste your SUPABASE_ANON_KEY here">
+        
+        <label>User JWT Token (from localStorage):</label>
+        <input type="text" id="jwtToken" placeholder="Will auto-fill from localStorage">
+        
+        <label>Test Content:</label>
+        <textarea id="testContent" rows="5">This is a test content about SEO optimization and content marketing strategies for digital businesses in 2025.</textarea>
+        
+        <label>Platforms (comma-separated):</label>
+        <input type="text" id="platforms" value="linkedin">
+        
+        <button onclick="runTest()">🚀 Test Edge Function</button>
+        <button onclick="checkAuth()">🔐 Check Auth</button>
+        <button onclick="getTokenFromStorage()">📋 Get Token from Storage</button>
+    </div>
+    
+    <div id="output"></div>
+
+    <script>
+        const SUPABASE_URL = 'https://siwzszmukfbzicjjkxro.supabase.co';
+        
+        function log(message, type = 'info') {
+            const output = document.getElementById('output');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : '';
+            output.innerHTML += `<pre class="${className}">[${timestamp}] ${message}</pre>`;
+        }
+
+        function getTokenFromStorage() {
+            const storageKeys = Object.keys(localStorage);
+            log('🔍 Checking localStorage for Supabase session...');
+            log('Available keys: ' + storageKeys.join(', '));
+            
+            // Look for the project-specific key
+            const supabaseKey = storageKeys.find(k => k.includes('sb-siwzszmukfbzicjjkxro-auth-token'));
+            
+            if (!supabaseKey) {
+                log('❌ No Supabase session found for this project', 'error');
+                log('Expected key: sb-siwzszmukfbzicjjkxro-auth-token');
+                return;
+            }
+            
+            log('✅ Found session key: ' + supabaseKey, 'success');
+            
+            try {
+                const sessionData = localStorage.getItem(supabaseKey);
+                if (!sessionData) {
+                    log('❌ Session key exists but has no data', 'error');
+                    return;
+                }
+                
+                log('Session data length: ' + sessionData.length + ' chars');
+                
+                const parsed = JSON.parse(sessionData);
+                log('Session structure: ' + Object.keys(parsed).join(', '));
+                
+                // Try multiple paths to find the token
+                const token = parsed.access_token || 
+                             parsed.currentSession?.access_token ||
+                             parsed.session?.access_token;
+                
+                if (token) {
+                    document.getElementById('jwtToken').value = token;
+                    log('✅ Token extracted and filled!', 'success');
+                    log('Token preview: ' + token.substring(0, 50) + '...');
+                    log('Token length: ' + token.length + ' chars');
+                } else {
+                    log('❌ No access_token found in session', 'error');
+                    log('Full session data (first 500 chars):');
+                    log(JSON.stringify(parsed, null, 2).substring(0, 500));
+                }
+            } catch (e) {
+                log('❌ Error parsing session: ' + e.message, 'error');
+                log('Stack: ' + e.stack);
+            }
+        }
+
+        async function checkAuth() {
+            const anonKey = document.getElementById('anonKey').value;
+            const jwtToken = document.getElementById('jwtToken').value;
+            
+            if (!anonKey) {
+                log('❌ Please enter SUPABASE_ANON_KEY', 'error');
+                return;
+            }
+            
+            log('🔐 Checking authentication...');
+            log('Anon key: ' + anonKey.substring(0, 20) + '...');
+            log('JWT token: ' + (jwtToken ? jwtToken.substring(0, 20) + '...' : 'NOT SET'));
+            
+            try {
+                const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+                    headers: {
+                        'apikey': anonKey,
+                        'Authorization': `Bearer ${jwtToken}`
+                    }
+                });
+                
+                log('Auth check status: ' + response.status);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    log('✅ Authenticated as: ' + data.email, 'success');
+                    log('User ID: ' + data.id);
+                } else {
+                    log('❌ Authentication failed', 'error');
+                    log('Response: ' + JSON.stringify(data, null, 2));
+                }
+            } catch (error) {
+                log('❌ Auth check error: ' + error.message, 'error');
+            }
+        }
+
+        async function runTest() {
+            document.getElementById('output').innerHTML = '';
+            
+            const anonKey = document.getElementById('anonKey').value;
+            const jwtToken = document.getElementById('jwtToken').value;
+            const content = document.getElementById('testContent').value;
+            const platformsStr = document.getElementById('platforms').value;
+            
+            if (!anonKey) {
+                log('❌ Please enter SUPABASE_ANON_KEY', 'error');
+                return;
+            }
+            
+            if (!jwtToken) {
+                log('⚠️  No JWT token - this will likely fail', 'error');
+            }
+            
+            const platforms = platformsStr.split(',').map(p => p.trim());
+            
+            const payload = {
+                content,
+                platforms,
+                tone: 'professional',
+                style: 'narrative',
+                seoData: {
+                    primaryKeyword: 'SEO optimization',
+                    secondaryKeywords: ['content marketing', 'digital strategy'],
+                    metaTitle: '',
+                    metaDescription: ''
+                }
+            };
+            
+            log('🚀 Testing edge function...');
+            log('📦 Request payload:');
+            log(JSON.stringify(payload, null, 2));
+            
+            try {
+                const startTime = Date.now();
+                
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/gemini-repurpose`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': anonKey,
+                        'Authorization': `Bearer ${jwtToken}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                const endTime = Date.now();
+                const duration = ((endTime - startTime) / 1000).toFixed(2);
+                
+                log(`\n📥 Response received (${duration}s)`);
+                log('Status: ' + response.status + ' ' + response.statusText);
+                log('Headers: ' + JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2));
+                
+                const responseText = await response.text();
+                log('\n📄 Response body:');
+                
+                try {
+                    const data = JSON.parse(responseText);
+                    log(JSON.stringify(data, null, 2), response.ok ? 'success' : 'error');
+                    
+                    if (data.generatedContent) {
+                        log('\n✅ SUCCESS! Generated ' + data.generatedContent.length + ' platform(s)', 'success');
+                        data.generatedContent.forEach(item => {
+                            log(`\n📝 ${item.platform.toUpperCase()}:\n${item.content.substring(0, 200)}...`);
+                        });
+                    } else if (data.error) {
+                        log('\n❌ Error from function: ' + data.error, 'error');
+                    }
+                } catch (e) {
+                    log(responseText, 'error');
+                    log('Failed to parse JSON: ' + e.message, 'error');
+                }
+                
+            } catch (error) {
+                log('❌ Network error: ' + error.message, 'error');
+                log('Stack: ' + error.stack);
+            }
+        }
+        
+        // Auto-load on page load
+        window.onload = () => {
+            getTokenFromStorage();
+            
+            // Try to get anon key from common location
+            const commonAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNpd3pzenptdWtmYnppY2pqa3hybyIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzI4OTU0NzQ3LCJleHAiOjIwNDQ1MzA3NDd9.GZQxDyYnhv--n82B1IXeEfGiNqnhY2TIx76qRYSC4BA';
+            document.getElementById('anonKey').value = commonAnonKey;
+        };
+    </script>
+</body>
+</html>
+

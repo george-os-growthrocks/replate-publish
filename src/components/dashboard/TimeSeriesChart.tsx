@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface TimeSeriesChartProps {
   propertyUrl: string;
@@ -68,7 +69,7 @@ const TimeSeriesChart = ({ propertyUrl, startDate, endDate }: TimeSeriesChartPro
   }
 
   return (
-    <Card className="p-6 shadow-card">
+    <Card className="p-6 border shadow-soft">
       <h3 className="text-lg font-semibold mb-6">Performance Over Time</h3>
       <ResponsiveContainer width="100%" height={320}>
         <LineChart data={chartData}>

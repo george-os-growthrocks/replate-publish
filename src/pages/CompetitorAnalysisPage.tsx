@@ -4,14 +4,34 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Target, Search, Loader2, TrendingUp, ExternalLink } from "lucide-react";
+import { Target, Search, Loader2, TrendingUp, ExternalLink, Bug } from "lucide-react";
 import { useDomainCompetitors } from "@/hooks/useDataForSEO";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect } from "react";
+
+// Debug logging utility
+async function addDebugLog(action: string, details: any) {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    await supabase.from('debug_logs').insert({
+      user_id: user?.id,
+      action,
+      details,
+      created_at: new Date().toISOString()
+    });
+    console.log(`[CompetitorAnalysis] ${action}:`, details);
+  } catch (err) {
+    console.error('Failed to add debug log:', err);
+  }
+}
 
 export default function CompetitorAnalysisPage() {
   const [targetDomain, setTargetDomain] = useState("");
   const [searchDomain, setSearchDomain] = useState("");
+  const [showDebug, setShowDebug] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<any>(null);
 
   const { data: competitorData, isLoading, error } = useDomainCompetitors(
     {
@@ -23,12 +43,73 @@ export default function CompetitorAnalysisPage() {
     !!searchDomain
   );
 
+  // Log data changes
+  useEffect(() => {
+    if (competitorData) {
+      addDebugLog('Competitor Data Received', {
+        domain: searchDomain,
+        status_code: competitorData?.status_code,
+        status_message: competitorData?.status_message,
+        tasks_count: competitorData?.tasks_count,
+        tasks_error: competitorData?.tasks_error,
+        has_tasks: !!competitorData?.tasks,
+        full_response: competitorData
+      });
+      setDebugInfo({
+        timestamp: new Date().toISOString(),
+        searchDomain,
+        params: {
+          target: searchDomain,
+          location_code: 2840,
+          language_code: "en",
+          limit: 100
+        },
+        response: competitorData
+      });
+    }
+  }, [competitorData, searchDomain]);
+
+  useEffect(() => {
+    if (error) {
+      addDebugLog('Competitor Analysis Error', {
+        domain: searchDomain,
+        error: error.message,
+        error_stack: error.stack
+      });
+      setDebugInfo({
+        timestamp: new Date().toISOString(),
+        searchDomain,
+        params: {
+          target: searchDomain,
+          location_code: 2840,
+          language_code: "en",
+          limit: 100
+        },
+        error: {
+          message: error.message,
+          stack: error.stack
+        }
+      });
+    }
+  }, [error, searchDomain]);
+
   const handleSearch = () => {
     if (!targetDomain.trim()) {
       toast.error("Please enter a domain");
       return;
     }
-    setSearchDomain(targetDomain.trim());
+    const cleanDomain = targetDomain.trim().replace(/^https?:\/\//, '').replace(/\/$/, '');
+    addDebugLog('Starting Competitor Analysis', {
+      originalInput: targetDomain,
+      cleanedDomain: cleanDomain,
+      params: {
+        target: cleanDomain,
+        location_code: 2840,
+        language_code: "en",
+        limit: 100
+      }
+    });
+    setSearchDomain(cleanDomain);
   };
 
   const competitors = competitorData?.tasks?.[0]?.result?.[0]?.items || [];
@@ -37,12 +118,65 @@ export default function CompetitorAnalysisPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold">Competitor Analysis</h1>
-        <p className="text-muted-foreground mt-1">
-          Discover domains ranking for similar keywords
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Competitor Analysis</h1>
+          <p className="text-muted-foreground mt-1">
+            Discover domains ranking for similar keywords
+          </p>
+        </div>
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={() => setShowDebug(!showDebug)}
+          className="gap-2"
+        >
+          <Bug className="h-4 w-4" />
+          {showDebug ? 'Hide Debug' : 'Show Debug'}
+        </Button>
       </div>
+
+      {/* Debug Panel */}
+      {showDebug && debugInfo && (
+        <Card className="p-4 bg-muted/50 border-yellow-500/50">
+          <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
+            <Bug className="h-4 w-4" />
+            Debug Information
+          </h3>
+          <div className="space-y-2 text-xs font-mono">
+            <div>
+              <span className="text-muted-foreground">Timestamp:</span>{' '}
+              <span className="text-foreground">{debugInfo.timestamp}</span>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Search Domain:</span>{' '}
+              <span className="text-foreground">{debugInfo.searchDomain}</span>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Parameters:</span>
+              <pre className="mt-1 p-2 bg-background rounded text-xs overflow-x-auto">
+                {JSON.stringify(debugInfo.params, null, 2)}
+              </pre>
+            </div>
+            {debugInfo.response && (
+              <div>
+                <span className="text-muted-foreground">API Response:</span>
+                <pre className="mt-1 p-2 bg-background rounded text-xs overflow-x-auto max-h-96">
+                  {JSON.stringify(debugInfo.response, null, 2)}
+                </pre>
+              </div>
+            )}
+            {debugInfo.error && (
+              <div>
+                <span className="text-red-400">Error:</span>
+                <pre className="mt-1 p-2 bg-background rounded text-xs overflow-x-auto text-red-300">
+                  {JSON.stringify(debugInfo.error, null, 2)}
+                </pre>
+              </div>
+            )}
+          </div>
+        </Card>
+      )}
 
       {/* Search Input */}
       <Card className="p-6">

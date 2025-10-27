@@ -3,10 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Gauge, Search, Loader2, CheckCircle2, AlertCircle, XCircle, FileCode, Zap } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useOnPageInstant, useLighthouse } from "@/hooks/useDataForSEO";
+import { Gauge, Search, Loader2, CheckCircle2, AlertCircle, XCircle, Zap, FileCode } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,10 +11,8 @@ import { supabase } from "@/integrations/supabase/client";
 export default function OnPageSeoPage() {
   const [url, setUrl] = useState("");
   const [searchUrl, setSearchUrl] = useState("");
-  const [activeTab, setActiveTab] = useState("instant");
   const [firecrawlData, setFirecrawlData] = useState<any>(null);
   const [isLoadingFirecrawl, setIsLoadingFirecrawl] = useState(false);
-  const [provider, setProvider] = useState<"firecrawl" | "dataforseo">("firecrawl"); // Default to Firecrawl
   const [debugLog, setDebugLog] = useState<Array<{time: string, message: string, type: string}>>([]);
   const [showDebug, setShowDebug] = useState(true);
 
@@ -27,76 +22,49 @@ export default function OnPageSeoPage() {
     console.log(`[${type.toUpperCase()}] ${message}`);
   };
 
-  const { data: onPageData, isLoading: onPageLoading, error: onPageError } = useOnPageInstant(
-    { type: "instant", url: searchUrl },
-    !!searchUrl && provider === "dataforseo"
-  );
-
-  const { data: lighthouseData, isLoading: lighthouseLoading, error: lighthouseError } = useLighthouse(
-    { type: "lighthouse", url: searchUrl, device: "desktop" },
-    !!searchUrl && activeTab === "lighthouse"
-  );
-
-  // Fetch with Firecrawl when provider is set to Firecrawl
+  // Fetch data when URL is set
   useEffect(() => {
-    if (searchUrl && provider === "firecrawl" && !firecrawlData && !isLoadingFirecrawl) {
-      addDebugLog("Using Firecrawl as primary provider", "info");
+    if (searchUrl && !firecrawlData && !isLoadingFirecrawl) {
+      addDebugLog("Starting page analysis...", "info");
       fetchWithFirecrawl(searchUrl);
     }
-  }, [searchUrl, provider]);
+  }, [searchUrl]);
 
-  // Auto-fallback to Firecrawl if DataForSEO fails
-  useEffect(() => {
-    if (onPageError && searchUrl && provider === "dataforseo" && !isLoadingFirecrawl) {
-      addDebugLog(`DataForSEO failed with error: ${onPageError}`, "error");
-      addDebugLog("Auto-switching to Firecrawl...", "warn");
-      toast.info("DataForSEO failed, switching to Firecrawl...");
-      setProvider("firecrawl");
-      fetchWithFirecrawl(searchUrl);
-    }
-  }, [onPageError, searchUrl, provider]);
-
-  // Log DataForSEO data when it arrives
-  useEffect(() => {
-    if (onPageData) {
-      addDebugLog("DataForSEO response received", "success");
-      addDebugLog(`Response keys: ${Object.keys(onPageData).join(", ")}`, "info");
-    }
-  }, [onPageData]);
+  // Removed unused DataForSEO code
 
   const fetchWithFirecrawl = async (targetUrl: string) => {
     setIsLoadingFirecrawl(true);
-    addDebugLog(`Calling Firecrawl API for: ${targetUrl}`, "info");
-    
+    addDebugLog(`Analyzing page: ${targetUrl}`, "info");
+
     try {
       const { data, error } = await supabase.functions.invoke("firecrawl-scrape", {
         body: { url: targetUrl }
       });
 
-      addDebugLog(`Firecrawl response received`, "info");
-      
+      addDebugLog(`Analysis response received`, "info");
+
       if (error) {
-        addDebugLog(`Firecrawl Supabase error: ${JSON.stringify(error)}`, "error");
+        addDebugLog(`Error: ${JSON.stringify(error)}`, "error");
         throw error;
       }
-      
+
       if (!data?.success) {
-        addDebugLog(`Firecrawl failed: ${data?.error || "Unknown error"}`, "error");
-        throw new Error(data?.error || "Firecrawl failed");
+        addDebugLog(`Analysis failed: ${data?.error || "Unknown error"}`, "error");
+        throw new Error(data?.error || "Analysis failed");
       }
 
-      addDebugLog("Firecrawl analysis successful!", "success");
+      addDebugLog("✓ Page analysis successful!", "success");
       addDebugLog(`Extracted data: ${JSON.stringify(Object.keys(data.data))}`, "info");
-      
+
       // Log specific important fields
       addDebugLog(`Title: ${data.data.title || "N/A"}`, "info");
       addDebugLog(`H1 Count: ${data.data.h1Count}, Links: ${data.data.linkCount}, Images: ${data.data.imageCount}`, "info");
-      
+
       setFirecrawlData(data.data);
-      toast.success("Page analyzed with Firecrawl");
+      toast.success("Page analyzed successfully");
     } catch (error: any) {
-      addDebugLog(`Firecrawl error: ${error.message}`, "error");
-      console.error("Firecrawl error:", error);
+      addDebugLog(`Analysis error: ${error.message}`, "error");
+      console.error("Analysis error:", error);
       toast.error(`Analysis failed: ${error.message}`);
     } finally {
       setIsLoadingFirecrawl(false);
@@ -109,29 +77,66 @@ export default function OnPageSeoPage() {
       return;
     }
     
+    // Format URL properly
+    let formattedUrl = url.trim();
+    
+    // Add https:// if no protocol
+    if (!formattedUrl.match(/^https?:\/\//i)) {
+      formattedUrl = `https://${formattedUrl}`;
+      addDebugLog(`Added https:// protocol to URL`, "info");
+    }
+    
+    // Validate URL format
+    try {
+      new URL(formattedUrl);
+    } catch (e) {
+      toast.error("Invalid URL format");
+      addDebugLog(`Invalid URL: ${formattedUrl}`, "error");
+      return;
+    }
+    
     // Clear previous state and logs
     setDebugLog([]);
     setFirecrawlData(null);
-    
-    addDebugLog(`Starting analysis for: ${url.trim()}`, "info");
-    addDebugLog(`Provider: ${provider === "firecrawl" ? "Firecrawl (Default)" : "DataForSEO"}`, "info");
-    
-    setSearchUrl(url.trim());
+
+    addDebugLog(`Starting analysis for: ${formattedUrl}`, "info");
+
+    setSearchUrl(formattedUrl);
   };
 
-  const onPageResult = provider === "firecrawl" ? firecrawlData : onPageData?.tasks?.[0]?.result?.[0];
-  const lighthouseResult = lighthouseData?.tasks?.[0]?.result?.[0];
-  const isLoading = onPageLoading || isLoadingFirecrawl;
+  const onPageResult = firecrawlData;
+  const isLoading = isLoadingFirecrawl;
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">OnPage SEO Analysis</h1>
+        <h1 className="text-3xl font-bold text-foreground">OnPage SEO Analysis</h1>
         <p className="text-muted-foreground mt-1">
           Comprehensive technical SEO audit and performance testing
         </p>
       </div>
+
+      {/* Info Card */}
+      <Card className="p-4 bg-blue-500/5 border-blue-500/20">
+        <div className="flex items-start gap-3">
+          <div className="p-2 rounded-lg bg-blue-500/10">
+            <Gauge className="h-5 w-5 text-blue-400" />
+          </div>
+          <div className="flex-1 space-y-2">
+            <h3 className="font-semibold text-blue-200">Instant Page Analysis</h3>
+            <div className="text-sm text-muted-foreground space-y-1">
+              <div className="flex items-start gap-2">
+                <Zap className="h-4 w-4 text-emerald-400 mt-0.5 shrink-0" />
+                <div>
+                  Fast, reliable single-page analysis powered by <strong className="text-foreground">AnotherSEOGuru AI</strong>.
+                  Extracts meta tags, headings, links, images, Open Graph data, and more. Perfect for quick audits.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Card>
 
       {/* Search Input */}
       <Card className="p-6">
@@ -162,32 +167,6 @@ export default function OnPageSeoPage() {
             </Button>
           </div>
           
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground">Provider:</span>
-            <div className="flex gap-2">
-              <Button
-                variant={provider === "firecrawl" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setProvider("firecrawl")}
-                className="gap-2"
-              >
-                <Zap className="h-3 w-3" />
-                Firecrawl (Recommended)
-              </Button>
-              <Button
-                variant={provider === "dataforseo" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setProvider("dataforseo")}
-                className="gap-2"
-              >
-                <FileCode className="h-3 w-3" />
-                DataForSEO (Beta)
-              </Button>
-            </div>
-            <Badge variant="outline" className="ml-auto">
-              {provider === "firecrawl" ? "✓ Works Great" : "⚠️ May Fail (500 Error)"}
-            </Badge>
-          </div>
         </div>
       </Card>
 
@@ -230,26 +209,11 @@ export default function OnPageSeoPage() {
         </Card>
       )}
 
-      {/* Error States */}
-      {(onPageError || lighthouseError) && (
-        <Card className="p-6 border-red-500/20 bg-red-500/5">
-          <div className="text-red-200">
-            ⚠️ Error: {onPageError?.message || lighthouseError?.message}
-          </div>
-        </Card>
-      )}
-
-      {/* Results Tabs */}
+      {/* Results */}
       {searchUrl && (
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="instant">Instant Check</TabsTrigger>
-            <TabsTrigger value="lighthouse">Lighthouse Audit</TabsTrigger>
-          </TabsList>
-
-          {/* Instant Check Tab */}
-          <TabsContent value="instant" className="space-y-4 mt-4">
-            {onPageLoading ? (
+        <Card className="p-6">
+          <div className="space-y-4">
+            {isLoading ? (
               <div className="space-y-4">
                 {[...Array(4)].map((_, i) => (
                   <Skeleton key={i} className="h-32 w-full" />
@@ -257,21 +221,15 @@ export default function OnPageSeoPage() {
               </div>
             ) : onPageResult ? (
               <>
-                {/* Data Source Badge */}
-                <div className="flex items-center gap-2 mb-4">
-                  <Badge variant="outline" className={
-                    provider === "firecrawl"
-                      ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-200"
-                      : "bg-blue-500/10 border-blue-500/30 text-blue-200"
-                  }>
-                    {provider === "firecrawl" ? "🔥 Powered by Firecrawl" : "📊 Powered by DataForSEO"}
-                  </Badge>
-                  <span className="text-xs text-muted-foreground">
-                    {provider === "firecrawl" 
-                      ? "(Fast, reliable scraping)" 
-                      : "(Advanced SEO metrics)"}
-                  </span>
-                </div>
+                  {/* Analysis Complete Badge */}
+                  <div className="flex items-center gap-2 mb-4">
+                    <Badge variant="outline" className="bg-emerald-500/10 border-emerald-500/30 text-emerald-200">
+                      ✓ Analysis Complete
+                    </Badge>
+                    <span className="text-xs text-muted-foreground">
+                      Powered by AnotherSEOGuru AI
+                    </span>
+                  </div>
 
                 {/* Status Overview */}
                 <div className="grid grid-cols-4 gap-4">
@@ -575,110 +533,17 @@ export default function OnPageSeoPage() {
                   </Card>
                 )}
               </>
-            ) : searchUrl && !onPageLoading ? (
+            ) : searchUrl && !isLoading ? (
               <Card className="p-12 text-center">
                 <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <h3 className="text-lg font-semibold mb-2">No Data Available</h3>
                 <p className="text-muted-foreground">
-                  Unable to fetch OnPage data for this URL
+                  Unable to fetch analysis data for this URL
                 </p>
               </Card>
             ) : null}
-          </TabsContent>
-
-          {/* Lighthouse Tab */}
-          <TabsContent value="lighthouse" className="space-y-4 mt-4">
-            {lighthouseLoading ? (
-              <div className="space-y-4">
-                {[...Array(4)].map((_, i) => (
-                  <Skeleton key={i} className="h-32 w-full" />
-                ))}
-              </div>
-            ) : lighthouseResult ? (
-              <>
-                {/* Lighthouse Scores */}
-                <div className="grid grid-cols-4 gap-4">
-                  {[
-                    { label: "Performance", score: lighthouseResult.categories?.performance?.score, color: "emerald" },
-                    { label: "Accessibility", score: lighthouseResult.categories?.accessibility?.score, color: "blue" },
-                    { label: "Best Practices", score: lighthouseResult.categories?.['best-practices']?.score, color: "purple" },
-                    { label: "SEO", score: lighthouseResult.categories?.seo?.score, color: "amber" },
-                  ].map((item, idx) => {
-                    const scoreValue = item.score !== undefined ? Math.round(item.score * 100) : null;
-                    const scoreColor = scoreValue 
-                      ? scoreValue >= 90 ? "text-emerald-400" 
-                      : scoreValue >= 50 ? "text-amber-400" 
-                      : "text-red-400"
-                      : "text-muted-foreground";
-                    
-                    return (
-                      <Card key={idx} className="p-6">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="text-sm text-muted-foreground">{item.label}</div>
-                          <Zap className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                        <div className={`text-4xl font-bold ${scoreColor}`}>
-                          {scoreValue !== null ? scoreValue : "-"}
-                        </div>
-                        {scoreValue !== null && (
-                          <div className="mt-2 h-2 bg-slate-900 rounded-full overflow-hidden">
-                            <div 
-                              className={`h-full ${
-                                scoreValue >= 90 ? "bg-emerald-500" :
-                                scoreValue >= 50 ? "bg-amber-500" :
-                                "bg-red-500"
-                              }`}
-                              style={{ width: `${scoreValue}%` }}
-                            />
-                          </div>
-                        )}
-                      </Card>
-                    );
-                  })}
-                </div>
-
-                {/* Metrics */}
-                <Card className="p-6">
-                  <h3 className="font-semibold mb-4">Performance Metrics</h3>
-                  <div className="grid grid-cols-3 gap-4">
-                    {lighthouseResult.audits?.['first-contentful-paint'] && (
-                      <div className="bg-slate-900/50 p-4 rounded border border-white/5">
-                        <div className="text-sm text-muted-foreground">First Contentful Paint</div>
-                        <div className="text-xl font-bold mt-1">
-                          {lighthouseResult.audits['first-contentful-paint'].displayValue}
-                        </div>
-                      </div>
-                    )}
-                    {lighthouseResult.audits?.['largest-contentful-paint'] && (
-                      <div className="bg-slate-900/50 p-4 rounded border border-white/5">
-                        <div className="text-sm text-muted-foreground">Largest Contentful Paint</div>
-                        <div className="text-xl font-bold mt-1">
-                          {lighthouseResult.audits['largest-contentful-paint'].displayValue}
-                        </div>
-                      </div>
-                    )}
-                    {lighthouseResult.audits?.['speed-index'] && (
-                      <div className="bg-slate-900/50 p-4 rounded border border-white/5">
-                        <div className="text-sm text-muted-foreground">Speed Index</div>
-                        <div className="text-xl font-bold mt-1">
-                          {lighthouseResult.audits['speed-index'].displayValue}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </Card>
-              </>
-            ) : searchUrl && !lighthouseLoading ? (
-              <Card className="p-12 text-center">
-                <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No Lighthouse Data</h3>
-                <p className="text-muted-foreground">
-                  Unable to fetch Lighthouse audit for this URL
-                </p>
-              </Card>
-            ) : null}
-          </TabsContent>
-        </Tabs>
+          </div>
+        </Card>
       )}
 
       {/* Initial State */}
@@ -687,7 +552,7 @@ export default function OnPageSeoPage() {
           <Gauge className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
           <h3 className="text-lg font-semibold mb-2">Analyze Any Page</h3>
           <p className="text-muted-foreground mb-4">
-            Enter a URL to get instant technical SEO analysis and Lighthouse scores
+            Enter a URL to get instant technical SEO analysis
           </p>
           <div className="text-sm text-muted-foreground max-w-md mx-auto">
             Checks: Meta tags, headings, images, links, performance, accessibility, and more

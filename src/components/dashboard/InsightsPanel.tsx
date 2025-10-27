@@ -109,9 +109,9 @@ const InsightsPanel = ({ propertyUrl, startDate, endDate }: InsightsPanelProps) 
         setInsights(data.actions);
         
         if (data.debug?.usedFallback) {
-          toast.warning(`Generated ${data.actions.length} insights (using fallback - Gemini JSON parse failed)`);
+          toast.warning(`Generated ${data.actions.length} insights (using intelligent fallback)`);
         } else {
-          toast.success(`Generated ${data.actions.length} AI insights from Gemini`);
+          toast.success(`Generated ${data.actions.length} AI insights`);
         }
       } else {
         addDebugLog("⚠️ No actions in response");

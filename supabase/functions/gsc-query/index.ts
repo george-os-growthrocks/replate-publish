@@ -86,7 +86,7 @@ serve(async (req) => {
         timestamp: new Date().toISOString(),
       }), 
       {
-        status: 200, // Return 200 so the client can read the error details
+        status: 400, // Return 400 for client errors
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );

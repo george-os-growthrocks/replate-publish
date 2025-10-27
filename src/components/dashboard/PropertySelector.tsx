@@ -81,11 +81,11 @@ const PropertySelector = ({ onPropertySelect, selectedProperty }: PropertySelect
 
   if (isLoading) {
     return (
-      <div className="flex items-center gap-3 px-4 py-2 rounded-xl bg-white/5 border border-white/10 animate-pulse">
-        <div className="h-8 w-8 rounded-lg bg-white/10" />
+      <div className="flex items-center gap-3 px-4 py-2 rounded-xl bg-muted border border-border animate-pulse">
+        <div className="h-8 w-8 rounded-lg bg-muted-foreground/20" />
         <div className="space-y-1.5 flex-1">
-          <div className="h-2.5 w-24 bg-white/10 rounded" />
-          <div className="h-3 w-48 bg-white/10 rounded" />
+          <div className="h-2.5 w-24 bg-muted-foreground/20 rounded" />
+          <div className="h-3 w-48 bg-muted-foreground/20 rounded" />
         </div>
       </div>
     );
@@ -110,18 +110,18 @@ const PropertySelector = ({ onPropertySelect, selectedProperty }: PropertySelect
     : "Select a property";
 
   return (
-    <div className="flex items-center gap-3 px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-indigo-500/10 border border-indigo-500/20 hover:border-indigo-500/40 transition-all duration-200">
+    <div className="flex items-center gap-3 px-4 py-2 rounded-xl bg-card border border-border hover:border-primary/50 transition-all duration-200">
       {/* Icon */}
-      <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center flex-shrink-0 shadow-lg">
+      <div className="h-8 w-8 rounded-lg gradient-primary flex items-center justify-center flex-shrink-0 shadow-lg">
         <Globe className="h-4 w-4 text-white" />
       </div>
       
       {/* Property Info */}
       <div className="flex-1 min-w-0">
-        <p className="text-[10px] text-indigo-200/70 font-medium tracking-wider uppercase leading-tight">
+        <p className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase leading-tight">
           Active Property
         </p>
-        <p className="text-sm font-semibold text-white truncate mt-0.5">
+        <p className="text-sm font-semibold text-foreground truncate mt-0.5">
           {displayProperty}
         </p>
       </div>
@@ -132,7 +132,7 @@ const PropertySelector = ({ onPropertySelect, selectedProperty }: PropertySelect
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-8 text-xs flex-shrink-0 text-indigo-200 hover:text-white hover:bg-white/10 border border-white/10 hover:border-white/20"
+            className="h-8 text-xs flex-shrink-0 hover:bg-muted border"
           >
             Switch
             <ChevronDown className="ml-1.5 h-3 w-3" />

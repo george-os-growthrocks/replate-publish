@@ -1,0 +1,229 @@
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Check } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+// Platform Logo SVG Components
+const BlogIcon = () => (
+  <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" strokeWidth="2"/>
+    <line x1="8" y1="9" x2="16" y2="9" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+    <line x1="8" y1="13" x2="16" y2="13" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+    <line x1="8" y1="17" x2="12" y2="17" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+  </svg>
+);
+
+const MediumIcon = () => (
+  <svg className="w-8 h-8" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+    <path d="M13.54 12a6.8 6.8 0 01-6.77 6.82A6.8 6.8 0 010 12a6.8 6.8 0 016.77-6.82A6.8 6.8 0 0113.54 12zM20.96 12c0 3.54-1.51 6.42-3.38 6.42-1.87 0-3.39-2.88-3.39-6.42s1.52-6.42 3.39-6.42 3.38 2.88 3.38 6.42M24 12c0 3.17-.53 5.75-1.19 5.75-.66 0-1.19-2.58-1.19-5.75s.53-5.75 1.19-5.75C23.47 6.25 24 8.83 24 12z"/>
+  </svg>
+);
+
+const LinkedInIcon = () => (
+  <svg className="w-8 h-8" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+  </svg>
+);
+
+const RedditIcon = () => (
+  <svg className="w-8 h-8" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/>
+  </svg>
+);
+
+const QuoraIcon = () => (
+  <svg className="w-8 h-8" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12.738 18.701c-.831-1.635-1.805-3.287-3.708-3.287-.362 0-.727.061-1.059.209.632-1.453.953-3.3.953-5.605 0-4.185-1.867-6.5-5.207-6.5-3.36 0-5.217 2.315-5.217 6.5 0 4.174 1.857 6.5 5.217 6.5.726 0 1.397-.115 2.003-.343.552.856 1.158 1.595 1.825 2.221-1.039.456-2.16.683-3.348.683C1.636 19.079 0 16.759 0 12.518 0 8.289 1.636 6 5.197 6c3.55 0 5.196 2.289 5.196 6.518 0 .354-.016.694-.052 1.022.554-.735 1.271-1.138 2.101-1.138 1.943 0 3.399 1.646 4.388 4.042l-.001.003c-.239.576-.494 1.088-.735 1.526-.432.785-.884 1.435-1.355 1.962-1.123 1.255-2.425 1.778-3.955 1.778-1.207 0-2.285-.296-3.227-.888.681-.491 1.272-1.13 1.774-1.916.304.089.639.134.998.134.847 0 1.541-.299 2.11-.908z"/>
+  </svg>
+);
+
+const TwitterIcon = () => (
+  <svg className="w-8 h-8" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+  </svg>
+);
+
+const InstagramIcon = () => (
+  <svg className="w-8 h-8" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+  </svg>
+);
+
+const YouTubeIcon = () => (
+  <svg className="w-8 h-8" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+  </svg>
+);
+
+const NewsletterIcon = () => (
+  <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="2"/>
+    <path d="M3 8L12 13L21 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
+const TikTokIcon = () => (
+  <svg className="w-8 h-8" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+  </svg>
+);
+
+export interface Platform {
+  id: string;
+  name: string;
+  icon: React.ReactNode;
+  credits: number;
+  description: string;
+  color: string;
+}
+
+export const platforms: Platform[] = [
+  {
+    id: 'blog',
+    name: 'SEO Blog',
+    icon: <BlogIcon />,
+    credits: 3,
+    description: 'Long-form, keyword-rich content',
+    color: 'text-primary'
+  },
+  {
+    id: 'medium',
+    name: 'Medium',
+    icon: <MediumIcon />,
+    credits: 2,
+    description: 'Personal storytelling format',
+    color: 'text-primary'
+  },
+  {
+    id: 'linkedin',
+    name: 'LinkedIn',
+    icon: <LinkedInIcon />,
+    credits: 2,
+    description: 'Professional thought-leadership',
+    color: 'text-primary'
+  },
+  {
+    id: 'reddit',
+    name: 'Reddit',
+    icon: <RedditIcon />,
+    credits: 2,
+    description: 'Casual, discussion-oriented',
+    color: 'text-primary'
+  },
+  {
+    id: 'quora',
+    name: 'Quora',
+    icon: <QuoraIcon />,
+    credits: 2,
+    description: 'Concise, authority-driven answers',
+    color: 'text-primary'
+  },
+  {
+    id: 'twitter',
+    name: 'Twitter/X',
+    icon: <TwitterIcon />,
+    credits: 1,
+    description: 'Short, punchy threads',
+    color: 'text-primary'
+  },
+  {
+    id: 'instagram',
+    name: 'Instagram',
+    icon: <InstagramIcon />,
+    credits: 1,
+    description: 'Visual captions with hashtags',
+    color: 'text-primary'
+  },
+  {
+    id: 'youtube',
+    name: 'YouTube',
+    icon: <YouTubeIcon />,
+    credits: 2,
+    description: 'Engaging video descriptions',
+    color: 'text-primary'
+  },
+  {
+    id: 'newsletter',
+    name: 'Newsletter',
+    icon: <NewsletterIcon />,
+    credits: 2,
+    description: 'Email-friendly format',
+    color: 'text-primary'
+  },
+  {
+    id: 'tiktok',
+    name: 'TikTok',
+    icon: <TikTokIcon />,
+    credits: 1,
+    description: 'Short video scripts',
+    color: 'text-primary'
+  }
+];
+
+interface PlatformSelectorProps {
+  selected: string[];
+  onSelect: (platformId: string) => void;
+}
+
+export function PlatformSelector({ selected, onSelect }: PlatformSelectorProps) {
+  const totalCredits = selected.reduce((sum, platformId) => {
+    const platform = platforms.find(p => p.id === platformId);
+    return sum + (platform?.credits || 0);
+  }, 0);
+
+  return (
+    <div className="space-y-4">
+      <h3 className="text-lg font-semibold">Select Target Platforms</h3>
+
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+        {platforms.map((platform) => {
+          const isSelected = selected.includes(platform.id);
+          
+          return (
+            <Card
+              key={platform.id}
+              className={cn(
+                "relative p-4 cursor-pointer transition-all duration-200 hover:shadow-md",
+                isSelected && "border-primary border-2 bg-primary/5"
+              )}
+              onClick={() => onSelect(platform.id)}
+            >
+              {isSelected && (
+                <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+                  <Check className="w-4 h-4 text-white" />
+                </div>
+              )}
+              
+              <div className="space-y-2">
+                <div className={platform.color}>
+                  {platform.icon}
+                </div>
+                <h4 className="font-semibold text-sm">{platform.name}</h4>
+                <p className="text-xs text-muted-foreground">
+                  {platform.description}
+                </p>
+                <div className="mt-1 flex items-center gap-1">
+                  <span className="text-xs font-medium text-primary">
+                    {platform.credits} credit{platform.credits > 1 ? 's' : ''}
+                  </span>
+                </div>
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+
+      {selected.length > 0 && (
+        <div className="space-y-1">
+          <p className="text-sm text-muted-foreground">
+            {selected.length} platform{selected.length > 1 ? "s" : ""} selected
+          </p>
+          <p className="text-sm font-medium text-primary">
+            Total: {totalCredits} credit{totalCredits !== 1 ? 's' : ''}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+

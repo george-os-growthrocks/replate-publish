@@ -1,0 +1,166 @@
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Menu, X } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
+
+export function LandingNav() {
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  return (
+    <nav 
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        isScrolled 
+          ? "bg-background/80 backdrop-blur-lg border-b border-border shadow-sm" 
+          : "bg-transparent"
+      }`}
+    >
+      <div className="container mx-auto px-4">
+        <div className="flex items-center justify-between h-16 md:h-20">
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-2 group">
+            <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+              <span className="text-white font-bold text-lg md:text-xl">A</span>
+            </div>
+            <span className="font-bold text-lg md:text-xl text-foreground">
+              AnotherSEOGuru
+            </span>
+          </Link>
+
+          {/* Desktop Navigation */}
+          <div className="hidden lg:flex items-center gap-8">
+            <Link 
+              to="/features" 
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Features
+            </Link>
+            <Link 
+              to="/pricing" 
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Pricing
+            </Link>
+            <Link 
+              to="/glossary" 
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              SEO Glossary
+            </Link>
+            <Link 
+              to="/about" 
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              About
+            </Link>
+            <Link 
+              to="/contact" 
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Contact
+            </Link>
+          </div>
+
+          {/* Right Section */}
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            
+            <Button 
+              asChild 
+              variant="ghost" 
+              className="hidden sm:inline-flex"
+            >
+              <Link to="/auth">Sign In</Link>
+            </Button>
+            
+            <Button 
+              asChild 
+              className="hidden sm:inline-flex gradient-primary"
+            >
+              <Link to="/auth">Get Started Free</Link>
+            </Button>
+
+            {/* Mobile Menu Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? (
+                <X className="w-5 h-5" />
+              ) : (
+                <Menu className="w-5 h-5" />
+              )}
+            </Button>
+          </div>
+        </div>
+
+        {/* Mobile Menu */}
+        {isMobileMenuOpen && (
+          <div className="lg:hidden py-4 border-t border-border">
+            <div className="flex flex-col gap-4">
+              <Link 
+                to="/features" 
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-2"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Features
+              </Link>
+              <Link 
+                to="/pricing" 
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-2"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Pricing
+              </Link>
+              <Link 
+                to="/glossary" 
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-2"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                SEO Glossary
+              </Link>
+              <Link 
+                to="/about" 
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-2"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                About
+              </Link>
+              <Link 
+                to="/contact" 
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-2"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Contact
+              </Link>
+              <div className="pt-4 border-t border-border flex flex-col gap-2">
+                <Button asChild variant="outline" className="w-full">
+                  <Link to="/auth" onClick={() => setIsMobileMenuOpen(false)}>
+                    Sign In
+                  </Link>
+                </Button>
+                <Button asChild className="w-full gradient-primary">
+                  <Link to="/auth" onClick={() => setIsMobileMenuOpen(false)}>
+                    Get Started Free
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </nav>
+  );
+}
+

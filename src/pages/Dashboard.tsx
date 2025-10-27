@@ -17,7 +17,7 @@ const Dashboard = () => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">Overview</h1>
+        <h1 className="text-3xl font-bold text-foreground">Overview</h1>
         <p className="text-muted-foreground mt-1">
           Your Search Console performance at a glance
         </p>

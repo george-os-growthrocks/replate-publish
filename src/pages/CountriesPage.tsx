@@ -77,7 +77,7 @@ export default function CountriesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Countries</h1>
+        <h1 className="text-3xl font-bold text-foreground">Countries</h1>
         <p className="text-muted-foreground mt-1">
           Performance breakdown by geographic location
         </p>

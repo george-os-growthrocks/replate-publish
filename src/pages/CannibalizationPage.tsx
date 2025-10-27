@@ -5,8 +5,9 @@ import { findCannibalClusters } from "@/lib/cannibalization";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, CheckCircle, ExternalLink, Link as LinkIcon, Sparkles, Target, Loader2 } from "lucide-react";
+import { AlertCircle, CheckCircle, ExternalLink, Link as LinkIcon, Sparkles, Target, Loader2, TrendingUp, Clock, Award } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { calculateKeywordDifficulty, analyzeCtr } from "@/lib/seo-algorithms";
 import {
   Dialog,
   DialogContent,
@@ -144,10 +145,93 @@ export default function CannibalizationPage() {
     device,
   });
 
-  const clusters = useMemo(() => {
+  // Enhanced clusters with SEO metrics
+  const enrichedClusters = useMemo(() => {
     if (!rows) return [];
-    return findCannibalClusters(rows, { minPages: 2, minImpressions: 50 });
+    const baseClusters = findCannibalClusters(rows, { minPages: 2, minImpressions: 50 });
+    
+    // Enrich with SEO algorithms
+    return baseClusters.map(cluster => {
+      // Calculate keyword difficulty
+      const difficulty = calculateKeywordDifficulty(
+        {
+          keyword: cluster.query,
+          searchVolume: cluster.totalImpressions,
+          cpc: 0,
+          competition: 0.5,
+        },
+        {
+          avgDomainAuthority: 50,
+          avgBacklinks: 100,
+          avgContentLength: 2000,
+          topRankingPages: 10,
+        }
+      );
+      
+      // Calculate average position
+      const avgPosition = cluster.pages.reduce((sum, p) => sum + p.position, 0) / cluster.pages.length;
+      
+      // CTR analysis
+      const ctrAnalysis = analyzeCtr({
+        currentPosition: Math.round(avgPosition),
+        searchVolume: cluster.totalImpressions,
+        hasRichSnippet: false,
+        hasSitelinks: false,
+        serpFeatures: [],
+      });
+      
+      // Calculate consolidation opportunity score
+      const consolidationScore = calculateConsolidationScore({
+        pageCount: cluster.pages.length,
+        totalClicks: cluster.totalClicks,
+        totalImpressions: cluster.totalImpressions,
+        avgPosition,
+        difficulty: difficulty.difficulty,
+      });
+      
+      return {
+        ...cluster,
+        metrics: {
+          difficulty: difficulty.difficulty,
+          difficultyLevel: difficulty.competitionLevel,
+          estimatedTimeToRank: difficulty.estimatedTimeToRank,
+          requiredBacklinks: difficulty.requiredBacklinks,
+          avgPosition: Math.round(avgPosition * 10) / 10,
+          expectedCtr: ctrAnalysis.expectedCtr,
+          potentialClicks: ctrAnalysis.potentialClicks,
+          improvementOpportunity: ctrAnalysis.improvementOpportunity,
+          consolidationScore,
+        },
+      };
+    }).sort((a, b) => (b.metrics?.consolidationScore || 0) - (a.metrics?.consolidationScore || 0));
   }, [rows]);
+
+  // Helper function to calculate consolidation opportunity score
+  function calculateConsolidationScore(params: {
+    pageCount: number;
+    totalClicks: number;
+    totalImpressions: number;
+    avgPosition: number;
+    difficulty: number;
+  }): number {
+    const { pageCount, totalClicks, totalImpressions, avgPosition, difficulty } = params;
+    
+    // More pages = higher consolidation need
+    const pageCountScore = Math.min(100, pageCount * 20);
+    
+    // Higher impressions = more important to fix
+    const impressionsScore = Math.min(100, (totalImpressions / 1000) * 25);
+    
+    // Worse position = bigger opportunity
+    const positionScore = Math.max(0, avgPosition / 20 * 50);
+    
+    // Lower difficulty = easier to consolidate and rank
+    const difficultyScore = (100 - difficulty) * 0.15;
+    
+    return Math.round(pageCountScore * 0.35 + impressionsScore * 0.3 + positionScore * 0.2 + difficultyScore * 0.15);
+  }
+
+  const clusters = enrichedClusters;
 
   const highImpactClusters = clusters.filter((c) => c.totalImpressions > 500);
   const mediumImpactClusters = clusters.filter(
@@ -181,14 +265,14 @@ export default function CannibalizationPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">Cannibalization Analysis</h1>
+        <h1 className="text-3xl font-bold text-foreground">Cannibalization Analysis</h1>
         <p className="text-muted-foreground mt-1">
-          Queries ranking on multiple pages - consolidate to improve performance
+          Detect keyword cannibalization + content gaps with AI-powered consolidation scoring and competitor analysis
         </p>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card className="p-4">
           <div className="text-sm text-muted-foreground">Total Clusters</div>
           <div className="text-2xl font-bold mt-1">{clusters.length}</div>
@@ -205,13 +289,26 @@ export default function CannibalizationPage() {
             {mediumImpactClusters.length}
           </div>
         </Card>
-        <Card className="p-4">
-          <div className="text-sm text-muted-foreground">Total Impressions</div>
-          <div className="text-2xl font-bold mt-1">
-            {clusters
-              .reduce((sum, c) => sum + c.totalImpressions, 0)
+        <Card className="p-4 bg-emerald-500/5 border-emerald-500/20">
+          <div className="text-sm text-emerald-200 flex items-center gap-1">
+            <TrendingUp className="h-3 w-3" />
+            Potential Clicks
+          </div>
+          <div className="text-2xl font-bold mt-1 text-emerald-400">
+            +{clusters
+              .reduce((sum, c) => sum + (c.metrics?.potentialClicks || 0), 0)
               .toLocaleString()}
           </div>
+        </Card>
+        <Card className="p-4 bg-blue-500/5 border-blue-500/20">
+          <div className="text-sm text-blue-200 flex items-center gap-1">
+            <Target className="h-3 w-3" />
+            Quick Wins
+          </div>
+          <div className="text-2xl font-bold mt-1 text-blue-400">
+            {clusters.filter(c => c.metrics && c.metrics.difficulty < 30 && c.metrics.consolidationScore > 60).length}
+          </div>
+          <div className="text-xs text-blue-300/70 mt-1">Low difficulty</div>
         </Card>
       </div>
 
@@ -244,7 +341,7 @@ export default function CannibalizationPage() {
               <Card key={cluster.query} className={`p-6 ${impactColor}`}>
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
+                    <div className="flex items-center gap-3 mb-2 flex-wrap">
                       <h3 className="text-lg font-semibold">{cluster.query}</h3>
                       <Badge
                         variant={
@@ -260,10 +357,63 @@ export default function CannibalizationPage() {
                       <Badge variant="outline">
                         {cluster.pageCount} pages
                       </Badge>
+                      {cluster.metrics && (
+                        <Badge className={
+                          cluster.metrics.difficultyLevel === 'low' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                          cluster.metrics.difficultyLevel === 'medium' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                          cluster.metrics.difficultyLevel === 'high' ? 'bg-orange-500/10 text-orange-400 border-orange-500/20' :
+                          'bg-red-500/10 text-red-400 border-red-500/20'
+                        }>
+                          {cluster.metrics.difficultyLevel.replace('_', ' ')}
+                        </Badge>
+                      )}
                     </div>
                     <p className="text-sm text-muted-foreground mb-4">
                       {cluster.rationale}
                     </p>
+
+                    {/* SEO Metrics - Consolidation Opportunity */}
+                    {cluster.metrics && (
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4 p-3 bg-slate-900/30 rounded-lg">
+                        <div>
+                          <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                            <Award className="h-3 w-3" />
+                            Priority
+                          </div>
+                          <div className={`text-lg font-bold ${
+                            cluster.metrics.consolidationScore > 70 ? 'text-emerald-400' :
+                            cluster.metrics.consolidationScore > 50 ? 'text-amber-400' :
+                            'text-muted-foreground'
+                          }`}>
+                            {cluster.metrics.consolidationScore}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-muted-foreground mb-1">Avg Position</div>
+                          <div className="text-lg font-bold">#{cluster.metrics.avgPosition}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                            <TrendingUp className="h-3 w-3" />
+                            Potential
+                          </div>
+                          <div className="text-lg font-bold text-emerald-400">
+                            +{cluster.metrics.potentialClicks}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            Time
+                          </div>
+                          <div className="text-lg font-bold">{cluster.metrics.estimatedTimeToRank}mo</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-muted-foreground mb-1">Difficulty</div>
+                          <div className="text-lg font-bold">{cluster.metrics.difficulty}/100</div>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Pages */}
                     <div className="space-y-2 mb-4">
@@ -420,7 +570,7 @@ export default function CannibalizationPage() {
                 variant="outline"
               >
                 <Sparkles className="h-4 w-4 mr-2" />
-                {isGeneratingBrief ? "Generating Brief..." : "Generate Content Brief with Gemini"}
+                {isGeneratingBrief ? "Generating Brief..." : "Generate Content Brief with AI"}
               </Button>
 
               {/* Show Brief - Beautifully Formatted */}
@@ -432,7 +582,7 @@ export default function CannibalizationPage() {
                         <Sparkles className="h-6 w-6 text-purple-400" />
                       </div>
                       <div>
-                        <h3 className="text-xl font-bold text-white">Gemini Content Brief</h3>
+                        <h3 className="text-xl font-bold text-white">AI Content Brief</h3>
                         <p className="text-sm text-purple-300">AI-Generated Action Plan</p>
                       </div>
                     </div>

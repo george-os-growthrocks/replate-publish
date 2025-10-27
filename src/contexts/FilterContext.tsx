@@ -1,9 +1,10 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { DateRange } from "react-day-picker";
 
 interface FilterContextType {
   propertyUrl: string;
   setPropertyUrl: (url: string) => void;
+  selectedProperty: string; // Alias for consistency
   dateRange: DateRange | undefined;
   setDateRange: (range: DateRange | undefined) => void;
   country: string;
@@ -28,11 +29,30 @@ export function FilterProvider({ children }: { children: ReactNode }) {
   const [device, setDevice] = useState<"ALL" | "DESKTOP" | "MOBILE" | "TABLET">("ALL");
   const [searchQuery, setSearchQuery] = useState<string>("");
 
+  // Load saved property from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('anotherseo_filter_property');
+    if (saved) {
+      setPropertyUrl(saved);
+    }
+  }, []);
+
+  // Save to localStorage whenever property changes
+  useEffect(() => {
+    if (propertyUrl) {
+      localStorage.setItem('anotherseo_filter_property', propertyUrl);
+      localStorage.setItem('anotherseo_selected_property', propertyUrl);
+      // Trigger storage event for other components (like chatbot)
+      window.dispatchEvent(new Event('storage'));
+    }
+  }, [propertyUrl]);
+
   return (
     <FilterContext.Provider
       value={{
         propertyUrl,
         setPropertyUrl,
+        selectedProperty: propertyUrl, // Alias for consistency
         dateRange,
         setDateRange,
         country,

@@ -2,72 +2,226 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  color-scheme: dark;
-}
-
-html, body, #root {
-  height: 100%;
-  @apply bg-slate-950 text-slate-100 antialiased;
-}
+/* 🎨 AnotherSEOGuru Complete Design System
+   All colors MUST be HSL format.
+   All colors defined as CSS variables for proper theme switching.
+*/
 
 @layer base {
+  /* ☀️ LIGHT MODE (Default) */
+  :root {
+    /* Background & Surface */
+    --background: 210 20% 98%;
+    --foreground: 222 47% 11%;
+    
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    
+    /* Brand Colors */
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 217 91% 70%;
+    
+    --secondary: 142 76% 36%;
+    --secondary-foreground: 0 0% 100%;
+    
+    --accent: 142 69% 58%;
+    --accent-foreground: 0 0% 100%;
+    
+    /* Utility Colors */
+    --muted: 210 20% 96%;
+    --muted-foreground: 215 16% 47%;
+    
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+    
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    
+    /* Borders & Inputs */
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 217 91% 60%;
+    
+    /* Border Radius */
+    --radius: 1rem;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%) 0%, hsl(142 69% 58%) 100%);
+    --gradient-secondary: linear-gradient(135deg, hsl(142 76% 36%) 0%, hsl(158 64% 52%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(210 20% 98%) 0%, hsl(217 91% 95%) 100%);
+    --gradient-card: linear-gradient(135deg, hsl(0 0% 100%) 0%, hsl(210 20% 99%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(217 91% 60%) 0%, hsl(217 91% 70%) 100%);
+    
+    /* Shadows */
+    --shadow-soft: 0 1px 3px hsl(222 47% 11% / 0.06), 0 1px 2px hsl(222 47% 11% / 0.04);
+    --shadow-medium: 0 4px 6px hsl(222 47% 11% / 0.07), 0 2px 4px hsl(222 47% 11% / 0.05);
+    --shadow-strong: 0 10px 15px hsl(222 47% 11% / 0.1), 0 4px 6px hsl(222 47% 11% / 0.05);
+    --shadow-glow: 0 0 30px hsl(217 91% 60% / 0.25);
+    --shadow-xl: 0 20px 25px hsl(222 47% 11% / 0.1), 0 8px 10px hsl(222 47% 11% / 0.04);
+    
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* Platform Colors */
+    --platform-linkedin: 201 100% 35%;
+    --platform-twitter: 203 89% 53%;
+    --platform-instagram: 330 80% 50%;
+    --platform-reddit: 16 100% 50%;
+    --platform-medium: 0 0% 0%;
+    --platform-quora: 357 75% 53%;
+    --platform-youtube: 0 100% 50%;
+    --platform-tiktok: 349 100% 50%;
+    --platform-newsletter: 217 91% 60%;
+    --platform-blog: 217 91% 60%;
+    
+    /* Chart Colors */
+    --chart-1: 217 91% 60%;
+    --chart-2: 142 69% 58%;
+    --chart-3: 142 76% 36%;
+    --chart-4: 38 92% 50%;
+    --chart-5: 330 80% 50%;
+  }
+  
+  /* 🌙 DARK MODE */
+  .dark {
+    --background: 222 47% 11%;
+    --foreground: 210 20% 98%;
+    
+    --card: 217 19% 15%;
+    --card-foreground: 210 20% 98%;
+    
+    --popover: 217 19% 15%;
+    --popover-foreground: 210 20% 98%;
+    
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 217 91% 70%;
+    
+    --secondary: 142 76% 36%;
+    --secondary-foreground: 0 0% 100%;
+    
+    --accent: 142 69% 58%;
+    --accent-foreground: 0 0% 100%;
+    
+    --muted: 217 19% 20%;
+    --muted-foreground: 215 16% 65%;
+    
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+    
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+    
+    --border: 217 19% 25%;
+    --input: 217 19% 25%;
+    --ring: 217 91% 60%;
+    
+    --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%) 0%, hsl(142 69% 58%) 100%);
+    --gradient-secondary: linear-gradient(135deg, hsl(142 76% 36%) 0%, hsl(158 64% 52%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(222 47% 11%) 0%, hsl(217 91% 18%) 100%);
+    --gradient-card: linear-gradient(135deg, hsl(217 19% 15%) 0%, hsl(217 19% 17%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(217 91% 60%) 0%, hsl(217 91% 70%) 100%);
+    
+    --shadow-soft: 0 1px 3px hsl(0 0% 0% / 0.3);
+    --shadow-medium: 0 4px 6px hsl(0 0% 0% / 0.4);
+    --shadow-strong: 0 10px 15px hsl(0 0% 0% / 0.5);
+    --shadow-glow: 0 0 30px hsl(217 91% 60% / 0.4);
+    --shadow-xl: 0 20px 25px hsl(0 0% 0% / 0.5);
+    
+    --platform-linkedin: 201 100% 45%;
+    --platform-twitter: 203 89% 63%;
+    --platform-instagram: 330 80% 60%;
+    --platform-reddit: 16 100% 60%;
+    --platform-medium: 0 0% 90%;
+    --platform-quora: 357 75% 63%;
+    --platform-youtube: 0 100% 60%;
+    --platform-tiktok: 349 100% 60%;
+    --platform-newsletter: 217 91% 60%;
+    --platform-blog: 217 91% 60%;
+    
+    /* Chart Colors */
+    --chart-1: 217 91% 60%;
+    --chart-2: 142 69% 58%;
+    --chart-3: 142 76% 36%;
+    --chart-4: 38 92% 50%;
+    --chart-5: 330 80% 50%;
+  }
+  
   * {
     @apply border-border;
   }
   
-  /* Dark theme glassmorphism design */
-  :root {
-    --background: 222 47% 11%; /* slate-950 */
-    --foreground: 210 40% 98%; /* slate-100 */
-    --card: 222 47% 11%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222 47% 15%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217 91% 60%; /* indigo-500 */
-    --primary-foreground: 210 40% 98%;
-    --secondary: 217 32% 17%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 215 20% 25%;
-    --muted-foreground: 215 16% 65%; /* slate-400 - lighter for better contrast */
-    --accent: 217 32% 17%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217 19% 27%; /* white/10 on dark */
-    --input: 217 32% 17%;
-    --ring: 217 91% 60%;
-    --radius: 0.75rem;
-    --chart-1: 217 91% 60%; /* blue */
-    --chart-2: 142 76% 45%; /* green */
-    --chart-3: 39 96% 59%; /* yellow */
-    --chart-4: 271 91% 65%; /* purple */
-    --chart-5: 0 72% 51%; /* red */
-  }
-  
   body {
-    @apply bg-slate-950 text-slate-100;
+    @apply bg-background text-foreground;
     font-feature-settings: "tnum" 1;
   }
 }
 
 @layer utilities {
+  /* Gradient utilities - use var() */
   .gradient-primary {
-    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.7) 100%);
+    background: var(--gradient-primary);
   }
   
-  /* Glassmorphism card style from plan.md */
-  .glass-card {
-    @apply rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/60 to-slate-900/20 backdrop-blur shadow-[0_10px_40px_-15px_rgba(0,0,0,0.5)] p-6;
+  .gradient-secondary {
+    background: var(--gradient-secondary);
   }
   
-  /* KPI card style */
-  .kpi-card {
-    @apply rounded-2xl border border-white/10 p-5 bg-slate-950/40;
+  .gradient-hero {
+    background: var(--gradient-hero);
   }
   
-  /* Chip/Badge style */
-  .chip {
-    @apply inline-flex items-center rounded-full border border-white/10 px-3 py-1 text-xs;
+  .gradient-card {
+    background: var(--gradient-card);
+  }
+  
+  .gradient-accent {
+    background: var(--gradient-accent);
+  }
+  
+  /* Shadow utilities */
+  .shadow-soft {
+    box-shadow: var(--shadow-soft);
+  }
+  
+  .shadow-medium {
+    box-shadow: var(--shadow-medium);
+  }
+  
+  .shadow-strong {
+    box-shadow: var(--shadow-strong);
+  }
+  
+  .shadow-glow {
+    box-shadow: var(--shadow-glow);
+  }
+  
+  .shadow-xl {
+    box-shadow: var(--shadow-xl);
+  }
+  
+  /* Transition utilities */
+  .transition-smooth {
+    transition: var(--transition-smooth);
+  }
+  
+  .transition-bounce {
+    transition: var(--transition-bounce);
+  }
+  
+  .transition-fast {
+    transition: var(--transition-fast);
   }
 }

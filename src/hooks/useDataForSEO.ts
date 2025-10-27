@@ -572,3 +572,174 @@ export function useDataForSEOLanguages(
   });
 }
 
+// ============================================================================
+// OnPage Crawl Hooks (Full Site Audit)
+// ============================================================================
+
+export interface OnPageCrawlParams {
+  target: string;
+  max_crawl_pages?: number;
+  allow_subdomains?: boolean;
+  enable_javascript?: boolean;
+  load_resources?: boolean;
+  validate_micromarkup?: boolean;
+  check_spell?: boolean;
+  calculate_keyword_density?: boolean;
+  checks_threshold?: {
+    high_loading_time?: number;
+    large_page_size?: number;
+  };
+  tag?: string;
+}
+
+// Start a crawl
+export async function startOnPageCrawl(params: OnPageCrawlParams): Promise<string> {
+  const { data, error } = await supabase.functions.invoke("dataforseo-onpage-crawl/task-post", {
+    body: [params],
+  });
+  
+  if (error) throw error;
+  if (data?.error) throw new Error(JSON.stringify(data.error));
+  
+  const taskId = data?.tasks?.[0]?.id;
+  if (!taskId) throw new Error("No task ID returned from crawl");
+  
+  return taskId;
+}
+
+// Check if crawl is ready
+export async function checkOnPageCrawlReady(): Promise<any> {
+  const { data, error } = await supabase.functions.invoke("dataforseo-onpage-crawl/tasks-ready", {
+    body: [],
+  });
+  
+  if (error) throw error;
+  return data;
+}
+
+// Get crawl summary
+export async function getOnPageSummary(taskId: string): Promise<any> {
+  const { data, error } = await supabase.functions.invoke("dataforseo-onpage-crawl/summary", {
+    body: [{ id: taskId }],
+  });
+  
+  if (error) throw error;
+  if (data?.error) throw new Error(JSON.stringify(data.error));
+  
+  return data;
+}
+
+// Get pages with issues
+export async function getOnPageCriticalPages(taskId: string, filters?: any[]): Promise<any> {
+  const payload = [{
+    id: taskId,
+    filters: filters || [
+      ["checks.is_4xx_code", "=", true],
+      "or",
+      ["checks.no_title", "=", true],
+      "or",
+      ["checks.no_description", "=", true]
+    ],
+    limit: 200
+  }];
+  
+  const { data, error } = await supabase.functions.invoke("dataforseo-onpage-crawl/pages", {
+    body: payload,
+  });
+  
+  if (error) throw error;
+  if (data?.error) throw new Error(JSON.stringify(data.error));
+  
+  return data;
+}
+
+// Get all pages
+export async function getOnPageAllPages(taskId: string, limit = 100, offset = 0): Promise<any> {
+  const { data, error } = await supabase.functions.invoke("dataforseo-onpage-crawl/pages", {
+    body: [{ id: taskId, limit, offset }],
+  });
+  
+  if (error) throw error;
+  if (data?.error) throw new Error(JSON.stringify(data.error));
+  
+  return data;
+}
+
+// Get duplicate tags
+export async function getOnPageDuplicateTags(taskId: string): Promise<any> {
+  const { data, error } = await supabase.functions.invoke("dataforseo-onpage-crawl/duplicate-tags", {
+    body: [{ id: taskId }],
+  });
+  
+  if (error) throw error;
+  if (data?.error) throw new Error(JSON.stringify(data.error));
+  
+  return data;
+}
+
+// Get duplicate content
+export async function getOnPageDuplicateContent(taskId: string): Promise<any> {
+  const { data, error } = await supabase.functions.invoke("dataforseo-onpage-crawl/duplicate-content", {
+    body: [{ id: taskId }],
+  });
+  
+  if (error) throw error;
+  if (data?.error) throw new Error(JSON.stringify(data.error));
+  
+  return data;
+}
+
+// Get non-indexable pages
+export async function getOnPageNonIndexable(taskId: string): Promise<any> {
+  const { data, error } = await supabase.functions.invoke("dataforseo-onpage-crawl/non-indexable", {
+    body: [{ id: taskId }],
+  });
+  
+  if (error) throw error;
+  if (data?.error) throw new Error(JSON.stringify(data.error));
+  
+  return data;
+}
+
+// Get redirect chains
+export async function getOnPageRedirectChains(taskId: string): Promise<any> {
+  const { data, error } = await supabase.functions.invoke("dataforseo-onpage-crawl/redirect-chains", {
+    body: [{ id: taskId }],
+  });
+  
+  if (error) throw error;
+  if (data?.error) throw new Error(JSON.stringify(data.error));
+  
+  return data;
+}
+
+// Get links
+export async function getOnPageLinks(taskId: string, filters?: any[]): Promise<any> {
+  const payload = [{ 
+    id: taskId, 
+    limit: 100,
+    ...(filters && { filters })
+  }];
+  
+  const { data, error } = await supabase.functions.invoke("dataforseo-onpage-crawl/links", {
+    body: payload,
+  });
+  
+  if (error) throw error;
+  if (data?.error) throw new Error(JSON.stringify(data.error));
+  
+  return data;
+}
+
+// Get resources
+export async function getOnPageResources(taskId: string): Promise<any> {
+  const { data, error } = await supabase.functions.invoke("dataforseo-onpage-crawl/resources", {
+    body: [{ id: taskId, limit: 100 }],
+  });
+  
+  if (error) throw error;
+  if (data?.error) throw new Error(JSON.stringify(data.error));
+  
+  return data;
+}
+

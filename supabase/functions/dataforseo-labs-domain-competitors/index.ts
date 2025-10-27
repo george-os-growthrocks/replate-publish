@@ -7,20 +7,38 @@ const corsHeaders = {
 
 async function dfsFetch(path: string, body: any, login: string, password: string) {
   const auth = btoa(`${login}:${password}`);
-  const res = await fetch(`https://api.dataforseo.com/v3/${path}`, {
+  const url = `https://api.dataforseo.com/v3/${path}`;
+  const requestBody = [body];
+  
+  console.log('[DFS Domain Competitors] Request:', {
+    url,
+    method: 'POST',
+    body: requestBody
+  });
+  
+  const res = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "Authorization": `Basic ${auth}`,
     },
-    body: JSON.stringify([body])
+    body: JSON.stringify(requestBody)
   });
+  
+  const responseText = await res.text();
+  console.log('[DFS Domain Competitors] Response:', {
+    status: res.status,
+    statusText: res.statusText,
+    ok: res.ok,
+    body: responseText
+  });
+  
   if (!res.ok) {
-    const errorText = await res.text();
-    console.error(`DataForSEO API Error (${path}):`, res.status, errorText);
-    throw new Error(`DataForSEO API Error: ${errorText}`);
+    console.error(`DataForSEO API Error (${path}):`, res.status, responseText);
+    throw new Error(`DataForSEO API Error: ${responseText}`);
   }
-  return res.json();
+  
+  return JSON.parse(responseText);
 }
 
 serve(async (req) => {
@@ -33,8 +51,12 @@ serve(async (req) => {
     const dfsPassword = Deno.env.get("DATAFORSEO_PASSWORD");
 
     if (!dfsLogin || !dfsPassword) {
+      console.error('[DFS Domain Competitors] Missing credentials');
       throw new Error("DataForSEO credentials not configured");
     }
+
+    const requestBody = await req.json();
+    console.log('[DFS Domain Competitors] Received request body:', requestBody);
 
     const { 
       target, // domain to analyze
@@ -43,9 +65,10 @@ serve(async (req) => {
       limit = 100,
       offset = 0,
       filters = null
-    } = await req.json();
+    } = requestBody;
 
     if (!target) {
+      console.error('[DFS Domain Competitors] Missing target domain');
       throw new Error("target domain is required");
     }
 
@@ -58,12 +81,16 @@ serve(async (req) => {
       ...(filters && { filters })
     };
 
+    console.log('[DFS Domain Competitors] Prepared payload:', payload);
+
     const data = await dfsFetch(
-      "dataforseo_labs/google/domain_competitors/live",
+      "dataforseo_labs/google/competitors_domain/live",
       payload,
       dfsLogin,
       dfsPassword
     );
+
+    console.log('[DFS Domain Competitors] Success! Returning data');
 
     return new Response(JSON.stringify(data), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

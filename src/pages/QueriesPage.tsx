@@ -51,8 +51,8 @@ function CtrGapAnalysis({ query, impressions, ctr, position }: CtrGapAnalysisPro
     return (
       <div className="mt-4 p-4 rounded-lg bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20">
         <div className="flex items-center gap-2">
-          <Target className="h-4 w-4 text-indigo-400 animate-pulse" />
-          <span className="text-sm text-indigo-200">Analyzing CTR opportunity...</span>
+          <Target className="h-4 w-4 text-primary animate-pulse" />
+          <span className="text-sm text-foreground">Analyzing CTR opportunity...</span>
         </div>
       </div>
     );
@@ -63,7 +63,7 @@ function CtrGapAnalysis({ query, impressions, ctr, position }: CtrGapAnalysisPro
     return (
       <div className="mt-4 p-4 rounded-lg bg-red-500/10 border border-red-500/20">
         <div className="text-sm text-red-200">
-          ⚠️ DataForSEO API Error: {error.message}
+          ⚠️ SERP Analysis Error: {error.message}
         </div>
         <div className="text-xs text-red-300/70 mt-1">
           Check console for details
@@ -86,7 +86,7 @@ function CtrGapAnalysis({ query, impressions, ctr, position }: CtrGapAnalysisPro
     return (
       <div className="mt-4 p-4 rounded-lg bg-red-500/10 border border-red-500/20">
         <div className="text-sm text-red-200">
-          ⚠️ DataForSEO returned error: {serpData.error}
+          ⚠️ SERP Analysis returned error: {serpData.error}
         </div>
       </div>
     );
@@ -221,6 +221,97 @@ function CtrGapAnalysis({ query, impressions, ctr, position }: CtrGapAnalysisPro
           🐛 {showDebug ? "Hide" : "Show"} Debug Info
         </Button>
       </div>
+
+      {/* Actionable Recommendations */}
+      {hasSignificantOpportunity && (
+        <div className="mt-4 p-4 rounded-lg bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="h-6 w-6 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+              <Zap className="h-4 w-4 text-emerald-400" />
+            </div>
+            <h4 className="text-sm font-semibold text-emerald-200">🎯 What To Do</h4>
+          </div>
+          <div className="space-y-2">
+            {/* Recommendations based on current status */}
+            {(() => {
+              const recommendations = [];
+
+              // Title optimization
+              recommendations.push({
+                icon: "✏️",
+                action: "Optimize Your Title Tag",
+                details: `Add power words, numbers, or emotional triggers. Keep it under 60 characters. Current position: ${position.toFixed(1)}`
+              });
+
+              // Meta description
+              recommendations.push({
+                icon: "📝",
+                action: "Improve Meta Description",
+                details: "Include the keyword, add a clear call-to-action, and make it compelling. Aim for 150-160 characters."
+              });
+
+              // SERP feature specific recommendations
+              if (!features.fs && position <= 5) {
+                recommendations.push({
+                  icon: "✨",
+                  action: "Target Featured Snippet",
+                  details: "Add a clear, concise answer paragraph at the top. Use bullet points or numbered lists."
+                });
+              }
+
+              if (features.fs) {
+                recommendations.push({
+                  icon: "✨",
+                  action: "Protect Featured Snippet",
+                  details: "You have a featured snippet! Monitor it and keep your answer format optimized."
+                });
+              }
+
+              if (!features.sitelinks && position <= 3) {
+                recommendations.push({
+                  icon: "🔗",
+                  action: "Add Sitelinks",
+                  details: "Improve site structure and internal linking to trigger sitelinks in Google."
+                });
+              }
+
+              if (features.paa) {
+                recommendations.push({
+                  icon: "❓",
+                  action: "Answer PAA Questions",
+                  details: "Add FAQ schema and answer related 'People Also Ask' questions on your page."
+                });
+              }
+
+              // Rich results
+              recommendations.push({
+                icon: "⭐",
+                action: "Add Schema Markup",
+                details: "Implement structured data (Article, Product, FAQ) to get star ratings and rich results."
+              });
+
+              // CTR boosters
+              if (ctr * 100 < 3) {
+                recommendations.push({
+                  icon: "🎨",
+                  action: "Make Title More Clickable",
+                  details: "Use brackets [like this], add year (2025), or use question format."
+                });
+              }
+
+              return recommendations.slice(0, 4).map((rec, idx) => (
+                <div key={idx} className="flex items-start gap-2 text-sm">
+                  <span className="text-lg mt-0.5">{rec.icon}</span>
+                  <div className="flex-1">
+                    <div className="font-medium text-white">{rec.action}</div>
+                    <div className="text-xs text-emerald-200/70 mt-0.5">{rec.details}</div>
+                  </div>
+                </div>
+              ));
+            })()}
+          </div>
+        </div>
+      )}
       
       {/* Debug Panel */}
       {showDebug && (
@@ -243,8 +334,8 @@ function CtrGapAnalysis({ query, impressions, ctr, position }: CtrGapAnalysisPro
 
           {/* API Status */}
           <div>
-            <div className="text-xs font-medium text-amber-300 mb-1">🔌 DataForSEO API Status</div>
-            <div className="bg-slate-900/50 p-2 rounded border border-white/5 text-xs">
+            <div className="text-xs font-medium text-amber-300 mb-1">🔌 SERP Analysis Status</div>
+            <div className="bg-muted p-2 rounded border border-white/5 text-xs">
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">API Call Status:</span>
                 <span className={`font-medium ${
@@ -278,19 +369,19 @@ function CtrGapAnalysis({ query, impressions, ctr, position }: CtrGapAnalysisPro
           <div>
             <div className="text-xs font-medium text-amber-300 mb-1">📥 Input Parameters</div>
             <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="bg-slate-900/50 p-2 rounded border border-white/5">
+              <div className="bg-muted p-2 rounded border border-white/5">
                 <span className="text-muted-foreground">Query:</span>
                 <div className="text-white font-medium truncate">{query}</div>
               </div>
-              <div className="bg-slate-900/50 p-2 rounded border border-white/5">
+              <div className="bg-muted p-2 rounded border border-white/5">
                 <span className="text-muted-foreground">Position:</span>
                 <div className="text-white font-medium">{position.toFixed(1)}</div>
               </div>
-              <div className="bg-slate-900/50 p-2 rounded border border-white/5">
+              <div className="bg-muted p-2 rounded border border-white/5">
                 <span className="text-muted-foreground">Impressions:</span>
                 <div className="text-white font-medium">{impressions.toLocaleString()}</div>
               </div>
-              <div className="bg-slate-900/50 p-2 rounded border border-white/5">
+              <div className="bg-muted p-2 rounded border border-white/5">
                 <span className="text-muted-foreground">Current CTR:</span>
                 <div className="text-white font-medium">{(ctr * 100).toFixed(2)}%</div>
               </div>
@@ -307,7 +398,7 @@ function CtrGapAnalysis({ query, impressions, ctr, position }: CtrGapAnalysisPro
                 { label: "Paid Ads", value: features.adsTop && features.adsTop > 0, count: features.adsTop, color: "amber" },
                 { label: "Sitelinks", value: features.sitelinks, color: "purple" }
               ].map((feature, i) => (
-                <div key={i} className="flex items-center justify-between bg-slate-900/50 p-2 rounded border border-white/5">
+                <div key={i} className="flex items-center justify-between bg-muted p-2 rounded border border-white/5">
                   <span className="text-muted-foreground">{feature.label}:</span>
                   <span className={`font-medium ${feature.value ? `text-${feature.color}-400` : 'text-muted-foreground'}`}>
                     {feature.value ? (feature.count ? `Yes (${feature.count})` : "Yes") : "No"}
@@ -321,19 +412,19 @@ function CtrGapAnalysis({ query, impressions, ctr, position }: CtrGapAnalysisPro
           <div>
             <div className="text-xs font-medium text-amber-300 mb-1">📊 CTR Calculation Results</div>
             <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="bg-slate-900/50 p-2 rounded border border-white/5">
+              <div className="bg-muted p-2 rounded border border-white/5">
                 <span className="text-muted-foreground">Expected CTR:</span>
                 <div className="text-emerald-400 font-medium">{(gap.ctrExpected * 100).toFixed(2)}%</div>
               </div>
-              <div className="bg-slate-900/50 p-2 rounded border border-white/5">
+              <div className="bg-muted p-2 rounded border border-white/5">
                 <span className="text-muted-foreground">CTR Gap:</span>
                 <div className="text-amber-400 font-medium">{(gap.gap * 100).toFixed(2)}%</div>
               </div>
-              <div className="bg-slate-900/50 p-2 rounded border border-white/5">
+              <div className="bg-muted p-2 rounded border border-white/5">
                 <span className="text-muted-foreground">Extra Clicks:</span>
                 <div className="text-indigo-400 font-medium">{gap.potentialExtraClicks.toLocaleString()}</div>
               </div>
-              <div className="bg-slate-900/50 p-2 rounded border border-white/5">
+              <div className="bg-muted p-2 rounded border border-white/5">
                 <span className="text-muted-foreground">Opportunity Level:</span>
                 <div className={`font-medium ${
                   gap.opportunity === 'high' ? 'text-red-400' : 
@@ -352,7 +443,7 @@ function CtrGapAnalysis({ query, impressions, ctr, position }: CtrGapAnalysisPro
               <div className="text-xs font-medium text-amber-300 mb-1">
                 📋 SERP Items ({serpData.tasks[0].result[0].items.length} total)
               </div>
-              <div className="bg-slate-900/50 p-2 rounded border border-white/5 max-h-32 overflow-y-auto">
+              <div className="bg-muted p-2 rounded border border-white/5 max-h-32 overflow-y-auto">
                 <div className="space-y-1 text-xs">
                   {serpData.tasks[0].result[0].items.slice(0, 10).map((item: any, idx: number) => (
                     <div key={idx} className="flex items-center gap-2 text-muted-foreground">
@@ -373,7 +464,7 @@ function CtrGapAnalysis({ query, impressions, ctr, position }: CtrGapAnalysisPro
             <summary className="cursor-pointer text-amber-300 font-medium hover:text-amber-200">
               🔍 View Full API Response
             </summary>
-            <pre className="mt-2 text-[10px] text-white bg-slate-900/50 p-3 rounded border border-white/5 overflow-x-auto max-h-64">
+            <pre className="mt-2 text-[10px] text-white bg-muted p-3 rounded border border-white/5 overflow-x-auto max-h-64">
               {JSON.stringify(serpData, null, 2)}
             </pre>
           </details>
@@ -439,7 +530,7 @@ export default function QueriesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Search Queries</h1>
+          <h1 className="text-3xl font-bold text-foreground">Search Queries</h1>
           <p className="text-muted-foreground mt-1">
             See which pages rank for each query
           </p>

@@ -49,7 +49,16 @@ const QueryTable = ({ propertyUrl, startDate, endDate }: QueryTableProps) => {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Edge function error:", error);
+        throw error;
+      }
+
+      // Check if the response contains an error even if request succeeded
+      if (data?.error) {
+        console.error("GSC API error:", data.error);
+        throw new Error(data.error);
+      }
 
       if (data?.rows) {
         const formatted = data.rows.map((row: any) => ({
@@ -60,9 +69,12 @@ const QueryTable = ({ propertyUrl, startDate, endDate }: QueryTableProps) => {
           position: row.position.toFixed(1),
         }));
         setQueries(formatted);
+      } else {
+        console.warn("No rows returned from GSC query");
       }
     } catch (error) {
       console.error("Error fetching queries:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to fetch queries");
     } finally {
       setIsLoading(false);
     }

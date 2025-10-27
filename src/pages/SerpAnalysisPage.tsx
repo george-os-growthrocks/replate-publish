@@ -1,19 +1,24 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, Loader2, Target, Star, TrendingUp, ExternalLink } from "lucide-react";
+import { Search, Loader2, Target, Star, TrendingUp, ExternalLink, Zap, Shield, Award, AlertCircle, Lightbulb, BarChart3, Globe } from "lucide-react";
 import { useSerpAdvanced } from "@/hooks/useDataForSEO";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { optimizeForSerpFeature } from "@/lib/seo-algorithms";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Progress } from "@/components/ui/progress";
 
 export default function SerpAnalysisPage() {
   const [keyword, setKeyword] = useState("");
   const [searchKeyword, setSearchKeyword] = useState("");
+  const [locationCode, setLocationCode] = useState(2300); // Greece default
+  const [languageCode, setLanguageCode] = useState("el"); // Greek default
 
   const { data: serpData, isLoading, error } = useSerpAdvanced(
-    { keyword: searchKeyword, location_code: 2840, language_code: "en", device: "desktop" },
+    { keyword: searchKeyword, location_code: locationCode, language_code: languageCode, device: "desktop" },
     !!searchKeyword
   );
 
@@ -32,22 +37,120 @@ export default function SerpAnalysisPage() {
   const paaItems = serpItems.filter((item: any) => item.type === "people_also_ask");
   const relatedSearches = serpItems.filter((item: any) => item.type === "related_searches");
 
+  // Advanced SERP Feature Detection
+  const serpFeatures = useMemo(() => {
+    if (serpItems.length === 0) return null;
+
+    const features = {
+      featured_snippet: serpItems.some((item: any) => item.type === "featured_snippet"),
+      people_also_ask: serpItems.some((item: any) => item.type === "people_also_ask"),
+      local_pack: serpItems.some((item: any) => item.type === "local_pack" || item.type === "map"),
+      knowledge_graph: serpItems.some((item: any) => item.type === "knowledge_graph"),
+      image_pack: serpItems.some((item: any) => item.type === "images"),
+      video_carousel: serpItems.some((item: any) => item.type === "video"),
+      shopping_results: serpItems.some((item: any) => item.type === "shopping" || item.type === "paid_shopping"),
+      top_stories: serpItems.some((item: any) => item.type === "top_stories"),
+      reviews: serpItems.some((item: any) => item.type === "reviews" || item.type === "google_reviews"),
+      sitelinks: organicResults.some((item: any) => item.links && item.links.length > 0),
+      paid_ads: serpItems.filter((item: any) => item.type === "paid").length,
+    };
+
+    const featureCount = Object.values(features).filter((v) => v === true || (typeof v === 'number' && v > 0)).length;
+    
+    return { ...features, count: featureCount };
+  }, [serpItems, organicResults]);
+
+  // Ranking Difficulty Analysis
+  const rankingDifficulty = useMemo(() => {
+    if (organicResults.length === 0) return null;
+
+    const topDomains = organicResults.slice(0, 10).map((r: any) => r.domain);
+    const uniqueDomains = new Set(topDomains).size;
+    const diversityScore = (uniqueDomains / 10) * 100;
+
+    // Check for strong domains (simple heuristic)
+    const strongDomains = topDomains.filter((d: string) => 
+      d.includes('wikipedia') || d.includes('youtube') || d.includes('amazon')
+    ).length;
+
+    const hasFS = serpFeatures?.featured_snippet || false;
+    const hasPAA = serpFeatures?.people_also_ask || false;
+    const serpComplexity = serpFeatures?.count || 0;
+
+    let difficulty = 50; // base
+
+    // Increase difficulty for strong domains
+    difficulty += strongDomains * 10;
+
+    // Increase for low diversity (same domains dominating)
+    if (diversityScore < 50) difficulty += 15;
+
+    // Increase for complex SERP
+    difficulty += serpComplexity * 3;
+
+    // Decrease if no featured snippet (easier to rank)
+    if (!hasFS) difficulty -= 10;
+
+    difficulty = Math.max(0, Math.min(100, difficulty));
+
+    const level = difficulty >= 70 ? 'Very High' : difficulty >= 50 ? 'High' : difficulty >= 30 ? 'Medium' : 'Low';
+
+    return { score: Math.round(difficulty), level, diversityScore: Math.round(diversityScore), strongDomains };
+  }, [organicResults, serpFeatures]);
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">SERP Analysis</h1>
+        <h1 className="text-3xl font-bold text-foreground">SERP Analysis</h1>
         <p className="text-muted-foreground mt-1">
-          Analyze search engine results pages and understand the competition
+          AI-powered SERP feature detection, ranking difficulty analysis, and optimization strategies for any keyword
         </p>
       </div>
+
+      {/* Location Selector */}
+      <Card className="p-4">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Globe className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium">Target Market:</span>
+          </div>
+          <Select value={locationCode.toString()} onValueChange={(val) => setLocationCode(Number(val))}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="2300">🇬🇷 Greece</SelectItem>
+              <SelectItem value="2840">🇺🇸 United States</SelectItem>
+              <SelectItem value="2826">🇬🇧 United Kingdom</SelectItem>
+              <SelectItem value="2276">🇩🇪 Germany</SelectItem>
+              <SelectItem value="2250">🇫🇷 France</SelectItem>
+              <SelectItem value="2380">🇮🇹 Italy</SelectItem>
+              <SelectItem value="2724">🇪🇸 Spain</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={languageCode} onValueChange={setLanguageCode}>
+            <SelectTrigger className="w-[150px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="el">Greek (Ελληνικά)</SelectItem>
+              <SelectItem value="en">English</SelectItem>
+              <SelectItem value="de">German</SelectItem>
+              <SelectItem value="fr">French</SelectItem>
+              <SelectItem value="it">Italian</SelectItem>
+              <SelectItem value="es">Spanish</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </Card>
 
       {/* Search Input */}
       <Card className="p-6">
         <div className="flex items-center gap-3">
           <Target className="h-5 w-5 text-primary" />
           <Input
-            placeholder='Enter keyword to analyze (e.g., "best running shoes")'
+            placeholder='Enter keyword to analyze (e.g., "κτημα γαμου")'
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
@@ -83,29 +186,173 @@ export default function SerpAnalysisPage() {
       )}
 
       {/* Results */}
-      {!isLoading && searchKeyword && serpItems.length > 0 && (
+      {!isLoading && searchKeyword && serpItems.length > 0 && serpFeatures && rankingDifficulty && (
         <>
-          {/* SERP Features Overview */}
-          <div className="grid grid-cols-4 gap-4">
-            <Card className="p-4">
-              <div className="text-sm text-muted-foreground">Total Results</div>
-              <div className="text-2xl font-bold mt-1">{serpItems.length}</div>
-            </Card>
+          {/* Stats Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <Card className="p-4">
               <div className="text-sm text-muted-foreground">Organic Results</div>
               <div className="text-2xl font-bold mt-1 text-emerald-400">{organicResults.length}</div>
             </Card>
             <Card className="p-4">
-              <div className="text-sm text-muted-foreground">Featured Snippet</div>
-              <div className="text-2xl font-bold mt-1">
-                {featuredSnippet ? "✓" : "✗"}
+              <div className="text-sm text-muted-foreground">SERP Features</div>
+              <div className="text-2xl font-bold mt-1 text-blue-400">{serpFeatures.count}</div>
+            </Card>
+            <Card className={`p-4 ${rankingDifficulty.score >= 70 ? 'bg-red-500/5 border-red-500/20' : rankingDifficulty.score >= 50 ? 'bg-amber-500/5 border-amber-500/20' : 'bg-emerald-500/5 border-emerald-500/20'}`}>
+              <div className={`text-sm flex items-center gap-1 ${rankingDifficulty.score >= 70 ? 'text-red-200' : rankingDifficulty.score >= 50 ? 'text-amber-200' : 'text-emerald-200'}`}>
+                <Shield className="h-3 w-3" />
+                Difficulty
+              </div>
+              <div className={`text-2xl font-bold mt-1 ${rankingDifficulty.score >= 70 ? 'text-red-400' : rankingDifficulty.score >= 50 ? 'text-amber-400' : 'text-emerald-400'}`}>
+                {rankingDifficulty.score}/100
+              </div>
+              <div className={`text-xs mt-1 ${rankingDifficulty.score >= 70 ? 'text-red-300/70' : rankingDifficulty.score >= 50 ? 'text-amber-300/70' : 'text-emerald-300/70'}`}>
+                {rankingDifficulty.level}
               </div>
             </Card>
             <Card className="p-4">
-              <div className="text-sm text-muted-foreground">PAA Questions</div>
-              <div className="text-2xl font-bold mt-1">{paaItems.length}</div>
+              <div className="text-sm text-muted-foreground">Domain Diversity</div>
+              <div className="text-2xl font-bold mt-1">{rankingDifficulty.diversityScore}%</div>
+              <div className="text-xs text-muted-foreground mt-1">
+                {rankingDifficulty.diversityScore >= 70 ? 'Highly diverse' : rankingDifficulty.diversityScore >= 50 ? 'Moderate' : 'Low diversity'}
+              </div>
+            </Card>
+            <Card className="p-4">
+              <div className="text-sm text-muted-foreground">Authority Domains</div>
+              <div className="text-2xl font-bold mt-1 text-purple-400">{rankingDifficulty.strongDomains}</div>
+              <div className="text-xs text-muted-foreground mt-1">in top 10</div>
             </Card>
           </div>
+
+          {/* Ranking Difficulty Analysis */}
+          <Card className="p-6 bg-gradient-to-r from-purple-500/10 to-blue-500/10 border-purple-500/20">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-purple-400" />
+                <h3 className="font-semibold text-purple-200">Ranking Difficulty Breakdown</h3>
+              </div>
+              <Badge variant="outline" className="text-purple-300 border-purple-500/30">
+                {rankingDifficulty.level} Competition
+              </Badge>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <div className="flex justify-between text-sm mb-2">
+                  <span>Overall Difficulty</span>
+                  <span className="font-bold">{rankingDifficulty.score}/100</span>
+                </div>
+                <Progress value={rankingDifficulty.score} className="h-2 bg-slate-900" />
+              </div>
+              <div className="grid grid-cols-2 gap-4 mt-4">
+                <div className="bg-slate-950/50 p-3 rounded border border-white/5">
+                  <div className="text-xs text-muted-foreground">SERP Complexity</div>
+                  <div className="text-lg font-bold">{serpFeatures.count} features</div>
+                </div>
+                <div className="bg-slate-950/50 p-3 rounded border border-white/5">
+                  <div className="text-xs text-muted-foreground">Strong Competitors</div>
+                  <div className="text-lg font-bold">{rankingDifficulty.strongDomains} domains</div>
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* SERP Features Detection */}
+          <Card className="p-6">
+            <h3 className="font-semibold mb-4 flex items-center gap-2">
+              <Zap className="h-5 w-5" />
+              Detected SERP Features
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {serpFeatures.featured_snippet && (
+                <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                  <div className="flex items-center gap-2">
+                    <Star className="h-4 w-4 text-amber-400" />
+                    <span className="text-sm font-medium text-amber-200">Featured Snippet</span>
+                  </div>
+                </div>
+              )}
+              {serpFeatures.people_also_ask && (
+                <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                  <div className="flex items-center gap-2">
+                    <Lightbulb className="h-4 w-4 text-blue-400" />
+                    <span className="text-sm font-medium text-blue-200">People Also Ask</span>
+                  </div>
+                </div>
+              )}
+              {serpFeatures.local_pack && (
+                <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                  <div className="flex items-center gap-2">
+                    <Target className="h-4 w-4 text-emerald-400" />
+                    <span className="text-sm font-medium text-emerald-200">Local Pack</span>
+                  </div>
+                </div>
+              )}
+              {serpFeatures.knowledge_graph && (
+                <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                  <div className="flex items-center gap-2">
+                    <Award className="h-4 w-4 text-purple-400" />
+                    <span className="text-sm font-medium text-purple-200">Knowledge Graph</span>
+                  </div>
+                </div>
+              )}
+              {serpFeatures.image_pack && (
+                <div className="p-3 rounded-lg bg-pink-500/10 border border-pink-500/20">
+                  <div className="flex items-center gap-2">
+                    <span className="text-amber-400">🖼️</span>
+                    <span className="text-sm font-medium text-pink-200">Image Pack</span>
+                  </div>
+                </div>
+              )}
+              {serpFeatures.video_carousel && (
+                <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+                  <div className="flex items-center gap-2">
+                    <span className="text-red-400">🎥</span>
+                    <span className="text-sm font-medium text-red-200">Video Carousel</span>
+                  </div>
+                </div>
+              )}
+              {serpFeatures.shopping_results && (
+                <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                  <div className="flex items-center gap-2">
+                    <span className="text-green-400">🛒</span>
+                    <span className="text-sm font-medium text-green-200">Shopping Results</span>
+                  </div>
+                </div>
+              )}
+              {serpFeatures.top_stories && (
+                <div className="p-3 rounded-lg bg-orange-500/10 border border-orange-500/20">
+                  <div className="flex items-center gap-2">
+                    <span className="text-orange-400">📰</span>
+                    <span className="text-sm font-medium text-orange-200">Top Stories</span>
+                  </div>
+                </div>
+              )}
+              {serpFeatures.reviews && (
+                <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+                  <div className="flex items-center gap-2">
+                    <Star className="h-4 w-4 text-yellow-400" />
+                    <span className="text-sm font-medium text-yellow-200">Reviews</span>
+                  </div>
+                </div>
+              )}
+              {serpFeatures.sitelinks && (
+                <div className="p-3 rounded-lg bg-indigo-500/10 border border-indigo-500/20">
+                  <div className="flex items-center gap-2">
+                    <span className="text-indigo-400">🔗</span>
+                    <span className="text-sm font-medium text-indigo-200">Sitelinks</span>
+                  </div>
+                </div>
+              )}
+              {serpFeatures.paid_ads > 0 && (
+                <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20">
+                  <div className="flex items-center gap-2">
+                    <span className="text-rose-400">💰</span>
+                    <span className="text-sm font-medium text-rose-200">{serpFeatures.paid_ads} Paid Ads</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </Card>
 
           {/* Featured Snippet */}
           {featuredSnippet && (
@@ -142,6 +389,122 @@ export default function SerpAnalysisPage() {
               </div>
             </Card>
           )}
+
+          {/* SERP Feature Optimization Recommendations */}
+          <Card className="p-6 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border-emerald-500/20">
+            <div className="flex items-center gap-2 mb-4">
+              <Lightbulb className="h-5 w-5 text-emerald-400" />
+              <h3 className="font-semibold text-emerald-200">🎯 Optimization Opportunities</h3>
+            </div>
+            <div className="space-y-4">
+              {serpFeatures.featured_snippet && (() => {
+                const fsOptimization = optimizeForSerpFeature({
+                  feature: "featured_snippet",
+                  currentPosition: 1,
+                  hasFeature: true
+                });
+                return (
+                  <div className="bg-slate-950/50 p-4 rounded-lg border border-emerald-500/20">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Star className="h-4 w-4 text-amber-400" />
+                      <span className="font-semibold text-white">Featured Snippet Strategy</span>
+                      <Badge variant="outline" className="text-amber-300 border-amber-500/30 ml-auto">
+                        {fsOptimization.estimatedImpact}
+                      </Badge>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      {fsOptimization.strategies.slice(0, 3).map((strategy, idx) => (
+                        <div key={idx} className="flex items-start gap-2">
+                          <span className="text-emerald-400 mt-1">•</span>
+                          <span className="text-emerald-100">{strategy}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {serpFeatures.people_also_ask && (() => {
+                const paaOptimization = optimizeForSerpFeature({
+                  feature: "people_also_ask",
+                  currentPosition: 1,
+                  hasFeature: true
+                });
+                return (
+                  <div className="bg-slate-950/50 p-4 rounded-lg border border-blue-500/20">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Lightbulb className="h-4 w-4 text-blue-400" />
+                      <span className="font-semibold text-white">People Also Ask Strategy</span>
+                      <Badge variant="outline" className="text-blue-300 border-blue-500/30 ml-auto">
+                        {paaOptimization.estimatedImpact}
+                      </Badge>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      {paaOptimization.strategies.slice(0, 3).map((strategy, idx) => (
+                        <div key={idx} className="flex items-start gap-2">
+                          <span className="text-blue-400 mt-1">•</span>
+                          <span className="text-blue-100">{strategy}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {serpFeatures.local_pack && (() => {
+                const localOptimization = optimizeForSerpFeature({
+                  feature: "local_pack",
+                  currentPosition: 1,
+                  hasFeature: true
+                });
+                return (
+                  <div className="bg-slate-950/50 p-4 rounded-lg border border-emerald-500/20">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Target className="h-4 w-4 text-emerald-400" />
+                      <span className="font-semibold text-white">Local Pack Strategy</span>
+                      <Badge variant="outline" className="text-emerald-300 border-emerald-500/30 ml-auto">
+                        {localOptimization.estimatedImpact}
+                      </Badge>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      {localOptimization.strategies.slice(0, 3).map((strategy, idx) => (
+                        <div key={idx} className="flex items-start gap-2">
+                          <span className="text-emerald-400 mt-1">•</span>
+                          <span className="text-emerald-100">{strategy}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {!serpFeatures.featured_snippet && organicResults.length > 0 && (
+                <div className="bg-slate-950/50 p-4 rounded-lg border border-amber-500/20">
+                  <div className="flex items-center gap-2 mb-2">
+                    <AlertCircle className="h-4 w-4 text-amber-400" />
+                    <span className="font-semibold text-white">Target Featured Snippet</span>
+                    <Badge variant="outline" className="text-amber-300 border-amber-500/30 ml-auto">
+                      High Impact
+                    </Badge>
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-start gap-2">
+                      <span className="text-amber-400 mt-1">•</span>
+                      <span className="text-amber-100">Add a clear, concise answer paragraph (40-60 words) at the top of your content</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <span className="text-amber-400 mt-1">•</span>
+                      <span className="text-amber-100">Use bullet points or numbered lists to answer the query</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <span className="text-amber-400 mt-1">•</span>
+                      <span className="text-amber-100">Match the format of existing snippets (paragraph, list, or table)</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </Card>
 
           {/* Organic Results */}
           <Card className="p-6">

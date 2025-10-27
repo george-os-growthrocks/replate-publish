@@ -37,7 +37,7 @@ export default function ShoppingPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">Shopping & Product Research</h1>
+        <h1 className="text-3xl font-bold text-foreground">Shopping & Product Research</h1>
         <p className="text-muted-foreground mt-1">
           Discover products, track prices, and analyze the competitive landscape
         </p>
