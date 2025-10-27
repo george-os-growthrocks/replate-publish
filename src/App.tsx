@@ -18,6 +18,9 @@ import PrivacyPage from "./pages/PrivacyPage";
 import TermsPage from "./pages/TermsPage";
 import BlogPage from "./pages/BlogPage";
 import BlogPostPage from "./pages/BlogPostPage";
+import AiOverviewChecker from "./pages/free-tools/AiOverviewChecker";
+import ChatGptPromptsLibrary from "./pages/free-tools/ChatGptPromptsLibrary";
+import KeywordClusteringTool from "./pages/free-tools/KeywordClusteringTool";
 import QueriesPage from "./pages/QueriesPage";
 import PagesPage from "./pages/PagesPage";
 import CountriesPage from "./pages/CountriesPage";
@@ -75,6 +78,11 @@ const App = () => (
                        <Route path="/glossary" element={<SeoGlossaryPage />} />
                        <Route path="/blog" element={<BlogPage />} />
                        <Route path="/blog/:slug" element={<BlogPostPage />} />
+                       
+                       {/* Free Tools */}
+                       <Route path="/free-tools/ai-overview-checker" element={<AiOverviewChecker />} />
+                       <Route path="/free-tools/chatgpt-seo-prompts" element={<ChatGptPromptsLibrary />} />
+                       <Route path="/free-tools/keyword-clustering" element={<KeywordClusteringTool />} />
                        <Route path="/privacy" element={<PrivacyPage />} />
                        <Route path="/terms" element={<TermsPage />} />
                        <Route path="/cookies" element={<CookiesPage />} />

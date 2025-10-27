@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { BrandLogo } from "@/components/BrandLogo";
+import { FreeToolsDropdown } from "@/components/landing/FreeToolsDropdown";
 
 export function LandingNav() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -38,6 +39,7 @@ export function LandingNav() {
             >
               Features
             </Link>
+            <FreeToolsDropdown />
             <Link 
               to="/pricing" 
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"

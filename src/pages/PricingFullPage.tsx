@@ -1,3 +1,4 @@
+import React from "react";
 import { Helmet } from "react-helmet-async";
 import { LandingNav } from "@/components/landing/LandingNav";
 import { PricingSection } from "@/components/landing/PricingSection";
@@ -77,8 +78,8 @@ export default function PricingFullPage() {
                   </thead>
                   <tbody>
                     {featureComparison.map((category, catIndex) => (
-                      <>
-                        <tr key={`cat-${catIndex}`} className="bg-muted/30">
+                      <React.Fragment key={`cat-${catIndex}`}>
+                        <tr className="bg-muted/30">
                           <td colSpan={4} className="p-4 font-semibold text-sm text-foreground">
                             {category.category}
                           </td>
@@ -121,7 +122,7 @@ export default function PricingFullPage() {
                             </td>
                           </tr>
                         ))}
-                      </>
+                      </React.Fragment>
                     ))}
                   </tbody>
                 </table>
