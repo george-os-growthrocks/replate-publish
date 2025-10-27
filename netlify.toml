@@ -10,6 +10,11 @@
 [build.environment]
   NODE_VERSION = "18"
 
+# Required environment variables (set in Netlify Dashboard):
+# VITE_SUPABASE_URL=https://your-project.supabase.co
+# VITE_SUPABASE_ANON_KEY=your_anon_key
+# VITE_SITE_URL=https://your-production-domain.com (for OAuth redirects)
+
 [[headers]]
   for = "/*"
   [headers.values]
