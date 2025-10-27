@@ -167,6 +167,7 @@ export default function SeoGlossaryPage() {
           name="description" 
           content="The most comprehensive SEO glossary on the internet. Learn 50+ important SEO terms and concepts from A to Z." 
         />
+        <link rel="canonical" href="https://anotherseoguru.com/glossary" />
       </Helmet>
       
       <div className="min-h-screen bg-background">

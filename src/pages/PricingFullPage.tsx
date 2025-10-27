@@ -48,7 +48,8 @@ export default function PricingFullPage() {
     <>
       <Helmet>
         <title>Pricing - AnotherSEOGuru</title>
-        <meta name="description" content="Simple, transparent pricing for AnotherSEOGuru. Choose the perfect plan for your SEO needs. All plans include 14-day free trial." />
+        <meta name="description" content="Simple, transparent pricing for AnotherSEOGuru. Choose the perfect plan for your SEO needs. All plans include 7-day free trial." />
+        <link rel="canonical" href="https://anotherseoguru.com/pricing" />
       </Helmet>
       
       <div className="min-h-screen bg-background">
@@ -151,7 +152,7 @@ export default function PricingFullPage() {
                 <div className="rounded-xl border border-border bg-card p-6">
                   <h3 className="font-semibold mb-2 text-foreground">Is there a refund policy?</h3>
                   <p className="text-sm text-muted-foreground">
-                    Yes! We offer a 14-day money-back guarantee. If you're not satisfied, contact us for a full refund.
+                    Yes! We offer a 7-day money-back guarantee. If you're not satisfied, contact us for a full refund.
                   </p>
                 </div>
 

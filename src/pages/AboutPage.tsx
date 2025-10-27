@@ -9,6 +9,7 @@ export default function AboutPage() {
       <Helmet>
         <title>About Us - AnotherSEOGuru</title>
         <meta name="description" content="Learn about AnotherSEOGuru's mission to democratize professional SEO tools and AI-powered content generation for businesses of all sizes." />
+        <link rel="canonical" href="https://anotherseoguru.com/about" />
       </Helmet>
       
       <div className="min-h-screen bg-background">

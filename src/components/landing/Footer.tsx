@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Twitter, Linkedin, Github, Youtube } from "lucide-react";
+import { BrandLogo } from "@/components/BrandLogo";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -10,14 +11,7 @@ export function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 mb-12">
           {/* Brand Column */}
           <div className="col-span-2">
-            <Link to="/" className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg">
-                <span className="text-white font-bold text-xl">A</span>
-              </div>
-              <span className="font-bold text-xl text-foreground">
-                AnotherSEOGuru
-              </span>
-            </Link>
+            <BrandLogo size="md" className="mb-4" />
             <p className="text-sm text-muted-foreground mb-4 max-w-sm">
               The most powerful SEO platform with AI-powered content generation. Dom
 
@@ -190,18 +184,30 @@ inate search rankings and scale your content like a pro.
 
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-border">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-muted-foreground">
-              © {currentYear} AnotherSEOGuru. All rights reserved.
-            </p>
-            <div className="flex items-center gap-6 text-sm text-muted-foreground">
-              <a href="mailto:hello@anotherseoguru.com" className="hover:text-foreground transition-colors">
-                hello@anotherseoguru.com
-              </a>
-              <span>•</span>
-              <Link to="/status" className="hover:text-foreground transition-colors">
-                Status
-              </Link>
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex flex-col items-center md:items-start gap-3">
+              <p className="text-sm text-muted-foreground">
+                © {currentYear} AnotherSEOGuru. All rights reserved.
+              </p>
+              <div className="flex items-center gap-6 text-sm text-muted-foreground">
+                <a href="mailto:hello@anotherseoguru.com" className="hover:text-foreground transition-colors">
+                  hello@anotherseoguru.com
+                </a>
+                <span>•</span>
+                <Link to="/status" className="hover:text-foreground transition-colors">
+                  Status
+                </Link>
+              </div>
+            </div>
+            
+            {/* Payment Methods */}
+            <div className="flex flex-col items-center md:items-end gap-2">
+              <p className="text-xs text-muted-foreground">We accept</p>
+              <img 
+                src="/payment-methods.png" 
+                alt="Accepted payment methods: Visa, Mastercard, Amex, iDEAL, JCB, Bancontact, Apple Pay, Google Pay, PayPal" 
+                className="h-6 opacity-70 hover:opacity-100 transition-opacity"
+              />
             </div>
           </div>
         </div>

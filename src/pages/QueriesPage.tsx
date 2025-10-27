@@ -28,7 +28,6 @@ interface CtrGapAnalysisProps {
 }
 
 function CtrGapAnalysis({ query, impressions, ctr, position }: CtrGapAnalysisProps) {
-  const [showDebug, setShowDebug] = useState(false);
   
   const { data: serpData, isLoading, error } = useSerpAdvanced(
     { keyword: query, location_code: 2840, language_code: "en", device: "desktop" },

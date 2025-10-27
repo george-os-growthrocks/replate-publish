@@ -8,6 +8,7 @@ export default function TermsPage() {
       <Helmet>
         <title>Terms of Service - AnotherSEOGuru</title>
         <meta name="description" content="Terms of Service for AnotherSEOGuru. Read our terms and conditions for using our SEO platform." />
+        <link rel="canonical" href="https://anotherseoguru.com/terms" />
       </Helmet>
       
       <div className="min-h-screen bg-background">
@@ -54,12 +55,12 @@ export default function TermsPage() {
 
                   <h3 className="text-xl font-semibold mb-3 text-foreground">4.2 Free Trial</h3>
                   <p className="text-muted-foreground mb-3">
-                    We offer a 14-day free trial. After the trial, you will be automatically charged unless you cancel.
+                    We offer a 7-day free trial. After the trial, you will be automatically charged unless you cancel.
                   </p>
 
                   <h3 className="text-xl font-semibold mb-3 text-foreground">4.3 Refund Policy</h3>
                   <p className="text-muted-foreground">
-                    We offer a 14-day money-back guarantee from your initial purchase date. Contact us for a refund within this period.
+                    We offer a 7-day money-back guarantee from your initial purchase date. Contact us for a refund within this period.
                   </p>
                 </section>
 

@@ -18,6 +18,7 @@ export default function LandingPage() {
           name="keywords" 
           content="SEO tools, SERP tracking, keyword research, backlink monitoring, competitor analysis, technical SEO, AI content generation, site audit, ranking tracker" 
         />
+        <link rel="canonical" href="https://anotherseoguru.com/" />
       </Helmet>
       
       <div className="min-h-screen bg-background">

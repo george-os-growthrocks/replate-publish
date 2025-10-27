@@ -49,7 +49,7 @@ export function SEOAIChatbot() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "👋 Hi! I'm **AnotherSEOGuru AI**, your intelligent SEO assistant trained on your complete site data and industry insights.\n\n**I can help you with:**\n\n• Keyword Research & Clustering  \n• SERP Tracking & Analysis  \n• Backlink Strategies  \n• Content Optimization  \n• Technical SEO Audits  \n• Google Search Console Data  \n• Site Audits & Technical Analysis  \n• Competitor Intelligence  \n• Content Gap Analysis  \n• Real-time data analysis from DataForSEO & GSC\n\n**Interactive Features:**\n\n🔍 Just ask me to analyze a keyword and I'll fetch live data!  \n📊 I can pull your GSC metrics and suggest improvements  \n🎯 Want competitor analysis? I'll get real SERP data  \n💡 Need content ideas? I'll analyze gaps and opportunities\n\n**Click a quick prompt below or ask me anything!**",
+      content: "👋 Hi! I'm **AnotherSEOGuru AI**, your intelligent SEO assistant trained on your complete site data and industry insights.\n\n**I can help you with:**\n\n• Keyword Research & Clustering  \n• SERP Tracking & Analysis  \n• Backlink Strategies  \n• Content Optimization  \n• Technical SEO Audits  \n• Google Search Console Data  \n• Site Audits & Technical Analysis  \n• Competitor Intelligence  \n• Content Gap Analysis  \n• Real-time data analysis from your properties\n\n**Interactive Features:**\n\n🔍 Just ask me to analyze a keyword and I'll fetch live data!  \n📊 I can pull your GSC metrics and suggest improvements  \n🎯 Want competitor analysis? I'll get real SERP data  \n💡 Need content ideas? I'll analyze gaps and opportunities\n\n**Click a quick prompt below or ask me anything!**",
     },
   ]);
   const [input, setInput] = useState("");
@@ -66,22 +66,34 @@ export function SEOAIChatbot() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      // Clear property when user signs out
+      if (!session?.user) {
+        setSelectedProperty(null);
+        localStorage.removeItem('anotherseo_selected_property');
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  // Load selected property from localStorage on mount
+  // Load selected property from localStorage ONLY if user is signed in
   useEffect(() => {
-    const savedProperty = localStorage.getItem('anotherseo_selected_property');
-    if (savedProperty) {
-      setSelectedProperty(savedProperty);
-      console.log('📍 Loaded saved property:', savedProperty);
+    if (user) {
+      const savedProperty = localStorage.getItem('anotherseo_selected_property');
+      if (savedProperty) {
+        setSelectedProperty(savedProperty);
+        console.log('📍 Loaded saved property:', savedProperty);
+      }
+    } else {
+      // Clear property if not signed in
+      setSelectedProperty(null);
     }
-  }, []);
+  }, [user]);
 
-  // Listen for property changes from FilterContext
+  // Listen for property changes from FilterContext ONLY if user is signed in
   useEffect(() => {
+    if (!user) return;
+
     const handleStorageChange = () => {
       const property = localStorage.getItem('anotherseo_filter_property');
       if (property && property !== selectedProperty) {
@@ -96,7 +108,7 @@ export function SEOAIChatbot() {
     handleStorageChange();
 
     return () => window.removeEventListener('storage', handleStorageChange);
-  }, [selectedProperty]);
+  }, [selectedProperty, user]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -160,13 +172,17 @@ export function SEOAIChatbot() {
             gscQueries = gscData?.queries?.slice(0, 20) || null;
           }
 
-          // 4. Get recent algorithm impacts
-          const { data: algorithmImpacts } = await supabase
-            .from("algorithm_impacts")
-            .select("update_name, impact_severity, affected_keywords_count, detected_at")
-            .eq("user_id", user.id)
-            .order("detected_at", { ascending: false })
-            .limit(5);
+        // 4. Get recent algorithm impacts
+        const { data: algorithmImpacts, error: impactsError } = await supabase
+          .from("algorithm_impacts")
+          .select("detected_at, severity, affected_keywords, avg_position_drop")
+          .eq("user_id", user.id)
+          .order("detected_at", { ascending: false })
+          .limit(5);
+
+        if (impactsError) {
+          console.error("algorithm_impacts error:", impactsError);
+        }
 
           projectContext = {
             selected_property: selectedProperty,
@@ -207,13 +223,24 @@ export function SEOAIChatbot() {
       console.log("📥 Edge function response:", { data, error });
 
       if (error) {
-        console.error("❌ Edge function error:", error);
+        console.error("Edge function error:", error);
         throw new Error(error.message || "Failed to get response from AI");
       }
 
-      if (!data?.message) {
+      if (!data?.message || data.message.trim() === "") {
         console.error("❌ No message in response:", data);
-        throw new Error("AI returned an empty response. Please try again.");
+        
+        // Check if there's an error field
+        if (data?.error) {
+          throw new Error(data.error);
+        }
+        
+        // Check if there's debug info
+        if (data?.debug) {
+          console.error("Debug info:", data.debug);
+        }
+        
+        throw new Error("The AI service returned an incomplete response. Please try again or rephrase your question.");
       }
 
       const assistantMessage: Message = {
@@ -289,6 +316,11 @@ export function SEOAIChatbot() {
     });
   };
 
+  // Don't render chatbot if user is not signed in
+  if (!user) {
+    return null;
+  }
+
   return (
     <>
       {/* Floating Button */}
@@ -319,9 +351,9 @@ export function SEOAIChatbot() {
               <h3 className="font-bold text-xs sm:text-sm truncate">AnotherSEOGuru AI</h3>
               <p className="text-xs truncate">
                 {selectedProperty ? (
-                  <span className="text-primary font-semibold">📍 {selectedProperty}</span>
+                  <span className="text-white font-semibold">📍 {selectedProperty}</span>
                 ) : (
-                  <span className="opacity-70">Your Intelligent SEO Assistant</span>
+                  <span className="text-white/70">Your Intelligent SEO Assistant</span>
                 )}
               </p>
             </div>

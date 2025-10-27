@@ -8,6 +8,7 @@ export default function PrivacyPage() {
       <Helmet>
         <title>Privacy Policy - AnotherSEOGuru</title>
         <meta name="description" content="AnotherSEOGuru's Privacy Policy. Learn how we collect, use, and protect your personal information." />
+        <link rel="canonical" href="https://anotherseoguru.com/privacy" />
       </Helmet>
       
       <div className="min-h-screen bg-background">
@@ -68,7 +69,7 @@ export default function PrivacyPage() {
                   </p>
                   <ul className="list-disc pl-6 space-y-2 text-muted-foreground">
                     <li>Service providers (hosting, analytics, payment processing)</li>
-                    <li>SEO data providers (DataForSEO, Google Search Console API)</li>
+                    <li>SEO data providers (Google Search Console API)</li>
                     <li>Law enforcement when required by law</li>
                     <li>Business partners with your explicit consent</li>
                   </ul>

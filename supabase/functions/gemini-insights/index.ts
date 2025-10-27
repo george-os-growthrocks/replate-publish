@@ -260,13 +260,38 @@ Remember: You're a $500/hour SEO consultant. Show your expertise. Be specific. F
     }
 
     const geminiData = await geminiResponse.json();
+    
+    // Detailed logging of Gemini response structure
+    console.log("=== GEMINI RESPONSE STRUCTURE ===");
+    console.log("Full response keys:", Object.keys(geminiData));
+    console.log("Has candidates?:", !!geminiData.candidates);
+    console.log("Candidates length:", geminiData.candidates?.length || 0);
+    if (geminiData.candidates && geminiData.candidates.length > 0) {
+      console.log("First candidate keys:", Object.keys(geminiData.candidates[0]));
+      console.log("Has content?:", !!geminiData.candidates[0].content);
+      if (geminiData.candidates[0].content) {
+        console.log("Content keys:", Object.keys(geminiData.candidates[0].content));
+        console.log("Has parts?:", !!geminiData.candidates[0].content.parts);
+        console.log("Parts length:", geminiData.candidates[0].content.parts?.length || 0);
+      }
+      console.log("Finish reason:", geminiData.candidates[0].finishReason);
+    }
+    console.log("Full response:", JSON.stringify(geminiData).substring(0, 1000));
+    console.log("================================");
+    
     const insightsText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
     
     console.log("Insights text length:", insightsText?.length || 0);
     console.log("Insights text preview:", insightsText?.substring(0, 300));
 
     if (!insightsText) {
-      throw new Error('No insights generated');
+      console.error("❌ CRITICAL: No insights text found in Gemini response");
+      console.error("Possible reasons:");
+      console.error("1. Safety filters blocked content");
+      console.error("2. Empty response from Gemini");
+      console.error("3. Unexpected response structure");
+      console.error("Full Gemini data:", JSON.stringify(geminiData, null, 2));
+      throw new Error('No insights generated - check logs for response structure');
     }
 
     // Parse the JSON response from Gemini with robust extraction

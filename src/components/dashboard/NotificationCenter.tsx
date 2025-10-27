@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Bell, X, CheckCircle, AlertTriangle, Info, TrendingUp, TrendingDown, Eye } from 'lucide-react';
+import { Bell, X, CheckCircle, AlertTriangle, Info, TrendingUp, TrendingDown, Eye, CircleCheckBig } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useFilters } from '@/contexts/FilterContext';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Notification {
   id: string;
@@ -18,60 +20,113 @@ export function NotificationCenter() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const { selectedProperty } = useFilters();
 
   useEffect(() => {
-    // Load mock notifications (in production, fetch from Supabase)
-    const mockNotifications: Notification[] = [
-      {
-        id: '1',
-        title: 'Ranking Improved',
-        message: 'Your keyword "seo tools" moved from position 15 to position 8',
-        type: 'ranking_up',
-        created_at: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-        read: false,
-      },
-      {
-        id: '2',
-        title: 'New Backlink Detected',
-        message: 'You got a new dofollow backlink from a DR 65 domain',
-        type: 'success',
-        created_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-        read: false,
-      },
-      {
-        id: '3',
-        title: 'Position Drop Alert',
-        message: '5 keywords dropped more than 3 positions in the last 7 days',
-        type: 'ranking_down',
-        created_at: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
-        read: false,
-      },
-      {
-        id: '4',
-        title: 'Site Audit Complete',
-        message: 'Found 12 SEO issues that need attention',
-        type: 'warning',
-        created_at: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
-        read: true,
-      },
-      {
-        id: '5',
-        title: 'Content Opportunity',
-        message: 'Detected 3 high-volume keywords you could easily rank for',
-        type: 'info',
-        created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-        read: true,
-      },
-    ];
+    if (selectedProperty) {
+      loadNotifications();
+    }
+  }, [selectedProperty]);
 
-    setNotifications(mockNotifications);
-    setUnreadCount(mockNotifications.filter((n) => !n.read).length);
-  }, []);
+  const loadNotifications = async () => {
+    if (!selectedProperty) return;
+    
+    setIsLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Fetch GSC data for last 7 days and previous 7 days for comparison
+      const endDate = new Date();
+      const startDate = new Date(endDate);
+      startDate.setDate(startDate.getDate() - 7);
+      const prevStartDate = new Date(startDate);
+      prevStartDate.setDate(prevStartDate.getDate() - 7);
+
+      const { data: currentData } = await supabase.functions.invoke('gsc-query', {
+        body: {
+          siteUrl: selectedProperty,
+          startDate: startDate.toISOString().split('T')[0],
+          endDate: endDate.toISOString().split('T')[0],
+          dimensions: ['query'],
+        },
+      });
+
+      const { data: prevData } = await supabase.functions.invoke('gsc-query', {
+        body: {
+          siteUrl: selectedProperty,
+          startDate: prevStartDate.toISOString().split('T')[0],
+          endDate: startDate.toISOString().split('T')[0],
+          dimensions: ['query'],
+        },
+      });
+
+      const generatedNotifications: Notification[] = [];
+
+      if (currentData?.rows && prevData?.rows) {
+        // Detect ranking improvements
+        currentData.rows.slice(0, 20).forEach((current: any) => {
+          const prev = prevData.rows.find((p: any) => p.keys[0] === current.keys[0]);
+          if (prev && prev.position - current.position >= 3) {
+            generatedNotifications.push({
+              id: `rank_up_${current.keys[0]}`,
+              title: 'Ranking Improved! 📈',
+              message: `"${current.keys[0]}" moved from position ${Math.round(prev.position)} to ${Math.round(current.position)}`,
+              type: 'ranking_up',
+              created_at: new Date().toISOString(),
+              read: false,
+            });
+          }
+        });
+
+        // Detect ranking drops
+        currentData.rows.slice(0, 20).forEach((current: any) => {
+          const prev = prevData.rows.find((p: any) => p.keys[0] === current.keys[0]);
+          if (prev && current.position - prev.position >= 3) {
+            generatedNotifications.push({
+              id: `rank_down_${current.keys[0]}`,
+              title: 'Position Drop Alert',
+              message: `"${current.keys[0]}" dropped from position ${Math.round(prev.position)} to ${Math.round(current.position)}`,
+              type: 'ranking_down',
+              created_at: new Date().toISOString(),
+              read: false,
+            });
+          }
+        });
+
+        // Detect high CTR opportunities
+        currentData.rows.slice(0, 10).forEach((row: any) => {
+          const avgCtr = currentData.rows.reduce((sum: number, r: any) => sum + r.ctr, 0) / currentData.rows.length;
+          if (row.impressions > 100 && row.ctr < avgCtr * 0.5) {
+            generatedNotifications.push({
+              id: `ctr_opp_${row.keys[0]}`,
+              title: 'CTR Opportunity',
+              message: `"${row.keys[0]}" has ${row.impressions.toLocaleString()} impressions but low CTR (${(row.ctr * 100).toFixed(1)}%)`,
+              type: 'info',
+              created_at: new Date().toISOString(),
+              read: false,
+            });
+          }
+        });
+      }
+
+      // Sort by created_at
+      generatedNotifications.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+      setNotifications(generatedNotifications.slice(0, 10));
+      setUnreadCount(generatedNotifications.filter((n) => !n.read).length);
+    } catch (error) {
+      console.error('Error loading notifications:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const getIcon = (type: string) => {
     switch (type) {
       case 'success':
-        return <CheckCircle className="w-4 h-4 text-emerald-500" />;
+        return <CircleCheckBig className="w-4 h-4 text-emerald-500" />;
       case 'warning':
         return <AlertTriangle className="w-4 h-4 text-amber-500" />;
       case 'ranking_up':
@@ -140,8 +195,8 @@ export function NotificationCenter() {
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
 
           {/* Notification Panel */}
-          <Card className="absolute right-0 top-12 w-80 md:w-96 max-h-[500px] shadow-xl z-50 bg-slate-950/95 border-white/10 backdrop-blur-xl">
-            <CardHeader className="pb-3 border-b border-white/10">
+          <Card className="absolute right-0 top-12 w-80 md:w-96 max-h-[500px] shadow-xl z-50 bg-popover/95 backdrop-blur-xl">
+            <CardHeader className="pb-3 border-b border-border">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg">Notifications</CardTitle>
                 <div className="flex items-center gap-2">
@@ -159,18 +214,24 @@ export function NotificationCenter() {
 
             <ScrollArea className="h-[400px]">
               <CardContent className="p-0">
-                {notifications.length === 0 ? (
+                {isLoading ? (
+                  <div className="p-8 text-center">
+                    <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-3" />
+                    <p className="text-sm text-muted-foreground">Loading notifications...</p>
+                  </div>
+                ) : notifications.length === 0 ? (
                   <div className="p-8 text-center">
                     <Bell className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
                     <p className="text-sm text-muted-foreground">No notifications yet</p>
+                    <p className="text-xs text-muted-foreground mt-1">We'll notify you of important changes</p>
                   </div>
                 ) : (
-                  <div className="divide-y divide-white/5">
+                  <div className="divide-y divide-border">
                     {notifications.map((notification) => (
                       <div
                         key={notification.id}
-                        className={`p-4 hover:bg-slate-900/50 transition-colors ${
-                          !notification.read ? 'bg-slate-900/30' : ''
+                        className={`p-4 hover:bg-accent/50 transition-colors ${
+                          !notification.read ? 'bg-accent/30' : ''
                         }`}
                       >
                         <div className="flex items-start gap-3">
@@ -178,9 +239,9 @@ export function NotificationCenter() {
                             {getIcon(notification.type)}
                           </div>
 
-                          <div className="flex-1 min-w-0">
+                            <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2 mb-1">
-                              <h4 className="text-sm font-semibold truncate">{notification.title}</h4>
+                              <h4 className="text-sm font-semibold truncate text-foreground">{notification.title}</h4>
                               {!notification.read && (
                                 <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-1" />
                               )}

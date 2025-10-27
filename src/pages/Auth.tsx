@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { BarChart3, TrendingUp, Sparkles, Check, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { BrandLogo } from "@/components/BrandLogo";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -74,22 +75,15 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
+    <div className="min-h-screen relative overflow-hidden bg-background">
       {/* Background gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-background to-background" />
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-primary/10 rounded-full blur-[120px] animate-pulse" />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-primary/10 dark:bg-primary/10 rounded-full blur-[120px] animate-pulse" />
 
       {/* Header */}
       <div className="relative z-10 container mx-auto px-4 py-6">
         <div className="flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-              <span className="text-white font-bold text-xl">A</span>
-            </div>
-            <span className="font-bold text-xl text-foreground hidden sm:inline">
-              AnotherSEOGuru
-            </span>
-          </Link>
+          <BrandLogo size="md" />
           <ThemeToggle />
         </div>
       </div>
@@ -113,7 +107,7 @@ const Auth = () => {
                 The Most Advanced SEO Platform
               </div>
               
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-foreground">
                 Start Dominating
                 <span className="block bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                   Search Rankings
@@ -146,7 +140,7 @@ const Auth = () => {
             <div className="flex flex-wrap items-center gap-6 pt-4 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
-                14-day free trial
+                7-day free trial
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
@@ -164,7 +158,7 @@ const Auth = () => {
             <Card className="p-8 md:p-10 shadow-2xl border-border">
               <div className="space-y-6">
                 <div className="space-y-3 text-center">
-                  <h2 className="text-3xl font-bold">Get Started Free</h2>
+                  <h2 className="text-3xl font-bold text-foreground">Get Started Free</h2>
                   <p className="text-muted-foreground">
                     Sign in with Google to access your Search Console data and unlock all features
                   </p>
@@ -216,7 +210,7 @@ const Auth = () => {
                   </div>
                   <div className="flex items-center gap-3 text-muted-foreground">
                     <Check className="w-4 h-4 text-success shrink-0" />
-                    <span>Start with 14-day free trial, no card required</span>
+                    <span>Start with 7-day free trial, no card required</span>
                   </div>
                 </div>
 

@@ -64,7 +64,7 @@ export function Hero() {
             </div>
             <div className="flex items-center gap-2">
               <Check className="w-4 h-4 text-success" />
-              Free 14-day trial
+              Free 7-day trial
             </div>
             <div className="flex items-center gap-2">
               <Check className="w-4 h-4 text-success" />

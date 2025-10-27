@@ -68,7 +68,7 @@ export function PricingSection() {
             </span>
           </h2>
           <p className="text-xl text-muted-foreground">
-            Choose the perfect plan for your needs. All plans include 14-day free trial.
+            Choose the perfect plan for your needs. All plans include 7-day free trial.
           </p>
         </div>
 
@@ -120,7 +120,7 @@ export function PricingSection() {
         </div>
 
         <div className="text-center mt-12 text-sm text-muted-foreground">
-          All plans include 14-day free trial • No credit card required • Cancel anytime
+          All plans include 7-day free trial • No credit card required • Cancel anytime
         </div>
       </div>
     </section>

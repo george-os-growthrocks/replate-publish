@@ -16,6 +16,8 @@ import PricingFullPage from "./pages/PricingFullPage";
 import SeoGlossaryPage from "./pages/SeoGlossaryPage";
 import PrivacyPage from "./pages/PrivacyPage";
 import TermsPage from "./pages/TermsPage";
+import BlogPage from "./pages/BlogPage";
+import BlogPostPage from "./pages/BlogPostPage";
 import QueriesPage from "./pages/QueriesPage";
 import PagesPage from "./pages/PagesPage";
 import CountriesPage from "./pages/CountriesPage";
@@ -39,6 +41,12 @@ import AlertsPage from "./pages/AlertsPage";
 import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
 import { SEOAIChatbot } from "@/components/SEOAIChatbot";
+import { TrialPopup } from "@/components/TrialPopup";
+import { CookieConsent } from "@/components/CookieConsent";
+import { ScrollToTop } from "@/components/ScrollToTop";
+import CookiesPage from "./pages/CookiesPage";
+import GDPRPage from "./pages/GDPRPage";
+import SecurityPage from "./pages/SecurityPage";
 
 const queryClient = new QueryClient();
 
@@ -56,6 +64,7 @@ const App = () => (
                 v7_relativeSplatPath: true,
               }}
             >
+              <ScrollToTop />
           <Routes>
             {/* Public Marketing Pages */}
             <Route path="/" element={<LandingPage />} />
@@ -63,10 +72,26 @@ const App = () => (
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/features" element={<FeaturesPage />} />
             <Route path="/pricing" element={<PricingFullPage />} />
-            <Route path="/glossary" element={<SeoGlossaryPage />} />
-            <Route path="/privacy" element={<PrivacyPage />} />
-            <Route path="/terms" element={<TermsPage />} />
-            <Route path="/auth" element={<Auth />} />
+                       <Route path="/glossary" element={<SeoGlossaryPage />} />
+                       <Route path="/blog" element={<BlogPage />} />
+                       <Route path="/blog/:slug" element={<BlogPostPage />} />
+                       <Route path="/privacy" element={<PrivacyPage />} />
+                       <Route path="/terms" element={<TermsPage />} />
+                       <Route path="/cookies" element={<CookiesPage />} />
+                       <Route path="/gdpr" element={<GDPRPage />} />
+                       <Route path="/security" element={<SecurityPage />} />
+                       
+                       {/* Redirect Coming Soon to Contact */}
+                       <Route path="/roadmap" element={<ContactPage />} />
+                       <Route path="/help" element={<ContactPage />} />
+                       <Route path="/guides" element={<ContactPage />} />
+                       <Route path="/api" element={<ContactPage />} />
+                       <Route path="/careers" element={<ContactPage />} />
+                       <Route path="/partners" element={<ContactPage />} />
+                       <Route path="/affiliates" element={<ContactPage />} />
+                       <Route path="/status" element={<ContactPage />} />
+                       
+                       <Route path="/auth" element={<Auth />} />
             
             {/* Protected Dashboard Pages */}
             <Route path="/dashboard" element={<DashboardLayout><Dashboard /></DashboardLayout>} />
@@ -94,8 +119,10 @@ const App = () => (
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
-          <SEOAIChatbot />
-        </BrowserRouter>
+                     <SEOAIChatbot />
+                     <TrialPopup />
+                     <CookieConsent />
+                   </BrowserRouter>
         </div>
       </TooltipProvider>
     </FilterProvider>

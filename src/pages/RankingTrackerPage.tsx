@@ -40,7 +40,6 @@ import { ExportButton } from '@/components/ExportButton';
 import { formatDateForFilename } from '@/lib/export-utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { addDebugLog, clearDebugLogs, getDebugLogs } from '@/lib/debug-logger';
 
 interface TrackedKeyword {
   keyword: string;
@@ -65,8 +64,6 @@ export default function RankingTrackerPage() {
   const [isAdding, setIsAdding] = useState(false);
   const [isLoadingTracked, setIsLoadingTracked] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [showDebugLog, setShowDebugLog] = useState(false);
-  const [debugLogs, setDebugLogs] = useState<ReturnType<typeof getDebugLogs>>([]);
 
   // Debug: Log selectedProperty on mount and changes
   useEffect(() => {
@@ -421,17 +418,6 @@ export default function RankingTrackerPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setShowDebugLog(!showDebugLog);
-              setDebugLogs(getDebugLogs());
-            }}
-          >
-            <FileText className="h-4 w-4 mr-2" />
-            {showDebugLog ? 'Hide' : 'Show'} Debug Log
-          </Button>
           <ExportButton
             data={keywordMetrics}
             filename={`ranking-tracker-${formatDateForFilename()}`}
@@ -737,58 +723,6 @@ export default function RankingTrackerPage() {
           )}
         </TabsContent>
       </Tabs>
-
-      {/* Debug Log Panel */}
-      {showDebugLog && (
-        <Card className="bg-slate-950/90 border-yellow-500/20">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <FileText className="h-5 w-5 text-yellow-500" />
-                Debug Log ({debugLogs.length} entries)
-              </CardTitle>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  clearDebugLogs();
-                  setDebugLogs([]);
-                }}
-              >
-                Clear
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2 max-h-96 overflow-y-auto font-mono text-xs">
-              {debugLogs.length === 0 ? (
-                <p className="text-muted-foreground text-center py-4">No debug logs yet. Try loading or adding a keyword.</p>
-              ) : (
-                debugLogs.map((log, i) => (
-                  <div
-                    key={i}
-                    className={`p-2 rounded border ${
-                      log.level === 'error'
-                        ? 'bg-red-500/10 border-red-500/20 text-red-400'
-                        : log.level === 'warn'
-                        ? 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400'
-                        : log.level === 'success'
-                        ? 'bg-green-500/10 border-green-500/20 text-green-400'
-                        : 'bg-blue-500/10 border-blue-500/20 text-blue-400'
-                    }`}
-                  >
-                    <div className="flex items-start gap-2">
-                      <span className="text-muted-foreground">[{log.timestamp}]</span>
-                      <span className="font-semibold">[{log.level}]</span>
-                      <span className="flex-1 whitespace-pre-wrap break-all">{log.message}</span>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }

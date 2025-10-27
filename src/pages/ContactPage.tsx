@@ -33,6 +33,7 @@ export default function ContactPage() {
       <Helmet>
         <title>Contact Us - AnotherSEOGuru</title>
         <meta name="description" content="Get in touch with AnotherSEOGuru. We're here to help with any questions about our SEO platform and AI content generation tools." />
+        <link rel="canonical" href="https://anotherseoguru.com/contact" />
       </Helmet>
       
       <div className="min-h-screen bg-background">
