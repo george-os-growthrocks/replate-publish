@@ -11,17 +11,31 @@ const Auth = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        navigate("/dashboard");
+        console.log("Session found, redirecting to dashboard");
+        navigate("/dashboard", { replace: true });
       }
     });
 
+    // Listen for auth state changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth state changed:", event, session ? "Session exists" : "No session");
+      
       if (event === "SIGNED_IN" && session) {
-        navigate("/dashboard");
+        console.log("User signed in, redirecting to dashboard");
+        navigate("/dashboard", { replace: true });
+      }
+      
+      // Handle OAuth callback with tokens in URL hash
+      if (event === "TOKEN_REFRESHED" || event === "INITIAL_SESSION") {
+        if (session) {
+          console.log("Session established, redirecting to dashboard");
+          navigate("/dashboard", { replace: true });
+        }
       }
     });
 
@@ -30,10 +44,17 @@ const Auth = () => {
 
   const handleGoogleSignIn = async () => {
     try {
+      // Use production URL if in production, otherwise use current origin
+      const redirectUrl = import.meta.env.PROD 
+        ? (import.meta.env.VITE_SITE_URL || window.location.origin)
+        : window.location.origin;
+      
+      console.log("Starting Google OAuth with redirect:", `${redirectUrl}/auth`);
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/dashboard`,
+          redirectTo: `${redirectUrl}/auth`,
           queryParams: {
             access_type: "offline",
             prompt: "consent",

@@ -71,7 +71,7 @@ serve(async (req) => {
     console.log("=== AI Insights Generation Started ===");
     console.log("Site:", siteUrl);
     console.log("Date range:", startDate, "to", endDate);
-    
+
     // Fetch query data
     const gscResponse = await fetch(
       `https://searchconsole.googleapis.com/webmasters/v3/sites/${encodeURIComponent(siteUrl)}/searchAnalytics/query`,
@@ -381,7 +381,7 @@ Remember: You're a $500/hour SEO consultant. Show your expertise. Be specific. F
       if (lowCtrQueries.length > 0) {
         const estimatedGain = Math.round(lowCtrQueries.reduce((sum, q) => sum + q.impressions * 0.08, 0));
         actions.push({
-          type: "CTR_TEST",
+            type: "CTR_TEST",
           title: "Optimize meta descriptions for low-CTR top 10 rankings",
           rationale: `${lowCtrQueries.length} queries in top 10 with CTR <10%. Meta improvements = +${estimatedGain} clicks/month`,
           impact: "HIGH",
@@ -434,8 +434,8 @@ Remember: You're a $500/hour SEO consultant. Show your expertise. Be specific. F
           type: "ADD_INTERNAL_LINKS",
           title: "Strategic internal linking to high-impression pages",
           rationale: `${highImpression.length} pages with strong visibility need link equity boost for ranking improvements`,
-          impact: "MEDIUM",
-          effort: "LOW",
+            impact: "MEDIUM",
+            effort: "LOW",
           items: highImpression.map(q => ({
             query: q.query,
             page: q.page,
@@ -479,7 +479,7 @@ Remember: You're a $500/hour SEO consultant. Show your expertise. Be specific. F
       }), 
       {
         status: 200, // Return 200 so the client can read the error details
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
   }
