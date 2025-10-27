@@ -22,7 +22,7 @@ export function Hero() {
           </div>
           
           {/* Headline */}
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight text-center mb-6">
+          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight text-center mb-6 text-foreground">
             Dominate Search Rankings{" "}
             <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
               with AI-Powered SEO
