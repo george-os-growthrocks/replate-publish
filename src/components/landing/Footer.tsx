@@ -68,12 +68,12 @@ inate search rankings and scale your content like a pro.
                 </Link>
               </li>
               <li>
-                <Link to="/auth" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Link to="/signup" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Sign Up
                 </Link>
               </li>
               <li>
-                <Link to="/auth" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Link to="/login" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Login
                 </Link>
               </li>

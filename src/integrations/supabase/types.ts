@@ -297,6 +297,264 @@ export type Database = {
         };
         Relationships: [];
       };
+      subscription_plans: {
+        Row: {
+          id: string;
+          name: string;
+          stripe_product_id: string | null;
+          stripe_price_id: string | null;
+          price_monthly: number;
+          price_yearly: number | null;
+          credits_included: number;
+          credits_monthly: number;
+          features: Json;
+          limits: Json;
+          is_active: boolean;
+          sort_order: number;
+          created_at: string;
+          updated_at: string;
+          stripe_price_id_monthly: string | null;
+          stripe_price_id_yearly: string | null;
+          credits_per_month: number;
+          max_projects: number;
+          max_team_members: number;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          stripe_product_id?: string | null;
+          stripe_price_id?: string | null;
+          price_monthly: number;
+          price_yearly?: number | null;
+          credits_included?: number;
+          credits_monthly?: number;
+          features?: Json;
+          limits?: Json;
+          is_active?: boolean;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+          stripe_price_id_monthly?: string | null;
+          stripe_price_id_yearly?: string | null;
+          credits_per_month?: number;
+          max_projects?: number;
+          max_team_members?: number;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          stripe_product_id?: string | null;
+          stripe_price_id?: string | null;
+          price_monthly?: number;
+          price_yearly?: number | null;
+          credits_included?: number;
+          credits_monthly?: number;
+          features?: Json;
+          limits?: Json;
+          is_active?: boolean;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+          stripe_price_id_monthly?: string | null;
+          stripe_price_id_yearly?: string | null;
+          credits_per_month?: number;
+          max_projects?: number;
+          max_team_members?: number;
+        };
+        Relationships: [];
+      };
+      user_subscriptions: {
+        Row: {
+          id: string;
+          user_id: string;
+          plan_id: string;
+          stripe_customer_id: string | null;
+          stripe_subscription_id: string | null;
+          status: string;
+          billing_cycle: string;
+          current_period_start: string | null;
+          current_period_end: string | null;
+          trial_end: string | null;
+          cancel_at_period_end: boolean;
+          canceled_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          plan_id: string;
+          stripe_customer_id?: string | null;
+          stripe_subscription_id?: string | null;
+          status?: string;
+          billing_cycle?: string;
+          current_period_start?: string | null;
+          current_period_end?: string | null;
+          trial_end?: string | null;
+          cancel_at_period_end?: boolean;
+          canceled_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          plan_id?: string;
+          stripe_customer_id?: string | null;
+          stripe_subscription_id?: string | null;
+          status?: string;
+          billing_cycle?: string;
+          current_period_start?: string | null;
+          current_period_end?: string | null;
+          trial_end?: string | null;
+          cancel_at_period_end?: boolean;
+          canceled_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      seo_projects: {
+        Row: {
+          id: string;
+          user_id: string;
+          name: string;
+          domain: string;
+          gsc_property_url: string | null;
+          description: string | null;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          name: string;
+          domain: string;
+          gsc_property_url?: string | null;
+          description?: string | null;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          name?: string;
+          domain?: string;
+          gsc_property_url?: string | null;
+          description?: string | null;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      credit_usage_log: {
+        Row: {
+          id: string;
+          user_id: string;
+          project_id: string | null;
+          feature: string;
+          credits_used: number;
+          metadata: Json | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          project_id?: string | null;
+          feature: string;
+          credits_used?: number;
+          metadata?: Json | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          project_id?: string | null;
+          feature?: string;
+          credits_used?: number;
+          metadata?: Json | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      payment_history: {
+        Row: {
+          id: string;
+          user_id: string;
+          stripe_payment_intent_id: string | null;
+          stripe_invoice_id: string | null;
+          amount: number;
+          currency: string;
+          status: string;
+          description: string | null;
+          metadata: Json | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          stripe_payment_intent_id?: string | null;
+          stripe_invoice_id?: string | null;
+          amount: number;
+          currency?: string;
+          status: string;
+          description?: string | null;
+          metadata?: Json | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          stripe_payment_intent_id?: string | null;
+          stripe_invoice_id?: string | null;
+          amount?: number;
+          currency?: string;
+          status?: string;
+          description?: string | null;
+          metadata?: Json | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      credit_packages: {
+        Row: {
+          id: string;
+          name: string;
+          stripe_price_id: string | null;
+          credits: number;
+          price: number;
+          bonus_credits: number;
+          is_active: boolean;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          stripe_price_id?: string | null;
+          credits: number;
+          price: number;
+          bonus_credits?: number;
+          is_active?: boolean;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          stripe_price_id?: string | null;
+          credits?: number;
+          price?: number;
+          bonus_credits?: number;
+          is_active?: boolean;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     }
     Views: {
       [_ in never]: never

@@ -3,48 +3,148 @@ import { Helmet } from "react-helmet-async";
 import { LandingNav } from "@/components/landing/LandingNav";
 import { PricingSection } from "@/components/landing/PricingSection";
 import { Footer } from "@/components/landing/Footer";
-import { Check, X } from "lucide-react";
+import { Check, X, Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { addDebugLog } from "@/lib/utils";
+import { Database } from "@/integrations/supabase/types";
 
-const featureComparison = [
+type SubscriptionPlan = Database['public']['Tables']['subscription_plans']['Row'];
+
+const dynamicFeatureComparison = [
   {
-    category: "Projects & Keywords",
+    category: "Core Features",
     features: [
-      { name: "Projects", starter: "5", pro: "25", enterprise: "Unlimited" },
-      { name: "Tracked Keywords", starter: "100", pro: "Unlimited", enterprise: "Unlimited" },
-      { name: "Ranking Updates", starter: "Daily", pro: "Hourly", enterprise: "Real-time" },
+      { name: "Credits per Month", getValue: (plan: SubscriptionPlan) => plan.credits_per_month || 0 },
+      { name: "Max Projects", getValue: (plan: SubscriptionPlan) => plan.max_projects || 0 },
+      { name: "Max Team Members", getValue: (plan: SubscriptionPlan) => plan.max_team_members || 1 },
     ]
   },
   {
-    category: "SEO Features",
+    category: "SEO Tools",
     features: [
-      { name: "Keyword Research", starter: true, pro: true, enterprise: true },
-      { name: "SERP Tracking", starter: true, pro: true, enterprise: true },
-      { name: "Site Audit", starter: "1 site", pro: "Unlimited", enterprise: "Unlimited" },
-      { name: "Backlink Monitoring", starter: false, pro: true, enterprise: true },
-      { name: "Competitor Analysis", starter: false, pro: true, enterprise: true },
-      { name: "Local SEO", starter: false, pro: true, enterprise: true },
+      { name: "Keyword Research", getValue: (plan: SubscriptionPlan) => true },
+      { name: "SERP Tracking", getValue: (plan: SubscriptionPlan) => true },
+      { name: "Site Audit", getValue: (plan: SubscriptionPlan) => plan.name === 'Free' ? '1 site' : 'Unlimited' },
+      { name: "Backlink Analysis", getValue: (plan: SubscriptionPlan) => plan.name !== 'Free' && plan.name !== 'Starter' },
+      { name: "Competitor Analysis", getValue: (plan: SubscriptionPlan) => plan.name !== 'Free' && plan.name !== 'Starter' },
+      { name: "Local SEO Suite", getValue: (plan: SubscriptionPlan) => plan.name !== 'Free' && plan.name !== 'Starter' },
     ]
   },
   {
     category: "AI & Content",
     features: [
-      { name: "AI Content Generation", starter: false, pro: true, enterprise: true },
-      { name: "Platform Support", starter: "N/A", pro: "8 platforms", enterprise: "8 platforms" },
-      { name: "Content Repurposing", starter: false, pro: true, enterprise: true },
+      { name: "AI Content Generation", getValue: (plan: SubscriptionPlan) => plan.name !== 'Free' && plan.name !== 'Starter' },
+      { name: "Content Repurposing", getValue: (plan: SubscriptionPlan) => plan.name !== 'Free' },
+      { name: "AI Analytics", getValue: (plan: SubscriptionPlan) => plan.name !== 'Free' && plan.name !== 'Starter' },
     ]
   },
   {
     category: "Support & Extras",
     features: [
-      { name: "Support", starter: "Email", pro: "Priority", enterprise: "24/7 Phone" },
-      { name: "White-label Reports", starter: false, pro: false, enterprise: true },
-      { name: "API Access", starter: false, pro: false, enterprise: true },
-      { name: "Dedicated Manager", starter: false, pro: false, enterprise: true },
+      { name: "Support", getValue: (plan: SubscriptionPlan) => {
+        if (plan.name === 'Free') return 'Community';
+        if (plan.name === 'Starter') return 'Email';
+        if (plan.name === 'Professional') return 'Priority';
+        return 'Dedicated';
+      }},
+      { name: "White-label Reports", getValue: (plan: SubscriptionPlan) => plan.name === 'Agency' || plan.name === 'Enterprise' },
+      { name: "API Access", getValue: (plan: SubscriptionPlan) => plan.name === 'Agency' || plan.name === 'Enterprise' },
+      { name: "Custom Integrations", getValue: (plan: SubscriptionPlan) => plan.name === 'Enterprise' },
     ]
   }
 ];
 
+function ComparisonTable({ plans }: { plans: SubscriptionPlan[] }) {
+  if (plans.length === 0) return null;
+
+  return (
+    <div className="max-w-6xl mx-auto">
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="border-b border-border">
+              <th className="text-left p-4 font-semibold text-foreground">Features</th>
+              {plans.map((plan) => (
+                <th 
+                  key={plan.id} 
+                  className={`text-center p-4 font-semibold text-foreground ${
+                    plan.name === 'Professional' ? 'bg-primary/5' : ''
+                  }`}
+                >
+                  {plan.name}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {dynamicFeatureComparison.map((category, catIndex) => (
+              <React.Fragment key={`cat-${catIndex}`}>
+                <tr className="bg-muted/30">
+                  <td colSpan={plans.length + 1} className="p-4 font-semibold text-sm text-foreground">
+                    {category.category}
+                  </td>
+                </tr>
+                {category.features.map((feature, featIndex) => (
+                  <tr key={`feat-${catIndex}-${featIndex}`} className="border-b border-border">
+                    <td className="p-4 text-sm text-foreground">{feature.name}</td>
+                    {plans.map((plan) => {
+                      const value = feature.getValue(plan);
+                      return (
+                        <td 
+                          key={plan.id} 
+                          className={`text-center p-4 ${
+                            plan.name === 'Professional' ? 'bg-primary/5' : ''
+                          }`}
+                        >
+                          {typeof value === "boolean" ? (
+                            value ? (
+                              <Check className="w-5 h-5 text-success mx-auto" />
+                            ) : (
+                              <X className="w-5 h-5 text-muted-foreground mx-auto" />
+                            )
+                          ) : (
+                            <span className={`text-sm ${
+                              plan.name === 'Professional' ? 'font-medium' : ''
+                            } text-foreground`}>{value}</span>
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </React.Fragment>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 export default function PricingFullPage() {
+  // Fetch plans from database
+  const { data: plans = [], isLoading } = useQuery<SubscriptionPlan[]>({
+    queryKey: ['subscription_plans_comparison'],
+    queryFn: async () => {
+      addDebugLog('Fetching plans for comparison table');
+      
+      const { data, error } = await supabase
+        .from('subscription_plans')
+        .select('*')
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true });
+
+      if (error) {
+        addDebugLog(`Error fetching comparison plans: ${error.message}`, 'error');
+        throw error;
+      }
+
+      addDebugLog(`Loaded ${data?.length || 0} plans for comparison`);
+      return data || [];
+    }
+  });
+
   return (
     <>
       <Helmet>
@@ -62,72 +162,21 @@ export default function PricingFullPage() {
           {/* Feature Comparison */}
           <div className="container mx-auto px-4 mt-20">
             <h2 className="text-3xl font-bold text-center mb-12 text-foreground">
-              Compare Plans
+              Compare All Plans
             </h2>
 
-            <div className="max-w-6xl mx-auto">
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th className="text-left p-4 font-semibold text-foreground">Features</th>
-                      <th className="text-center p-4 font-semibold text-foreground">Starter</th>
-                      <th className="text-center p-4 font-semibold bg-primary/5 text-foreground">Professional</th>
-                      <th className="text-center p-4 font-semibold text-foreground">Enterprise</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {featureComparison.map((category, catIndex) => (
-                      <React.Fragment key={`cat-${catIndex}`}>
-                        <tr className="bg-muted/30">
-                          <td colSpan={4} className="p-4 font-semibold text-sm text-foreground">
-                            {category.category}
-                          </td>
-                        </tr>
-                        {category.features.map((feature, featIndex) => (
-                          <tr key={`feat-${catIndex}-${featIndex}`} className="border-b border-border">
-                            <td className="p-4 text-sm text-foreground">{feature.name}</td>
-                            <td className="text-center p-4">
-                              {typeof feature.starter === "boolean" ? (
-                                feature.starter ? (
-                                  <Check className="w-5 h-5 text-success mx-auto" />
-                                ) : (
-                                  <X className="w-5 h-5 text-muted-foreground mx-auto" />
-                                )
-                              ) : (
-                                <span className="text-sm text-foreground">{feature.starter}</span>
-                              )}
-                            </td>
-                            <td className="text-center p-4 bg-primary/5">
-                              {typeof feature.pro === "boolean" ? (
-                                feature.pro ? (
-                                  <Check className="w-5 h-5 text-success mx-auto" />
-                                ) : (
-                                  <X className="w-5 h-5 text-muted-foreground mx-auto" />
-                                )
-                              ) : (
-                                <span className="text-sm font-medium text-foreground">{feature.pro}</span>
-                              )}
-                            </td>
-                            <td className="text-center p-4">
-                              {typeof feature.enterprise === "boolean" ? (
-                                feature.enterprise ? (
-                                  <Check className="w-5 h-5 text-success mx-auto" />
-                                ) : (
-                                  <X className="w-5 h-5 text-muted-foreground mx-auto" />
-                                )
-                              ) : (
-                                <span className="text-sm text-foreground">{feature.enterprise}</span>
-                              )}
-                            </td>
-                          </tr>
-                        ))}
-                      </React.Fragment>
-                    ))}
-                  </tbody>
-                </table>
+            {isLoading ? (
+              <div className="flex justify-center items-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                <span className="ml-2 text-muted-foreground">Loading comparison table...</span>
               </div>
-            </div>
+            ) : plans.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">Unable to load plans for comparison.</p>
+              </div>
+            ) : (
+              <ComparisonTable plans={plans} />
+            )}
 
             {/* FAQ */}
             <div className="max-w-3xl mx-auto mt-20">

@@ -11,6 +11,9 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import { initGA, logPageView } from "@/lib/utils";
 import LandingPage from "./pages/LandingPage";
 import Auth from "./pages/Auth";
+import Signup from "./pages/Signup";
+import Login from "./pages/Login";
+import Checkout from "./pages/Checkout";
 import Dashboard from "./pages/Dashboard";
 import AboutPage from "./pages/AboutPage";
 import ContactPage from "./pages/ContactPage";
@@ -172,6 +175,9 @@ const App = () => (
                        <Route path="/status" element={<ContactPage />} />
                        
                        <Route path="/auth" element={<Auth />} />
+                     <Route path="/signup" element={<Signup />} />
+                     <Route path="/login" element={<Login />} />
+                     <Route path="/checkout" element={<Checkout />} />
             
             {/* Protected Dashboard Pages */}
             <Route path="/dashboard" element={<DashboardLayout><Dashboard /></DashboardLayout>} />

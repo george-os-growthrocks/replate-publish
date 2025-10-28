@@ -10,7 +10,7 @@ export interface SubscriptionPlan {
   credits_per_month: number;
   max_projects: number;
   max_team_members: number;
-  features: string[];
+  features: string[] | unknown; // Allow both string[] and Json types
   stripe_price_id_monthly: string;
   stripe_price_id_yearly: string;
 }
@@ -32,7 +32,7 @@ export interface UserCredits {
   total_credits: number;
   used_credits: number;
   available_credits: number;
-  last_reset_at: string;
+  last_reset_at?: string;
 }
 
 export function useSubscription() {
@@ -66,14 +66,14 @@ export function useSubscription() {
       if (planError) {
         console.error('Plan query error:', planError);
         // Return subscription without plan data
-        return { ...subData, plan: null } as any;
+        return null;
       }
 
       // Combine
-      const subscription: UserSubscription = {
+      const subscription = {
         ...subData,
         plan: planData
-      };
+      } as UserSubscription;
       
       return subscription;
     },
@@ -116,38 +116,64 @@ export function useCreateCheckout() {
 
   return useMutation({
     mutationFn: async ({ planName, billingCycle }: { planName: string; billingCycle: 'monthly' | 'yearly' }) => {
-      console.log('Creating checkout for:', planName, billingCycle);
+      console.log('🚀 Creating checkout for:', planName, billingCycle);
       
-      const { data, error } = await supabase.functions.invoke('stripe-checkout', {
-        body: { planName, billingCycle },
+      // Make direct fetch call to get better error details
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const url = `${supabaseUrl}/functions/v1/stripe-checkout`;
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session?.access_token || supabaseAnonKey}`,
+        'apikey': supabaseAnonKey,
+      };
+      
+      console.log('📤 Making request to:', url);
+      console.log('📤 With body:', { planName, billingCycle });
+      
+      const fetchResponse = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ planName, billingCycle }),
       });
 
-      console.log('Checkout response:', { data, error });
+      console.log('📦 Response status:', fetchResponse.status, fetchResponse.statusText);
+      
+      const responseData = await fetchResponse.json();
+      console.log('📦 Response data:', responseData);
 
-      if (error) {
-        console.error('Supabase function error:', error);
-        throw error;
+      // Check for errors
+      if (!fetchResponse.ok) {
+        const errorMessage = responseData?.error || `HTTP ${fetchResponse.status}: ${fetchResponse.statusText}`;
+        console.error('❌ Edge function error:', errorMessage);
+        throw new Error(errorMessage);
       }
       
-      if (data?.error) {
-        console.error('Function returned error:', data.error);
-        throw new Error(data.error);
+      // Check for application errors in the response data
+      if (responseData?.error) {
+        console.error('❌ Function returned error:', responseData.error);
+        throw new Error(responseData.error);
       }
       
-      if (!data?.url) {
-        console.error('No URL in response:', data);
-        throw new Error('No checkout URL received from server');
+      // Check for missing URL
+      if (!responseData?.url) {
+        console.error('❌ No URL in response. Full data:', JSON.stringify(responseData));
+        throw new Error(`No checkout URL received. Response: ${JSON.stringify(responseData)}`);
       }
 
-      return data.url;
+      console.log('✅ Checkout URL received:', responseData.url);
+      return responseData.url;
     },
     onSuccess: (url) => {
-      console.log('Redirecting to checkout:', url);
+      console.log('✅ Redirecting to checkout:', url);
       // Redirect to Stripe Checkout
       window.location.href = url;
     },
     onError: (error) => {
-      console.error('Checkout error:', error);
+      console.error('❌ Checkout error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to create checkout session';
       toast.error(errorMessage);
     },
@@ -167,11 +193,12 @@ export function useDeductCredits() {
       feature: string; 
       credits?: number;
       projectId?: string;
-      metadata?: any;
+      metadata?: Record<string, unknown>;
     }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+      // @ts-expect-error - RPC function may not be in generated types yet
       const { data, error } = await supabase.rpc('deduct_credits', {
         p_user_id: user.id,
         p_feature: feature,

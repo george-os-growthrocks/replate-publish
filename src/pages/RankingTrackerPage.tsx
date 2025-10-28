@@ -64,6 +64,16 @@ export default function RankingTrackerPage() {
   const [isAdding, setIsAdding] = useState(false);
   const [isLoadingTracked, setIsLoadingTracked] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [debugLogs, setDebugLogs] = useState<string[]>([]);
+
+  // Debug logging functions
+  const addDebugLog = (level: string, message: string) => {
+    const logMessage = `[${level.toUpperCase()}] ${message}`;
+    console.log(logMessage);
+    setDebugLogs(prev => [...prev, logMessage]);
+  };
+
+  const getDebugLogs = () => debugLogs;
 
   // Debug: Log selectedProperty on mount and changes
   useEffect(() => {
@@ -130,18 +140,15 @@ export default function RankingTrackerPage() {
       }
 
       if (data?.data) {
-        const keywords = data.data.map((item: any) => item.keyword);
+        const keywords = data.data.map((item: {keyword: string}) => item.keyword);
         addDebugLog('success', `✅ Loaded ${keywords.length} tracked keywords`);
         setTrackedKeywords(keywords);
-        setDebugLogs(getDebugLogs());
       } else {
         addDebugLog('info', 'ℹ️ No tracked keywords found');
         setTrackedKeywords([]);
-        setDebugLogs(getDebugLogs());
       }
     } catch (error) {
       addDebugLog('error', `❌ Error: ${error instanceof Error ? error.message : String(error)}`);
-      setDebugLogs(getDebugLogs());
       toast.error('Failed to load tracked keywords. Check debug log.');
     } finally {
       setIsLoadingTracked(false);

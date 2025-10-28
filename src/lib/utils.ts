@@ -48,3 +48,23 @@ export const trackConversion = (plan: string, amount: number) => {
 export const trackSignup = () => {
   logEvent('User', 'Signup', 'New User Registration');
 };
+
+// Debug logging utility
+export const addDebugLog = (message: string, type: string = "info") => {
+  const timestamp = new Date().toLocaleTimeString();
+  const prefix = `[${timestamp}] [${type.toUpperCase()}]`;
+  
+  switch (type) {
+    case 'error':
+      console.error(`${prefix} ${message}`);
+      break;
+    case 'warn':
+      console.warn(`${prefix} ${message}`);
+      break;
+    case 'success':
+      console.log(`%c${prefix} ${message}`, 'color: green');
+      break;
+    default:
+      console.log(`${prefix} ${message}`);
+  }
+};

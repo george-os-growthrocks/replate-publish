@@ -78,14 +78,24 @@ BEGIN
         ALTER TABLE public.subscription_plans ADD COLUMN stripe_product_id TEXT UNIQUE;
     END IF;
 
-    -- Add stripe_price_id if missing
+    -- Add stripe_price_id_monthly if missing
     IF NOT EXISTS (
         SELECT 1 FROM information_schema.columns 
         WHERE table_schema = 'public' 
         AND table_name = 'subscription_plans' 
-        AND column_name = 'stripe_price_id'
+        AND column_name = 'stripe_price_id_monthly'
     ) THEN
-        ALTER TABLE public.subscription_plans ADD COLUMN stripe_price_id TEXT UNIQUE;
+        ALTER TABLE public.subscription_plans ADD COLUMN stripe_price_id_monthly TEXT;
+    END IF;
+
+    -- Add stripe_price_id_yearly if missing
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_schema = 'public' 
+        AND table_name = 'subscription_plans' 
+        AND column_name = 'stripe_price_id_yearly'
+    ) THEN
+        ALTER TABLE public.subscription_plans ADD COLUMN stripe_price_id_yearly TEXT;
     END IF;
 END $$;
 
@@ -221,23 +231,23 @@ END $$;
 
 -- Update or insert subscription plans (upsert)
 -- Note: Using credits_per_month (existing column) and max_projects/max_team_members as separate columns
-INSERT INTO public.subscription_plans (name, price_monthly, price_yearly, features, limits, sort_order, credits_per_month, max_projects, max_team_members)
+INSERT INTO public.subscription_plans (name, price_monthly, price_yearly, features, limits, sort_order, credits_per_month, max_projects, max_team_members, stripe_price_id_monthly, stripe_price_id_yearly)
 VALUES
     ('Free', 0, 0,
         '["5 SEO Tools", "Social Media SEO (Limited)", "100 Credits One-time", "Community Support"]'::jsonb,
-        '{"max_keywords": 100, "max_reports": 5}'::jsonb, 1, 0, 1, 1),
+        '{"max_keywords": 100, "max_reports": 5}'::jsonb, 1, 0, 1, 1, NULL, NULL),
     ('Starter', 29, 290,
         '["All SEO Tools", "Social Media SEO", "SERP Preview", "500 Credits/month", "Email Support"]'::jsonb,
-        '{"max_keywords": 500, "max_reports": 50}'::jsonb, 2, 500, 3, 1),
+        '{"max_keywords": 500, "max_reports": 50}'::jsonb, 2, 500, 3, 1, 'price_starter_monthly', 'price_starter_yearly'),
     ('Professional', 79, 790,
         '["Everything in Starter", "GA4 Analytics", "Credit Analytics", "Rank Tracking", "1,500 Credits/month", "Priority Support", "Export Reports"]'::jsonb,
-        '{"max_keywords": 2000, "max_reports": 500}'::jsonb, 3, 1500, 10, 5),
+        '{"max_keywords": 2000, "max_reports": 500}'::jsonb, 3, 1500, 10, 5, 'price_pro_monthly', 'price_pro_yearly'),
     ('Agency', 149, 1490,
         '["Everything in Professional", "White-label Reports", "Team Collaboration", "API Access", "3,500 Credits/month", "Dedicated Support"]'::jsonb,
-        '{"max_keywords": 10000, "max_reports": -1}'::jsonb, 4, 3500, 50, 20),
+        '{"max_keywords": 10000, "max_reports": -1}'::jsonb, 4, 3500, 50, 20, 'price_agency_monthly', 'price_agency_yearly'),
     ('Enterprise', 299, 2990,
         '["Everything in Agency", "Custom Integration", "SLA", "Custom Limits", "10,000 Credits/month", "White-glove Support", "Training"]'::jsonb,
-        '{"max_keywords": -1, "max_reports": -1}'::jsonb, 5, 10000, -1, -1)
+        '{"max_keywords": -1, "max_reports": -1}'::jsonb, 5, 10000, -1, -1, 'price_enterprise_monthly', 'price_enterprise_yearly')
 ON CONFLICT (name) DO UPDATE SET
     price_monthly = EXCLUDED.price_monthly,
     price_yearly = EXCLUDED.price_yearly,
@@ -247,6 +257,8 @@ ON CONFLICT (name) DO UPDATE SET
     features = EXCLUDED.features,
     limits = EXCLUDED.limits,
     sort_order = EXCLUDED.sort_order,
+    stripe_price_id_monthly = EXCLUDED.stripe_price_id_monthly,
+    stripe_price_id_yearly = EXCLUDED.stripe_price_id_yearly,
     updated_at = NOW();
 
 -- Insert credit packages (upsert)

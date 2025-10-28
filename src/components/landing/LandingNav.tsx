@@ -111,14 +111,14 @@ export function LandingNav() {
                   variant="ghost" 
                   className="hidden sm:inline-flex"
                 >
-                  <Link to="/auth">Sign In</Link>
+                  <Link to="/login">Sign In</Link>
                 </Button>
                 
                 <Button 
                   asChild 
                   className="hidden sm:inline-flex gradient-primary"
                 >
-                  <Link to="/auth">Get Started Free</Link>
+                  <Link to="/signup">Get Started Free</Link>
                 </Button>
               </>
             )}
@@ -197,12 +197,12 @@ export function LandingNav() {
                 ) : (
                   <>
                     <Button asChild variant="outline" className="w-full">
-                      <Link to="/auth" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
                         Sign In
                       </Link>
                     </Button>
                     <Button asChild className="w-full gradient-primary">
-                      <Link to="/auth" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Link to="/signup" onClick={() => setIsMobileMenuOpen(false)}>
                         Get Started Free
                       </Link>
                     </Button>
