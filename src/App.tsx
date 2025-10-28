@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -6,6 +8,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { FilterProvider } from "@/contexts/FilterContext";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { initGA, logPageView } from "@/lib/utils";
 import LandingPage from "./pages/LandingPage";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -74,8 +77,25 @@ import CWVTroubleshooting from "./pages/help/CWVTroubleshooting";
 import ProjectsPage from "./pages/ProjectsPage";
 import AnswerThePublicPage from "./pages/AnswerThePublicPage";
 import SEOReportPage from "./pages/SEOReportPage";
+import CreditUsageAnalytics from "./pages/CreditUsageAnalytics";
+import Index from "./pages/Index";
 
 const queryClient = new QueryClient();
+
+// Analytics Tracker Component
+function AnalyticsTracker() {
+  const location = useLocation();
+
+  useEffect(() => {
+    initGA();
+  }, []);
+
+  useEffect(() => {
+    logPageView(location.pathname + location.search);
+  }, [location]);
+
+  return null;
+}
 
 const App = () => (
   <ErrorBoundary>
@@ -91,10 +111,12 @@ const App = () => (
                 v7_relativeSplatPath: true,
               }}
             >
+              <AnalyticsTracker />
               <ScrollToTop />
           <Routes>
             {/* Public Marketing Pages */}
-            <Route path="/" element={<LandingPage />} />
+            <Route path="/" element={<Index />} />
+            <Route path="/landing" element={<LandingPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/features" element={<FeaturesPage />} />
@@ -174,6 +196,7 @@ const App = () => (
                   <Route path="/alerts" element={<DashboardLayout><AlertsPage /></DashboardLayout>} />
                   <Route path="/answer-the-public" element={<DashboardLayout><AnswerThePublicPage /></DashboardLayout>} />
                   <Route path="/projects" element={<DashboardLayout><ProjectsPage /></DashboardLayout>} />
+                  <Route path="/credit-analytics" element={<DashboardLayout><CreditUsageAnalytics /></DashboardLayout>} />
                   <Route path="/settings" element={<DashboardLayout><SettingsPage /></DashboardLayout>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

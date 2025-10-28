@@ -7,6 +7,7 @@ import { BarChart3, TrendingUp, Sparkles, Check, ArrowLeft } from "lucide-react"
 import { toast } from "sonner";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { BrandLogo } from "@/components/BrandLogo";
+import { trackSignup } from "@/lib/utils";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -28,6 +29,9 @@ const Auth = () => {
       
       if (event === "SIGNED_IN" && session) {
         console.log("User signed in, attempting to store OAuth token");
+        
+        // Track signup in Google Analytics
+        trackSignup();
         
         // Try to capture and store the provider token
         try {

@@ -131,12 +131,116 @@ export type Database = {
         };
         Relationships: [];
       };
+      user_credits: {
+        Row: {
+          id: string;
+          user_id: string;
+          total_credits: number;
+          used_credits: number;
+          available_credits: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          total_credits?: number;
+          used_credits?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          total_credits?: number;
+          used_credits?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      credit_usage_history: {
+        Row: {
+          id: string;
+          user_id: string;
+          feature: string;
+          credits_used: number;
+          metadata: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          feature: string;
+          credits_used: number;
+          metadata?: Json;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          feature?: string;
+          credits_used?: number;
+          metadata?: Json;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      user_oauth_tokens: {
+        Row: {
+          id: string;
+          user_id: string;
+          provider: string;
+          access_token: string;
+          refresh_token: string | null;
+          expires_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          provider: string;
+          access_token: string;
+          refresh_token?: string | null;
+          expires_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          provider?: string;
+          access_token?: string;
+          refresh_token?: string | null;
+          expires_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      consume_credits_with_transaction: {
+        Args: {
+          p_user_id: string;
+          p_feature_name: string;
+          p_credits_amount: number;
+          p_project_id: string | null;
+          p_metadata: Json;
+        };
+        Returns: Json;
+      };
+      has_feature_access: {
+        Args: {
+          p_user_id: string;
+          p_feature_key: string;
+        };
+        Returns: boolean;
+      };
     }
     Enums: {
       [_ in never]: never

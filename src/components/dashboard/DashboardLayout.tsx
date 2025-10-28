@@ -330,6 +330,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <FolderOpen className={cn("h-[18px] w-[18px]", !sidebarCollapsed && "mr-3")} />
                 {!sidebarCollapsed && <span>Projects</span>}
               </Button>
+              <Button variant="ghost" className={cn("w-full justify-start rounded-xl text-sm transition-colors", location.pathname === "/credit-analytics" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground", sidebarCollapsed && "justify-center px-2")} onClick={() => navigate("/credit-analytics")}>
+                <BarChart3 className={cn("h-[18px] w-[18px]", !sidebarCollapsed && "mr-3")} />
+                {!sidebarCollapsed && <span>Credit Analytics</span>}
+              </Button>
               <Button variant="ghost" className={cn("w-full justify-start rounded-xl text-sm transition-colors", location.pathname === "/settings" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground", sidebarCollapsed && "justify-center px-2")} onClick={() => navigate("/settings")}>
                 <Settings className={cn("h-[18px] w-[18px]", !sidebarCollapsed && "mr-3")} />
                 {!sidebarCollapsed && <span>Settings</span>}

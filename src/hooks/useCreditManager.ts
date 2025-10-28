@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { getCreditCost, type FeatureKey } from '@/lib/credit-costs';
 import { useToast } from '@/hooks/use-toast';
+import { trackFeatureUsage } from '@/lib/utils';
 
 interface CreditState {
   total: number;
@@ -129,6 +130,10 @@ export function useCreditManager() {
             description: result.error || 'Failed to consume credits',
             variant: 'destructive',
           });
+        } else {
+          // Track successful feature usage in Google Analytics
+          const creditsUsed = params.amount || getCreditCost(params.feature);
+          trackFeatureUsage(params.feature, creditsUsed);
         }
 
         return result;
