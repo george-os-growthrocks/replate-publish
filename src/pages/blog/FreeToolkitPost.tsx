@@ -16,6 +16,7 @@ export default function FreeToolkitPost() {
           name="description" 
           content="Build your free SEO stack: title sim, PAA extractor, schema generator, CWV pulse, log analyzer, and more. Templates + metrics you can use today." 
         />
+        <link rel="canonical" href="https://anotherseoguru.com/blog/free-seo-toolkit-2026" />
         <meta property="og:type" content="article" />
         <meta property="article:published_time" content="2025-10-28T10:00:00Z" />
         <meta property="article:modified_time" content="2025-10-28T10:00:00Z" />

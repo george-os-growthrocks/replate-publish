@@ -13,6 +13,7 @@ export default function CWVTroubleshooting() {
       <Helmet>
         <title>Core Web Vitals Troubleshooting Guide | AnotherSEOGuru Help</title>
         <meta name="description" content="Learn how to improve LCP, INP, and CLS scores. Step-by-step troubleshooting for Core Web Vitals optimization." />
+        <link rel="canonical" href="https://anotherseoguru.com/help/cwv-troubleshooting" />
       </Helmet>
 
       <div className="min-h-screen bg-background">

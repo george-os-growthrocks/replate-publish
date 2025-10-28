@@ -70,6 +70,9 @@ import FreeToolsPage from "./pages/FreeToolsPage";
 import ConnectSearchConsole from "./pages/help/ConnectSearchConsole";
 import KeywordClusteringGuide from "./pages/help/KeywordClusteringGuide";
 import CWVTroubleshooting from "./pages/help/CWVTroubleshooting";
+import ProjectsPage from "./pages/ProjectsPage";
+import AnswerThePublicPage from "./pages/AnswerThePublicPage";
+import SEOReportPage from "./pages/SEOReportPage";
 
 const queryClient = new QueryClient();
 
@@ -145,6 +148,7 @@ const App = () => (
             
             {/* Protected Dashboard Pages */}
             <Route path="/dashboard" element={<DashboardLayout><Dashboard /></DashboardLayout>} />
+            <Route path="/seo-report" element={<DashboardLayout><SEOReportPage /></DashboardLayout>} />
             <Route path="/queries" element={<DashboardLayout><QueriesPage /></DashboardLayout>} />
             <Route path="/pages" element={<DashboardLayout><PagesPage /></DashboardLayout>} />
             <Route path="/countries" element={<DashboardLayout><CountriesPage /></DashboardLayout>} />
@@ -166,6 +170,8 @@ const App = () => (
                   <Route path="/seo-intelligence" element={<DashboardLayout><SEOIntelligencePage /></DashboardLayout>} />
                   <Route path="/llm-citations" element={<DashboardLayout><LLMCitationPage /></DashboardLayout>} />
                   <Route path="/alerts" element={<DashboardLayout><AlertsPage /></DashboardLayout>} />
+                  <Route path="/answer-the-public" element={<DashboardLayout><AnswerThePublicPage /></DashboardLayout>} />
+                  <Route path="/projects" element={<DashboardLayout><ProjectsPage /></DashboardLayout>} />
                   <Route path="/settings" element={<DashboardLayout><SettingsPage /></DashboardLayout>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

@@ -216,6 +216,7 @@ export default function HelpCenterPage() {
           name="description" 
           content="Find answers to common questions, learn how to use our SEO tools, and get the most out of your subscription." 
         />
+        <link rel="canonical" href="https://anotherseoguru.com/help" />
       </Helmet>
 
       <div className="min-h-screen bg-background">

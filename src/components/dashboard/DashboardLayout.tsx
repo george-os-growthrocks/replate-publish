@@ -44,6 +44,7 @@ import {
   Zap,
   FileSearch,
   Shield,
+  FolderOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -163,6 +164,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               </h3>
             )}
             <div className="space-y-1">
+              <Button variant="ghost" className={cn("w-full justify-start rounded-xl text-sm transition-colors", location.pathname === "/seo-report" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground", sidebarCollapsed && "justify-center px-2")} onClick={() => navigate("/seo-report")}>
+                <BarChart3 className={cn("h-[18px] w-[18px]", !sidebarCollapsed && "mr-3")} />
+                {!sidebarCollapsed && <span>SEO Report</span>}
+              </Button>
               <Button variant="ghost" className={cn("w-full justify-start rounded-xl text-sm transition-colors", location.pathname === "/queries" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground", sidebarCollapsed && "justify-center px-2")} onClick={() => navigate("/queries")}>
                 <Search className={cn("h-[18px] w-[18px]", !sidebarCollapsed && "mr-3")} />
                 {!sidebarCollapsed && <span>Queries</span>}
@@ -293,6 +298,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <Brain className={cn("h-[18px] w-[18px]", !sidebarCollapsed && "mr-3")} />
                 {!sidebarCollapsed && <span>Intelligence</span>}
               </Button>
+              <Button variant="ghost" className={cn("w-full justify-start rounded-xl text-sm transition-colors", location.pathname === "/answer-the-public" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground", sidebarCollapsed && "justify-center px-2")} onClick={() => navigate("/answer-the-public")}>
+                <HelpCircle className={cn("h-[18px] w-[18px]", !sidebarCollapsed && "mr-3")} />
+                {!sidebarCollapsed && <span>Answer The Public</span>}
+              </Button>
               <Button variant="ghost" className={cn("w-full justify-start rounded-xl text-sm transition-colors", location.pathname === "/llm-citations" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground", sidebarCollapsed && "justify-center px-2")} onClick={() => navigate("/llm-citations")}>
                 <Activity className={cn("h-[18px] w-[18px]", !sidebarCollapsed && "mr-3")} />
                 {!sidebarCollapsed && <span>LLM Citations</span>}
@@ -304,7 +313,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </div>
 
             {/* Settings */}
-            <div className="pt-2 border-t border-border">
+            <div className="pt-2 border-t border-border space-y-1">
+              <Button variant="ghost" className={cn("w-full justify-start rounded-xl text-sm transition-colors", location.pathname === "/projects" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground", sidebarCollapsed && "justify-center px-2")} onClick={() => navigate("/projects")}>
+                <FolderOpen className={cn("h-[18px] w-[18px]", !sidebarCollapsed && "mr-3")} />
+                {!sidebarCollapsed && <span>Projects</span>}
+              </Button>
               <Button variant="ghost" className={cn("w-full justify-start rounded-xl text-sm transition-colors", location.pathname === "/settings" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground", sidebarCollapsed && "justify-center px-2")} onClick={() => navigate("/settings")}>
                 <Settings className={cn("h-[18px] w-[18px]", !sidebarCollapsed && "mr-3")} />
                 {!sidebarCollapsed && <span>Settings</span>}

@@ -139,6 +139,7 @@ export default function PAAExtractor() {
           name="description" 
           content="Extract People Also Ask questions from Google. Turn questions into content briefs, export to CSV, and optimize your content strategy." 
         />
+        <link rel="canonical" href="https://anotherseoguru.com/free-tools/paa-extractor" />
       </Helmet>
 
       <div className="min-h-screen bg-background">

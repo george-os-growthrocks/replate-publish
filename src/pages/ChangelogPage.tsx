@@ -111,6 +111,7 @@ export default function ChangelogPage() {
           name="description" 
           content="See what's new in AnotherSEOGuru. Track all product updates, new features, bug fixes, and improvements." 
         />
+        <link rel="canonical" href="https://anotherseoguru.com/changelog" />
       </Helmet>
 
       <div className="min-h-screen bg-background">

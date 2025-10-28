@@ -28,6 +28,7 @@ export default function FreeToolsPage() {
           name="description" 
           content="Access 15+ free SEO tools: title simulator, schema generator, PAA extractor, CWV checker, hreflang builder, and more. No sign-up required." 
         />
+        <link rel="canonical" href="https://anotherseoguru.com/free-tools" />
       </Helmet>
 
       <div className="min-h-screen bg-background">

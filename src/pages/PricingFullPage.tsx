@@ -167,7 +167,7 @@ export default function PricingFullPage() {
             </div>
           </div>
         </main>
-
+        
         <Footer />
       </div>
     </>

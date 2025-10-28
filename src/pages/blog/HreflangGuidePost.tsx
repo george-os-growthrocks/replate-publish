@@ -13,6 +13,7 @@ export default function HreflangGuidePost() {
       <Helmet>
         <title>Hreflang Without Tears: ccTLDs vs. Subfolders vs. Subdomains</title>
         <meta name="description" content="A pragmatic framework for choosing your international URL strategy—with hreflang templates that actually work." />
+        <link rel="canonical" href="https://anotherseoguru.com/blog/hreflang-guide" />
       </Helmet>
 
       <div className="min-h-screen bg-background">

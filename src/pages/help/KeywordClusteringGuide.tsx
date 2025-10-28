@@ -13,6 +13,7 @@ export default function KeywordClusteringGuide() {
       <Helmet>
         <title>How Keyword Clustering Works | AnotherSEOGuru Help</title>
         <meta name="description" content="Understanding semantic grouping and intent analysis for better SEO. Learn how our AI clusters keywords by topic and search intent." />
+        <link rel="canonical" href="https://anotherseoguru.com/help/keyword-clustering-guide" />
       </Helmet>
 
       <div className="min-h-screen bg-background">

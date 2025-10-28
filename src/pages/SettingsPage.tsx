@@ -2,9 +2,12 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Settings, User, Bell, Database, Palette } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Settings, User, Bell, Database, Palette, CreditCard } from "lucide-react";
 import { useFilters } from "@/contexts/FilterContext";
 import PropertySelector from "@/components/dashboard/PropertySelector";
+import { SubscriptionSettings } from "@/components/settings/SubscriptionSettings";
+import { ProfileSettings } from "@/components/settings/ProfileSettings";
 
 export default function SettingsPage() {
   const { propertyUrl, setPropertyUrl } = useFilters();
@@ -19,7 +22,32 @@ export default function SettingsPage() {
         </p>
       </div>
 
-      {/* Property Settings */}
+      <Tabs defaultValue="profile" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="profile">
+            <User className="w-4 h-4 mr-2" />
+            Profile
+          </TabsTrigger>
+          <TabsTrigger value="general">
+            <Settings className="w-4 h-4 mr-2" />
+            General
+          </TabsTrigger>
+          <TabsTrigger value="subscription">
+            <CreditCard className="w-4 h-4 mr-2" />
+            Subscription & Credits
+          </TabsTrigger>
+          <TabsTrigger value="notifications">
+            <Bell className="w-4 h-4 mr-2" />
+            Notifications
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="profile">
+          <ProfileSettings />
+        </TabsContent>
+
+        <TabsContent value="general" className="space-y-6">
+          {/* Property Settings */}
       <Card className="p-6">
         <div className="flex items-center gap-3 mb-4">
           <Database className="h-5 w-5" />
@@ -135,11 +163,55 @@ export default function SettingsPage() {
         </div>
       </Card>
 
-      {/* Save Button */}
-      <div className="flex justify-end gap-3">
-        <Button variant="outline">Reset to Defaults</Button>
-        <Button>Save Changes</Button>
-      </div>
+          {/* Save Button */}
+          <div className="flex justify-end gap-3">
+            <Button variant="outline">Reset to Defaults</Button>
+            <Button>Save Changes</Button>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="subscription">
+          <SubscriptionSettings />
+        </TabsContent>
+
+        <TabsContent value="notifications" className="space-y-6">
+          <Card className="p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <Bell className="h-5 w-5" />
+              <h3 className="text-lg font-semibold">Notification Preferences</h3>
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label>Ranking Change Alerts</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Get notified when rankings change significantly
+                  </p>
+                </div>
+                <Switch defaultChecked={true} />
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label>Weekly Reports</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Receive weekly SEO performance summary
+                  </p>
+                </div>
+                <Switch defaultChecked={true} />
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label>Credit Low Warnings</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Alert when credits drop below 20%
+                  </p>
+                </div>
+                <Switch defaultChecked={true} />
+              </div>
+            </div>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

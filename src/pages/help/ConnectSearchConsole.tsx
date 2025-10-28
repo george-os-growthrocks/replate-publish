@@ -13,6 +13,7 @@ export default function ConnectSearchConsole() {
       <Helmet>
         <title>How to Connect Google Search Console | AnotherSEOGuru Help</title>
         <meta name="description" content="Step-by-step guide to connecting your Google Search Console property to AnotherSEOGuru. Get your SEO data flowing in minutes." />
+        <link rel="canonical" href="https://anotherseoguru.com/help/connect-search-console" />
       </Helmet>
 
       <div className="min-h-screen bg-background">

@@ -13,6 +13,7 @@ export default function LogFileSEOPost() {
       <Helmet>
         <title>Log-File SEO: The Fastest Way to Find Crawl Waste</title>
         <meta name="description" content="Learn to parse access logs, spot crawl traps, and fix budget-draining patterns—step by step with sample queries." />
+        <link rel="canonical" href="https://anotherseoguru.com/blog/log-file-seo-guide" />
         <meta property="og:type" content="article" />
       </Helmet>
 

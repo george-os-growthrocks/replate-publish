@@ -1,78 +1,52 @@
-import { useFilters } from "@/contexts/FilterContext";
-import MetricsOverview from "@/components/dashboard/MetricsOverview";
-import TimeSeriesChart from "@/components/dashboard/TimeSeriesChart";
-import QueryTable from "@/components/dashboard/QueryTable";
-import InsightsPanel from "@/components/dashboard/InsightsPanel";
-import { CtrPositionScatter } from "@/components/dashboard/CtrPositionScatter";
+import { useEffect, useState } from "react";
+import { DashboardHero } from "@/components/dashboard/DashboardHero";
+import { DashboardMetricsCards } from "@/components/dashboard/DashboardMetricsCards";
+import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
+import { DashboardRightSidebar } from "@/components/dashboard/DashboardRightSidebar";
 import { Card } from "@/components/ui/card";
-import { TrendingUp, Users, MousePointerClick, BarChart } from "lucide-react";
+import { TrendingUp } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Dashboard = () => {
-  const { propertyUrl, dateRange } = useFilters();
+  const [userEmail, setUserEmail] = useState<string>("");
 
-  const startDate = dateRange?.from?.toISOString().split("T")[0] || "";
-  const endDate = dateRange?.to?.toISOString().split("T")[0] || "";
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUserEmail(session?.user?.email || "");
+    });
+  }, []);
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Overview</h1>
-        <p className="text-muted-foreground mt-1">
-          Your Search Console performance at a glance
-        </p>
+      {/* Hero Section */}
+      {userEmail && <DashboardHero userEmail={userEmail} />}
+      
+      {/* Metrics Cards */}
+      <DashboardMetricsCards />
+
+      {/* Charts Section with Real Data */}
+      <DashboardCharts />
+
+      {/* Right Sidebar */}
+      <div className="grid lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <Card className="p-12 text-center">
+            <div className="max-w-md mx-auto space-y-4">
+              <div className="h-16 w-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
+                <TrendingUp className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold">Your SEO Command Center</h3>
+              <p className="text-muted-foreground">
+                Navigate to specific tools using the sidebar, or check your SEO Report for Google Search Console insights.
+              </p>
+            </div>
+          </Card>
+        </div>
+        
+        <div>
+          <DashboardRightSidebar />
+        </div>
       </div>
-
-      {propertyUrl && startDate && endDate ? (
-        <>
-          {/* Metrics Overview */}
-          <MetricsOverview 
-            propertyUrl={propertyUrl}
-            startDate={startDate}
-            endDate={endDate}
-          />
-
-          {/* Main Grid */}
-          <div className="grid lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-6">
-              <TimeSeriesChart 
-                propertyUrl={propertyUrl}
-                startDate={startDate}
-                endDate={endDate}
-              />
-              <CtrPositionScatter
-                propertyUrl={propertyUrl}
-                startDate={startDate}
-                endDate={endDate}
-              />
-              <QueryTable 
-                propertyUrl={propertyUrl}
-                startDate={startDate}
-                endDate={endDate}
-              />
-            </div>
-            <div>
-              <InsightsPanel 
-                propertyUrl={propertyUrl}
-                startDate={startDate}
-                endDate={endDate}
-              />
-            </div>
-          </div>
-        </>
-      ) : (
-        <Card className="p-12 text-center">
-          <div className="max-w-md mx-auto space-y-4">
-            <div className="h-16 w-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
-              <TrendingUp className="h-8 w-8 text-primary" />
-            </div>
-            <h3 className="text-xl font-semibold">Select a Property</h3>
-            <p className="text-muted-foreground">
-              Choose a Search Console property from the selector above to start analyzing your data.
-            </p>
-          </div>
-        </Card>
-      )}
     </div>
   );
 };

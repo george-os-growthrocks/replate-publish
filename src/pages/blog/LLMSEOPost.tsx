@@ -16,6 +16,7 @@ export default function LLMSEOPost() {
           name="description" 
           content="A field guide to earning citations in ChatGPT and Perplexity: Q&A formatting, freshness, source-worthiness, schema, and measurement." 
         />
+        <link rel="canonical" href="https://anotherseoguru.com/blog/llm-seo-chatgpt-perplexity" />
         <meta property="og:type" content="article" />
         <meta property="article:published_time" content="2025-10-28T10:00:00Z" />
         <meta property="article:modified_time" content="2025-10-28T10:00:00Z" />

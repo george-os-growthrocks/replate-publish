@@ -115,6 +115,7 @@ export default function HreflangBuilder() {
           name="description" 
           content="Generate and validate hreflang tags for international SEO. Prevent indexing issues with x-default support and canonical parity checks." 
         />
+        <link rel="canonical" href="https://anotherseoguru.com/free-tools/hreflang-builder" />
       </Helmet>
 
       <div className="min-h-screen bg-background">

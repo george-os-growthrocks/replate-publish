@@ -121,6 +121,7 @@ export default function CWVPulse() {
           name="description" 
           content="Check your Core Web Vitals (LCP, INP, CLS) scores. Get PageSpeed Insights data with actionable recommendations." 
         />
+        <link rel="canonical" href="https://anotherseoguru.com/free-tools/cwv-pulse" />
       </Helmet>
 
       <div className="min-h-screen bg-background">

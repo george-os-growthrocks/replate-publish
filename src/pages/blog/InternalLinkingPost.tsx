@@ -13,6 +13,7 @@ export default function InternalLinkingPost() {
       <Helmet>
         <title>Internal Linking at Scale: From GSC Exports to Smart Anchors</title>
         <meta name="description" content="Use queries, clusters, and templates to deploy internal links that move rankings—minus the manual pain." />
+        <link rel="canonical" href="https://anotherseoguru.com/blog/internal-linking-scale" />
       </Helmet>
 
       <div className="min-h-screen bg-background">
