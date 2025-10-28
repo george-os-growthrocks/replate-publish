@@ -64,6 +64,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userEmail, setUserEmail] = useState<string>("");
   const { dateRange, setDateRange, device, setDevice, country, setCountry, propertyUrl, setPropertyUrl } = useFilters();
 
@@ -101,11 +102,21 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
+      {/* Mobile Overlay */}
+      {mobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
       <aside
         className={cn(
           "h-screen border-r border-border bg-background flex flex-col transition-all duration-200",
-          sidebarCollapsed ? "w-20" : "w-64"
+          "fixed lg:relative z-50 lg:z-auto",
+          sidebarCollapsed ? "w-20" : "w-64",
+          mobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
         {/* Header */}
@@ -344,46 +355,113 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto">
-        {/* Top Bar with Filters - Edge to Edge */}
-        <div className="sticky top-0 z-40 border-b border-border bg-background backdrop-blur">
-          <div className="px-6 py-3 flex items-center gap-3">
-            <PropertySelector
-              onPropertySelect={setPropertyUrl}
-              selectedProperty={propertyUrl}
-            />
-            <DateRangePicker value={dateRange} onChange={setDateRange} />
-            <Select value={device} onValueChange={(v: any) => setDevice(v)}>
-              <SelectTrigger className="h-9 w-[130px] rounded-xl hover:bg-muted text-xs">
-                <Monitor className="h-3.5 w-3.5 mr-1.5 opacity-80" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">All Devices</SelectItem>
-                <SelectItem value="DESKTOP">Desktop</SelectItem>
-                <SelectItem value="MOBILE">Mobile</SelectItem>
-                <SelectItem value="TABLET">Tablet</SelectItem>
-              </SelectContent>
-            </Select>
-            {country !== "ALL" && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setCountry("ALL")}
-                className="h-9 rounded-xl hover:bg-muted text-xs"
-              >
-                Clear Country Filter
-              </Button>
-            )}
-            <div className="ml-auto flex items-center gap-2">
-              <ThemeToggle />
-              <NotificationCenter />
-              <UserProfileDropdown userEmail={userEmail} userPlan="Free" />
+        {/* Top Bar with Filters - Mobile Responsive */}
+        <div className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur-lg">
+          {/* Mobile: Stacked Layout */}
+          <div className="lg:hidden">
+            <div className="px-3 py-2 space-y-2">
+              {/* Hamburger Menu Button */}
+              <div className="flex items-center gap-2 mb-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9"
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                >
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                </Button>
+                <div className="flex-1 text-sm font-semibold">
+                  AnotherSEOGuru
+                </div>
+              </div>
+
+              {/* Row 1: Property Selector (Full Width) */}
+              <div className="w-full">
+                <PropertySelector
+                  onPropertySelect={setPropertyUrl}
+                  selectedProperty={propertyUrl}
+                />
+              </div>
+              
+              {/* Row 2: Date Range & Device (Side by Side) */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                <div className="flex-1 min-w-[200px]">
+                  <DateRangePicker value={dateRange} onChange={setDateRange} />
+                </div>
+                <Select value={device} onValueChange={(v: any) => setDevice(v)}>
+                  <SelectTrigger className="h-9 w-[110px] rounded-xl hover:bg-muted text-xs flex-shrink-0">
+                    <Monitor className="h-3.5 w-3.5 mr-1.5 opacity-80" />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">All</SelectItem>
+                    <SelectItem value="DESKTOP">Desktop</SelectItem>
+                    <SelectItem value="MOBILE">Mobile</SelectItem>
+                    <SelectItem value="TABLET">Tablet</SelectItem>
+                  </SelectContent>
+                </Select>
+                <ThemeToggle />
+                <NotificationCenter />
+                <UserProfileDropdown userEmail={userEmail} userPlan="Free" />
+              </div>
+              
+              {/* Country Filter (if active) */}
+              {country !== "ALL" && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setCountry("ALL")}
+                  className="h-8 w-full rounded-xl hover:bg-muted text-xs"
+                >
+                  Clear Country Filter
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Desktop: Original Horizontal Layout */}
+          <div className="hidden lg:block">
+            <div className="px-6 py-3 flex items-center gap-3">
+              <PropertySelector
+                onPropertySelect={setPropertyUrl}
+                selectedProperty={propertyUrl}
+              />
+              <DateRangePicker value={dateRange} onChange={setDateRange} />
+              <Select value={device} onValueChange={(v: any) => setDevice(v)}>
+                <SelectTrigger className="h-9 w-[130px] rounded-xl hover:bg-muted text-xs">
+                  <Monitor className="h-3.5 w-3.5 mr-1.5 opacity-80" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">All Devices</SelectItem>
+                  <SelectItem value="DESKTOP">Desktop</SelectItem>
+                  <SelectItem value="MOBILE">Mobile</SelectItem>
+                  <SelectItem value="TABLET">Tablet</SelectItem>
+                </SelectContent>
+              </Select>
+              {country !== "ALL" && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setCountry("ALL")}
+                  className="h-9 rounded-xl hover:bg-muted text-xs"
+                >
+                  Clear Country Filter
+                </Button>
+              )}
+              <div className="ml-auto flex items-center gap-2">
+                <ThemeToggle />
+                <NotificationCenter />
+                <UserProfileDropdown userEmail={userEmail} userPlan="Free" />
+              </div>
             </div>
           </div>
         </div>
 
         {/* Page Content */}
-        <div className="px-6 py-6 space-y-6">
+        <div className="px-3 sm:px-4 lg:px-6 py-4 lg:py-6 space-y-4 lg:space-y-6">
           {children}
         </div>
 

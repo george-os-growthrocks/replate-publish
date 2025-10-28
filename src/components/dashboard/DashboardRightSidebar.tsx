@@ -88,35 +88,35 @@ export function DashboardRightSidebar() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* AI Insights */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Sparkles className="w-5 h-5 text-primary" />
+        <CardHeader className="px-4 sm:px-6 py-3 sm:py-6">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
             AI Insights
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-3 sm:space-y-4 px-4 sm:px-6 pb-4 sm:pb-6">
           {aiInsights.map((insight, idx) => (
             <div 
               key={idx}
-              className={`p-4 rounded-lg border ${
+              className={`p-3 sm:p-4 rounded-lg border ${
                 insight.priority === 'high' 
                   ? 'bg-amber-500/5 border-amber-500/20' 
                   : 'bg-blue-500/5 border-blue-500/20'
               }`}
             >
-              <div className="flex items-start justify-between mb-2">
-                <h4 className="font-semibold text-sm">{insight.title}</h4>
+              <div className="flex items-start justify-between gap-2 mb-1.5 sm:mb-2">
+                <h4 className="font-semibold text-xs sm:text-sm">{insight.title}</h4>
                 <Badge 
                   variant={insight.priority === 'high' ? 'default' : 'secondary'}
-                  className="text-xs"
+                  className="text-[10px] sm:text-xs flex-shrink-0"
                 >
                   {insight.priority}
                 </Badge>
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[11px] sm:text-xs text-muted-foreground">
                 {insight.description}
               </p>
             </div>
@@ -126,20 +126,20 @@ export function DashboardRightSidebar() {
 
       {/* Recent Activity */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Clock className="w-5 h-5" />
+        <CardHeader className="px-4 sm:px-6 py-3 sm:py-6">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
             Recent Activity
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
+        <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
+          <div className="space-y-2 sm:space-y-3">
             {recentActivity.map((activity, idx) => (
-              <div key={idx} className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
-                <span className="text-xl">{activity.icon}</span>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">{activity.action}</p>
-                  <p className="text-xs text-muted-foreground">{activity.time}</p>
+              <div key={idx} className="flex items-start gap-2 sm:gap-3 p-2.5 sm:p-3 bg-muted/50 rounded-lg">
+                <span className="text-lg sm:text-xl flex-shrink-0">{activity.icon}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-sm font-medium truncate">{activity.action}</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">{activity.time}</p>
                 </div>
               </div>
             ))}
@@ -149,10 +149,10 @@ export function DashboardRightSidebar() {
 
       {/* Subscription Card */}
       <Card className={isFreePlan ? "bg-gradient-to-br from-primary/10 to-secondary/10 border-primary/20" : ""}>
-        <CardHeader>
-          <CardTitle className="text-lg">Your Subscription</CardTitle>
+        <CardHeader className="px-4 sm:px-6 py-3 sm:py-6">
+          <CardTitle className="text-base sm:text-lg">Your Subscription</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-3 sm:space-y-4 px-4 sm:px-6 pb-4 sm:pb-6">
           <div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-muted-foreground">Current Plan</span>
@@ -170,26 +170,26 @@ export function DashboardRightSidebar() {
 
           {isFreePlan && (
             <>
-              <div className="p-4 bg-gradient-to-br from-primary/5 to-secondary/5 rounded-lg border border-primary/20">
-                <p className="font-semibold mb-2 text-sm">Upgrade to Pro</p>
-                <ul className="space-y-1 mb-3">
-                  <li className="text-xs text-muted-foreground flex items-center gap-1">
-                    <TrendingUp className="w-3 h-3 text-green-500" />
-                    3,000 credits/month
+              <div className="p-3 sm:p-4 bg-gradient-to-br from-primary/5 to-secondary/5 rounded-lg border border-primary/20">
+                <p className="font-semibold mb-2 text-xs sm:text-sm">Upgrade to Pro</p>
+                <ul className="space-y-1 mb-2 sm:mb-3">
+                  <li className="text-[10px] sm:text-xs text-muted-foreground flex items-center gap-1">
+                    <TrendingUp className="w-3 h-3 text-green-500 flex-shrink-0" />
+                    <span>3,000 credits/month</span>
                   </li>
-                  <li className="text-xs text-muted-foreground flex items-center gap-1">
-                    <TrendingUp className="w-3 h-3 text-green-500" />
-                    Unlimited keywords
+                  <li className="text-[10px] sm:text-xs text-muted-foreground flex items-center gap-1">
+                    <TrendingUp className="w-3 h-3 text-green-500 flex-shrink-0" />
+                    <span>Unlimited keywords</span>
                   </li>
-                  <li className="text-xs text-muted-foreground flex items-center gap-1">
-                    <TrendingUp className="w-3 h-3 text-green-500" />
-                    White-label reports
+                  <li className="text-[10px] sm:text-xs text-muted-foreground flex items-center gap-1">
+                    <TrendingUp className="w-3 h-3 text-green-500 flex-shrink-0" />
+                    <span>White-label reports</span>
                   </li>
                 </ul>
-                <Button asChild size="sm" className="w-full gradient-primary">
+                <Button asChild size="sm" className="w-full gradient-primary text-xs sm:text-sm h-8 sm:h-9">
                   <Link to="/pricing">
                     Upgrade Now
-                    <ArrowRight className="w-3 h-3 ml-2" />
+                    <ArrowRight className="w-3 h-3 ml-1.5 sm:ml-2" />
                   </Link>
                 </Button>
               </div>
@@ -211,25 +211,25 @@ export function DashboardRightSidebar() {
 
       {/* Quick Links */}
       <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Quick Links</CardTitle>
+        <CardHeader className="px-4 sm:px-6 py-3 sm:py-6">
+          <CardTitle className="text-base sm:text-lg">Quick Links</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-2">
-          <Button asChild variant="ghost" className="w-full justify-start" size="sm">
+        <CardContent className="space-y-2 px-4 sm:px-6 pb-4 sm:pb-6">
+          <Button asChild variant="ghost" className="w-full justify-start h-8 sm:h-9 text-xs sm:text-sm" size="sm">
             <Link to="/settings">
-              <Settings className="w-4 h-4 mr-2" />
+              <Settings className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2" />
               Settings
             </Link>
           </Button>
-          <Button asChild variant="ghost" className="w-full justify-start" size="sm">
+          <Button asChild variant="ghost" className="w-full justify-start h-8 sm:h-9 text-xs sm:text-sm" size="sm">
             <Link to="/help">
-              <HelpCircle className="w-4 h-4 mr-2" />
+              <HelpCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2" />
               Help Center
             </Link>
           </Button>
-          <Button asChild variant="ghost" className="w-full justify-start" size="sm">
+          <Button asChild variant="ghost" className="w-full justify-start h-8 sm:h-9 text-xs sm:text-sm" size="sm">
             <Link to="/pricing">
-              <CreditCard className="w-4 h-4 mr-2" />
+              <CreditCard className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2" />
               View Plans
             </Link>
           </Button>

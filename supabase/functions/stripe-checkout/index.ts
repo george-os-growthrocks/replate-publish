@@ -7,9 +7,32 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const stripe = new Stripe('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', {
+const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY');
+if (!STRIPE_SECRET_KEY) {
+  throw new Error('STRIPE_SECRET_KEY environment variable is not set');
+}
+
+const stripe = new Stripe(STRIPE_SECRET_KEY, {
   apiVersion: '2023-10-16',
 });
+
+// Credit pricing calculator
+function calculateCreditPrice(credits: number): number {
+  if (credits <= 100) return 10;
+  if (credits <= 500) return 40;
+  if (credits <= 1000) return 70;
+  if (credits <= 5000) return 300;
+  // Custom amount: $0.10 per credit
+  return Math.ceil(credits * 0.1);
+}
+
+// Calculate bonus credits based on purchase amount
+function calculateBonusCredits(credits: number): number {
+  if (credits >= 5000) return 1000;
+  if (credits >= 1000) return 150;
+  if (credits >= 500) return 50;
+  return 0;
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -35,27 +58,11 @@ serve(async (req) => {
       throw new Error('Not authenticated');
     }
 
-    const { planName, billingCycle } = await req.json(); // 'Starter'/'Pro'/'Agency', 'monthly'/'yearly'
+    const body = await req.json();
+    const { planName, billingCycle, purchaseType, credits, featureKey } = body;
+    // purchaseType: 'subscription' | 'credits' | 'feature'
 
-    console.log('Checkout request:', { planName, billingCycle });
-
-    // Get plan details from database
-    const { data: plan, error: planError } = await supabaseClient
-      .from('subscription_plans')
-      .select('*')
-      .eq('name', planName)
-      .single();
-
-    console.log('Plan lookup result:', { plan, planError });
-
-    if (planError) {
-      console.error('Plan lookup error:', planError);
-      throw new Error(`Plan lookup failed: ${planError.message}`);
-    }
-
-    if (!plan) {
-      throw new Error(`Plan "${planName}" not found in database. Available plans should be: Starter, Pro, Agency`);
-    }
+    console.log('Checkout request:', { planName, billingCycle, purchaseType, credits, featureKey });
 
     // Get or create Stripe customer
     let customerId: string;
@@ -64,7 +71,7 @@ serve(async (req) => {
       .from('user_subscriptions')
       .select('stripe_customer_id')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
     if (existingSub?.stripe_customer_id) {
       customerId = existingSub.stripe_customer_id;
@@ -78,65 +85,170 @@ serve(async (req) => {
       customerId = customer.id;
     }
 
-    // Determine price ID based on billing cycle
-    const priceId = billingCycle === 'yearly' 
-      ? plan.stripe_price_id_yearly 
-      : plan.stripe_price_id_monthly;
+    let session;
 
-    console.log('Selected price ID:', priceId, 'for billing cycle:', billingCycle);
+    // Handle different purchase types
+    if (purchaseType === 'credits') {
+      // One-time credit purchase
+      const creditAmount = credits || 100;
+      const price = calculateCreditPrice(creditAmount);
 
-    // For testing: Create price on-the-fly if not configured
-    let actualPriceId = priceId;
-    
-    if (!priceId || priceId.startsWith('price_')) {
-      console.log('Creating Stripe price on-the-fly for testing...');
-      
-      // Create product first
+      // Create product for credits
       const product = await stripe.products.create({
-        name: `${plan.name} Plan`,
-        description: `${plan.name} subscription for AnotherSEOGuru`,
+        name: `${creditAmount} Credits`,
+        description: `One-time purchase of ${creditAmount} credits for AnotherSEOGuru`,
       });
 
       // Create price
-      const price = await stripe.prices.create({
+      const creditPrice = await stripe.prices.create({
         product: product.id,
-        unit_amount: Math.round((billingCycle === 'yearly' ? plan.price_yearly : plan.price_monthly) * 100),
+        unit_amount: Math.round(price * 100),
+        currency: 'usd',
+      });
+
+      session = await stripe.checkout.sessions.create({
+        customer: customerId,
+        mode: 'payment',
+        payment_method_types: ['card'],
+        line_items: [
+          {
+            price: creditPrice.id,
+            quantity: 1,
+          },
+        ],
+        success_url: `${req.headers.get('origin')}/dashboard?credits_purchased={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${req.headers.get('origin')}/settings?tab=subscription`,
+        metadata: {
+          user_id: user.id,
+          purchase_type: 'credits',
+          credit_amount: creditAmount.toString(),
+        },
+      });
+    } else if (purchaseType === 'feature') {
+      // Individual feature purchase (monthly subscription)
+      if (!featureKey) {
+        throw new Error('Feature key is required for feature purchase');
+      }
+
+      // For now, create price on-the-fly (in production, these would be pre-created)
+      const product = await stripe.products.create({
+        name: `${featureKey} Feature`,
+        description: `Monthly subscription for ${featureKey}`,
+      });
+
+      const featurePrice = await stripe.prices.create({
+        product: product.id,
+        unit_amount: 1900, // Default $19/mo, adjust based on feature
         currency: 'usd',
         recurring: {
-          interval: billingCycle === 'yearly' ? 'year' : 'month',
+          interval: 'month',
         },
       });
 
-      actualPriceId = price.id;
-      console.log('Created price:', actualPriceId);
-    }
-
-    // Create Checkout Session
-    const session = await stripe.checkout.sessions.create({
-      customer: customerId,
-      mode: 'subscription',
-      payment_method_types: ['card'],
-      line_items: [
-        {
-          price: actualPriceId,
-          quantity: 1,
+      session = await stripe.checkout.sessions.create({
+        customer: customerId,
+        mode: 'subscription',
+        payment_method_types: ['card'],
+        line_items: [
+          {
+            price: featurePrice.id,
+            quantity: 1,
+          },
+        ],
+        subscription_data: {
+          metadata: {
+            user_id: user.id,
+            purchase_type: 'feature',
+            feature_key: featureKey,
+          },
         },
-      ],
-      subscription_data: {
-        trial_period_days: 7, // 7-day free trial
+        success_url: `${req.headers.get('origin')}/dashboard?feature_unlocked={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${req.headers.get('origin')}/settings?tab=subscription`,
+        metadata: {
+          user_id: user.id,
+          purchase_type: 'feature',
+          feature_key: featureKey,
+        },
+      });
+    } else {
+      // Subscription purchase (default)
+      const { data: plan, error: planError } = await supabaseClient
+        .from('subscription_plans')
+        .select('*')
+        .eq('name', planName)
+        .single();
+
+      console.log('Plan lookup result:', { plan, planError });
+
+      if (planError) {
+        console.error('Plan lookup error:', planError);
+        throw new Error(`Plan lookup failed: ${planError.message}`);
+      }
+
+      if (!plan) {
+        throw new Error(`Plan "${planName}" not found in database. Available plans should be: Starter, Pro, Agency`);
+      }
+
+      // Determine price ID based on billing cycle
+      const priceId = billingCycle === 'yearly' 
+        ? plan.stripe_price_id_yearly 
+        : plan.stripe_price_id_monthly;
+
+      console.log('Selected price ID:', priceId, 'for billing cycle:', billingCycle);
+
+      // For testing: Create price on-the-fly if not configured
+      let actualPriceId = priceId;
+      
+      if (!priceId || priceId.startsWith('price_')) {
+        console.log('Creating Stripe price on-the-fly for testing...');
+        
+        // Create product first
+        const product = await stripe.products.create({
+          name: `${plan.name} Plan`,
+          description: `${plan.name} subscription for AnotherSEOGuru`,
+        });
+
+        // Create price
+        const price = await stripe.prices.create({
+          product: product.id,
+          unit_amount: Math.round((billingCycle === 'yearly' ? plan.price_yearly : plan.price_monthly) * 100),
+          currency: 'usd',
+          recurring: {
+            interval: billingCycle === 'yearly' ? 'year' : 'month',
+          },
+        });
+
+        actualPriceId = price.id;
+        console.log('Created price:', actualPriceId);
+      }
+
+      session = await stripe.checkout.sessions.create({
+        customer: customerId,
+        mode: 'subscription',
+        payment_method_types: ['card'],
+        line_items: [
+          {
+            price: actualPriceId,
+            quantity: 1,
+          },
+        ],
+        subscription_data: {
+          trial_period_days: 7, // 7-day free trial
+          metadata: {
+            user_id: user.id,
+            plan_id: plan.id,
+            plan_name: plan.name,
+          },
+        },
+        success_url: `${req.headers.get('origin')}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${req.headers.get('origin')}/pricing`,
         metadata: {
           user_id: user.id,
           plan_id: plan.id,
-          plan_name: plan.name,
+          billing_cycle: billingCycle,
         },
-      },
-      success_url: `${req.headers.get('origin')}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${req.headers.get('origin')}/pricing`,
-      metadata: {
-        user_id: user.id,
-        plan_id: plan.id,
-      },
-    });
+      });
+    }
 
     return new Response(
       JSON.stringify({ url: session.url, sessionId: session.id }),

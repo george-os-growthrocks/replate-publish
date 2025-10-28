@@ -33,8 +33,11 @@ const Auth = () => {
         try {
           const providerToken = session.provider_token;
           const providerRefreshToken = session.provider_refresh_token;
-          
-          if (providerToken) {
+          const accessToken = session.access_token;
+
+          if (!accessToken) {
+            console.warn("⚠️ No access_token available in session; skipping OAuth token storage");
+          } else if (providerToken) {
             console.log("📥 Found provider_token, storing it...");
             
             const { error } = await supabase.functions.invoke("store-oauth-token", {
@@ -42,7 +45,10 @@ const Auth = () => {
                 provider_token: providerToken,
                 provider_refresh_token: providerRefreshToken,
                 expires_at: session.expires_at,
-              }
+              },
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+              },
             });
             
             if (error) {

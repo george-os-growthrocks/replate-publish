@@ -110,18 +110,18 @@ const PropertySelector = ({ onPropertySelect, selectedProperty }: PropertySelect
     : "Select a property";
 
   return (
-    <div className="flex items-center gap-3 px-4 py-2 rounded-xl bg-card border border-border hover:border-primary/50 transition-all duration-200">
+    <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-xl bg-card border border-border hover:border-primary/50 transition-all duration-200 w-full">
       {/* Icon */}
-      <div className="h-8 w-8 rounded-lg gradient-primary flex items-center justify-center flex-shrink-0 shadow-lg">
-        <Globe className="h-4 w-4 text-white" />
+      <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg gradient-primary flex items-center justify-center flex-shrink-0 shadow-lg">
+        <Globe className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white" />
       </div>
       
       {/* Property Info */}
       <div className="flex-1 min-w-0">
-        <p className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase leading-tight">
-          Active Property
+        <p className="text-[9px] sm:text-[10px] text-muted-foreground font-medium tracking-wider uppercase leading-tight">
+          Property
         </p>
-        <p className="text-sm font-semibold truncate mt-0.5 text-primary">
+        <p className="text-xs sm:text-sm font-semibold truncate mt-0.5 text-primary">
           {displayProperty}
         </p>
       </div>
@@ -132,13 +132,13 @@ const PropertySelector = ({ onPropertySelect, selectedProperty }: PropertySelect
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-8 text-xs flex-shrink-0 hover:bg-muted border"
+            className="h-7 sm:h-8 text-xs flex-shrink-0 hover:bg-muted border px-2 sm:px-3"
           >
-            Switch
-            <ChevronDown className="ml-1.5 h-3 w-3" />
+            <span className="hidden sm:inline">Switch</span>
+            <ChevronDown className="h-3 w-3 sm:ml-1.5" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-[400px] max-h-[70vh] overflow-y-auto">
+        <DropdownMenuContent align="end" className="w-[min(400px,calc(100vw-2rem))] max-h-[70vh] overflow-y-auto">
           {domainProperties.length > 0 && (
             <>
               <DropdownMenuLabel className="flex items-center gap-2 text-xs text-muted-foreground sticky top-0 bg-popover z-10 border-b border-border/50">

@@ -1,6 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   AreaChart, 
   Area, 
@@ -16,87 +18,135 @@ import {
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer,
-  Legend
 } from "recharts";
-import { TrendingUp, BarChart3, Globe, Search } from "lucide-react";
-
-// Mock data - replace with real data from your backend
-const weeklyCreditsData = [
-  { week: 'Week 1', credits: 120 },
-  { week: 'Week 2', credits: 185 },
-  { week: 'Week 3', credits: 145 },
-  { week: 'Week 4', credits: 230 },
-];
-
-const trafficSourcesData = [
-  { name: 'Organic', value: 65, color: '#8b5cf6' },
-  { name: 'Direct', value: 20, color: '#3b82f6' },
-  { name: 'Referral', value: 10, color: '#10b981' },
-  { name: 'Social', value: 5, color: '#f59e0b' },
-];
-
-const rankingTrendsData = [
-  { month: 'Apr', position: 15.2 },
-  { month: 'May', position: 12.8 },
-  { month: 'Jun', position: 10.5 },
-  { month: 'Jul', position: 9.2 },
-  { month: 'Aug', position: 7.8 },
-  { month: 'Sep', position: 6.5 },
-  { month: 'Oct', position: 5.2 },
-];
-
-const trafficGrowthData = [
-  { month: 'Apr', traffic: 1200 },
-  { month: 'May', traffic: 1450 },
-  { month: 'Jun', traffic: 1680 },
-  { month: 'Jul', traffic: 1920 },
-  { month: 'Aug', traffic: 2150 },
-  { month: 'Sep', traffic: 2480 },
-  { month: 'Oct', traffic: 2850 },
-];
-
-const topKeywords = [
-  { keyword: 'seo tools', position: 3, clicks: 1245, trend: 'up' },
-  { keyword: 'keyword research', position: 5, clicks: 892, trend: 'up' },
-  { keyword: 'rank tracker', position: 8, clicks: 654, trend: 'stable' },
-  { keyword: 'competitor analysis', position: 12, clicks: 445, trend: 'down' },
-  { keyword: 'backlink checker', position: 15, clicks: 332, trend: 'up' },
-];
+import { Zap, BarChart3, FolderOpen, Sparkles } from "lucide-react";
 
 export function DashboardCharts() {
+  // Fetch daily credit usage for last 30 days
+  const { data: dailyCredits } = useQuery({
+    queryKey: ['daily-credit-usage'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+      
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      
+      const { data, error } = await supabase
+        .from('credit_usage_log')
+        .select('credits_used, created_at')
+        .eq('user_id', user.id)
+        .gte('created_at', thirtyDaysAgo.toISOString())
+        .order('created_at', { ascending: true });
+      
+      if (error || !data) return [];
+      
+      // Group by date
+      const grouped: Record<string, number> = {};
+      data.forEach(item => {
+        const date = new Date(item.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        grouped[date] = (grouped[date] || 0) + item.credits_used;
+      });
+      
+      return Object.entries(grouped).map(([date, credits]) => ({ date, credits }));
+    }
+  });
+
+  // Fetch feature usage distribution
+  const { data: featureUsage } = useQuery({
+    queryKey: ['feature-usage-distribution'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+      
+      const { data, error } = await supabase
+        .from('credit_usage_log')
+        .select('feature, credits_used')
+        .eq('user_id', user.id)
+        .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
+      
+      if (error || !data) return [];
+      
+      // Group by feature
+      const grouped: Record<string, number> = {};
+      data.forEach(item => {
+        const feature = item.feature || 'other';
+        grouped[feature] = (grouped[feature] || 0) + item.credits_used;
+      });
+      
+      const colors = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#ec4899'];
+      return Object.entries(grouped)
+        .map(([name, value], idx) => ({
+          name: name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+          value,
+          color: colors[idx % colors.length]
+        }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 6);
+    }
+  });
+
+  // Fetch project activity timeline
+  const { data: projectActivity } = useQuery({
+    queryKey: ['project-activity'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+      
+      const { data, error } = await supabase
+        .from('seo_projects')
+        .select('name, created_at, updated_at')
+        .eq('user_id', user.id)
+        .order('updated_at', { ascending: false })
+        .limit(10);
+      
+      if (error || !data) return [];
+      
+      return data.map(project => ({
+        name: project.name,
+        created: new Date(project.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        updated: new Date(project.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        daysSinceUpdate: Math.floor((Date.now() - new Date(project.updated_at).getTime()) / (1000 * 60 * 60 * 24))
+      }));
+    }
+  });
+
+  const creditChartData = dailyCredits && dailyCredits.length > 0 ? dailyCredits : [
+    { date: 'No data', credits: 0 }
+  ];
+
+  const featureChartData = featureUsage && featureUsage.length > 0 ? featureUsage : [
+    { name: 'No activity yet', value: 1, color: '#94a3b8' }
+  ];
+
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Performance Analytics</CardTitle>
+      <CardHeader className="px-4 sm:px-6">
+        <CardTitle className="text-base sm:text-lg">Platform Usage Analytics</CardTitle>
       </CardHeader>
-      <CardContent>
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="overview" className="flex items-center gap-2">
-              <BarChart3 className="w-4 h-4" />
-              Overview
+      <CardContent className="px-4 sm:px-6">
+        <Tabs defaultValue="credits" className="space-y-4 sm:space-y-6">
+          <TabsList className="grid w-full grid-cols-3 h-auto">
+            <TabsTrigger value="credits" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 text-xs sm:text-sm">
+              <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden xs:inline">Credits</span>
             </TabsTrigger>
-            <TabsTrigger value="rankings" className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4" />
-              Rankings
+            <TabsTrigger value="features" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 text-xs sm:text-sm">
+              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden xs:inline">Features</span>
             </TabsTrigger>
-            <TabsTrigger value="traffic" className="flex items-center gap-2">
-              <Globe className="w-4 h-4" />
-              Traffic
-            </TabsTrigger>
-            <TabsTrigger value="keywords" className="flex items-center gap-2">
-              <Search className="w-4 h-4" />
-              Keywords
+            <TabsTrigger value="projects" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 text-xs sm:text-sm">
+              <FolderOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden xs:inline">Projects</span>
             </TabsTrigger>
           </TabsList>
 
-          {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-6">
+          {/* Credits Usage Tab */}
+          <TabsContent value="credits" className="space-y-4 sm:space-y-6">
             <div>
-              <h3 className="text-lg font-semibold mb-4">Weekly Credit Usage</h3>
-              <div className="h-80">
+              <h3 className="text-sm sm:text-lg font-semibold mb-3 sm:mb-4">Daily Credit Usage (Last 30 Days)</h3>
+              <div className="min-h-[250px] h-[40vh] max-h-[400px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={weeklyCreditsData}>
+                  <AreaChart data={creditChartData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
                     <defs>
                       <linearGradient id="creditsGradient" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
@@ -104,8 +154,17 @@ export function DashboardCharts() {
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="week" stroke="hsl(var(--muted-foreground))" />
-                    <YAxis stroke="hsl(var(--muted-foreground))" />
+                    <XAxis 
+                      dataKey="date" 
+                      stroke="hsl(var(--muted-foreground))" 
+                      fontSize={11}
+                      tick={{ fontSize: 11 }}
+                    />
+                    <YAxis 
+                      stroke="hsl(var(--muted-foreground))" 
+                      fontSize={11}
+                      tick={{ fontSize: 11 }}
+                    />
                     <Tooltip 
                       contentStyle={{ 
                         backgroundColor: 'hsl(var(--card))', 
@@ -123,24 +182,30 @@ export function DashboardCharts() {
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
+              <p className="text-xs sm:text-sm text-muted-foreground text-center mt-2 sm:mt-3">
+                Track your daily credit consumption patterns
+              </p>
             </div>
+          </TabsContent>
 
+          {/* Feature Usage Tab */}
+          <TabsContent value="features" className="space-y-4 sm:space-y-6">
             <div>
-              <h3 className="text-lg font-semibold mb-4">Traffic Sources</h3>
-              <div className="h-80 flex items-center justify-center">
+              <h3 className="text-sm sm:text-lg font-semibold mb-3 sm:mb-4">Feature Usage Distribution</h3>
+              <div className="min-h-[250px] h-[40vh] max-h-[400px] flex items-center justify-center">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={trafficSourcesData}
+                      data={featureChartData}
                       cx="50%"
                       cy="50%"
                       labelLine={false}
                       label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                      outerRadius={120}
+                      outerRadius="70%"
                       fill="#8884d8"
                       dataKey="value"
                     >
-                      {trafficSourcesData.map((entry, index) => (
+                      {featureChartData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
@@ -148,111 +213,51 @@ export function DashboardCharts() {
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-            </div>
-          </TabsContent>
-
-          {/* Rankings Tab */}
-          <TabsContent value="rankings" className="space-y-6">
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Ranking Trends (6 Months)</h3>
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={rankingTrendsData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" />
-                    <YAxis 
-                      stroke="hsl(var(--muted-foreground))" 
-                      reversed 
-                      domain={[0, 20]}
-                      label={{ value: 'Average Position', angle: -90, position: 'insideLeft' }}
-                    />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'hsl(var(--card))', 
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px'
-                      }} 
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="position"
-                      stroke="#10b981"
-                      strokeWidth={3}
-                      dot={{ fill: '#10b981', r: 5 }}
-                      activeDot={{ r: 7 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-              <p className="text-sm text-muted-foreground text-center mt-3">
-                Average position improving from 15.2 to 5.2 over 6 months
+              <p className="text-xs sm:text-sm text-muted-foreground text-center mt-2 sm:mt-3">
+                See which tools you use most frequently
               </p>
             </div>
           </TabsContent>
 
-          {/* Traffic Tab */}
-          <TabsContent value="traffic" className="space-y-6">
+          {/* Projects Activity Tab */}
+          <TabsContent value="projects" className="space-y-4 sm:space-y-6">
             <div>
-              <h3 className="text-lg font-semibold mb-4">Traffic Growth Analysis</h3>
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={trafficGrowthData}>
-                    <defs>
-                      <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8} />
-                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" />
-                    <YAxis stroke="hsl(var(--muted-foreground))" />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'hsl(var(--card))', 
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px'
-                      }} 
-                    />
-                    <Bar dataKey="traffic" fill="url(#barGradient)" radius={[8, 8, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-              <p className="text-sm text-muted-foreground text-center mt-3">
-                +137% growth over 6 months
-              </p>
-            </div>
-          </TabsContent>
-
-          {/* Keywords Tab */}
-          <TabsContent value="keywords" className="space-y-6">
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Top Performing Keywords</h3>
-              <div className="space-y-3">
-                {topKeywords.map((kw, idx) => (
-                  <div 
-                    key={idx} 
-                    className="flex items-center justify-between p-4 bg-muted/50 rounded-lg hover:bg-muted transition-colors"
-                  >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-1">
-                        <span className="font-semibold">{kw.keyword}</span>
-                        <Badge 
-                          variant={kw.trend === 'up' ? 'default' : kw.trend === 'down' ? 'destructive' : 'secondary'}
-                          className="text-xs"
-                        >
-                          {kw.trend === 'up' ? '↑' : kw.trend === 'down' ? '↓' : '→'}
-                        </Badge>
+              <h3 className="text-sm sm:text-lg font-semibold mb-3 sm:mb-4">Recent Project Activity</h3>
+              <div className="space-y-2 sm:space-y-3 max-h-[60vh] overflow-y-auto">
+                {projectActivity && projectActivity.length > 0 ? (
+                  projectActivity.map((project, idx) => (
+                    <div 
+                      key={idx} 
+                      className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 sm:p-4 bg-muted/50 rounded-lg hover:bg-muted transition-colors"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <span className="font-semibold text-sm sm:text-base truncate">{project.name}</span>
+                          <Badge 
+                            variant={project.daysSinceUpdate < 7 ? 'default' : 'secondary'}
+                            className="text-[10px] sm:text-xs flex-shrink-0"
+                          >
+                            {project.daysSinceUpdate === 0 ? 'Today' : 
+                             project.daysSinceUpdate === 1 ? 'Yesterday' :
+                             `${project.daysSinceUpdate}d ago`}
+                          </Badge>
+                        </div>
+                        <p className="text-xs sm:text-sm text-muted-foreground">
+                          Created {project.created} • Updated {project.updated}
+                        </p>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        Position #{kw.position} • {kw.clicks.toLocaleString()} clicks
-                      </p>
+                      <div className="text-left sm:text-right flex sm:flex-col items-center sm:items-end gap-2 sm:gap-0">
+                        <div className="text-xl sm:text-2xl font-bold">{project.daysSinceUpdate}</div>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">days ago</p>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold">#{kw.position}</div>
-                      <p className="text-xs text-muted-foreground">Position</p>
-                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 sm:py-12 text-muted-foreground">
+                    <FolderOpen className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 sm:mb-3 opacity-50" />
+                    <p className="text-xs sm:text-sm px-4">No projects yet. Create your first project to get started!</p>
                   </div>
-                ))}
+                )}
               </div>
             </div>
           </TabsContent>

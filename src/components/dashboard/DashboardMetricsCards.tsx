@@ -98,25 +98,25 @@ export function DashboardMetricsCards() {
   const totalContentGenerated = contentActivity?.reduce((sum: number, item: any) => sum + item.value, 0) || 0;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
       {/* Credits Card */}
       <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <Coins className="w-4 h-4 text-primary" />
-            Available Credits
+        <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6 pt-4 sm:pt-6">
+          <CardTitle className="text-xs sm:text-sm font-medium flex items-center gap-1.5 sm:gap-2">
+            <Coins className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary flex-shrink-0" />
+            <span className="truncate">Available Credits</span>
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="text-3xl font-bold mb-2">
+        <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
+          <div className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">
             {credits?.available_credits?.toLocaleString() || 0}
           </div>
-          <p className="text-xs text-muted-foreground mb-3">
+          <p className="text-[10px] sm:text-xs text-muted-foreground mb-2 sm:mb-3">
             of {credits?.total_credits?.toLocaleString() || 0} total
           </p>
-          <div className="h-16">
+          <div className="h-12 sm:h-16">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={creditUsageData}>
+              <AreaChart data={creditUsageData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="creditGradient" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
@@ -138,21 +138,21 @@ export function DashboardMetricsCards() {
 
       {/* SEO Projects Card */}
       <Card className="bg-gradient-to-br from-blue-500/5 to-blue-500/10 border-blue-500/20">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <FolderOpen className="w-4 h-4 text-blue-500" />
-            SEO Projects
+        <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6 pt-4 sm:pt-6">
+          <CardTitle className="text-xs sm:text-sm font-medium flex items-center gap-1.5 sm:gap-2">
+            <FolderOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-500 flex-shrink-0" />
+            <span className="truncate">SEO Projects</span>
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="text-3xl font-bold mb-2">
+        <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
+          <div className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">
             {activeProjects}
           </div>
-          <p className="text-xs text-muted-foreground mb-3">
+          <p className="text-[10px] sm:text-xs text-muted-foreground mb-2 sm:mb-3">
             {totalProjects} total projects
           </p>
-          <div className="flex items-center gap-2 text-sm">
-            <TrendingUp className="w-4 h-4 text-green-500" />
+          <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
+            <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-500 flex-shrink-0" />
             <span className="text-green-600 dark:text-green-400 font-semibold">+2</span>
             <span className="text-muted-foreground">this month</span>
           </div>
@@ -161,22 +161,22 @@ export function DashboardMetricsCards() {
 
       {/* Content Generated Card */}
       <Card className="bg-gradient-to-br from-emerald-500/5 to-emerald-500/10 border-emerald-500/20">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <FileText className="w-4 h-4 text-emerald-500" />
-            Content Generated
+        <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6 pt-4 sm:pt-6">
+          <CardTitle className="text-xs sm:text-sm font-medium flex items-center gap-1.5 sm:gap-2">
+            <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500 flex-shrink-0" />
+            <span className="truncate">Content Generated</span>
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="text-3xl font-bold mb-2">
+        <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
+          <div className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">
             {totalContentGenerated}
           </div>
-          <p className="text-xs text-muted-foreground mb-3">
+          <p className="text-[10px] sm:text-xs text-muted-foreground mb-2 sm:mb-3">
             {totalContentGenerated === 0 ? 'No content yet' : 'pieces this month'}
           </p>
-          <div className="h-16">
+          <div className="h-12 sm:h-16">
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
+              <PieChart margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                 <Pie
                   data={contentTypeData}
                   cx="50%"
@@ -198,24 +198,24 @@ export function DashboardMetricsCards() {
 
       {/* API Integrations Card */}
       <Card className="bg-gradient-to-br from-amber-500/5 to-amber-500/10 border-amber-500/20">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <Plug className="w-4 h-4 text-amber-500" />
-            API Integrations
+        <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6 pt-4 sm:pt-6">
+          <CardTitle className="text-xs sm:text-sm font-medium flex items-center gap-1.5 sm:gap-2">
+            <Plug className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500 flex-shrink-0" />
+            <span className="truncate">API Integrations</span>
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="text-3xl font-bold mb-2">
+        <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
+          <div className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">
             {connectedAPIs} / {apiIntegrations.length}
           </div>
-          <p className="text-xs text-muted-foreground mb-3">
+          <p className="text-[10px] sm:text-xs text-muted-foreground mb-2 sm:mb-3">
             connected services
           </p>
           <div className="space-y-1">
             {apiIntegrations.slice(0, 2).map((api, idx) => (
-              <div key={idx} className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">{api.name}</span>
-                <div className={`w-2 h-2 rounded-full ${api.connected ? 'bg-green-500' : 'bg-slate-400'}`} />
+              <div key={idx} className="flex items-center justify-between text-[10px] sm:text-xs">
+                <span className="text-muted-foreground truncate pr-2">{api.name}</span>
+                <div className={`w-2 h-2 rounded-full flex-shrink-0 ${api.connected ? 'bg-green-500' : 'bg-slate-400'}`} />
               </div>
             ))}
           </div>

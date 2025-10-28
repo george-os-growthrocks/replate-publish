@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Download, Search, Loader2, HelpCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { FeatureGate } from "@/components/FeatureGate";
+import { useCredits } from "@/hooks/useCreditManager";
 
 interface WheelData {
   who: string[];
@@ -33,6 +35,7 @@ export function AnswerThePublicWheel() {
   const [wheelData, setWheelData] = useState<WheelData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPetal, setSelectedPetal] = useState<string | null>(null);
+  const { checkCredits, consumeCredits } = useCredits();
 
   const handleGenerate = async () => {
     if (!seedKeyword.trim()) {
@@ -40,44 +43,63 @@ export function AnswerThePublicWheel() {
       return;
     }
 
+    // Check credits first
+    const hasCredits = await checkCredits('answer_the_public');
+    if (!hasCredits) {
+      return;
+    }
+
     setIsLoading(true);
     try {
-      // Use our Google Autocomplete API with alphabet expansion
-      const { data, error } = await supabase.functions.invoke('google-autocomplete', {
-        body: { query: seedKeyword, expandAlphabet: true }
+      // Use dedicated Answer The Public edge function
+      const { data, error } = await supabase.functions.invoke('answer-the-public', {
+        body: { keyword: seedKeyword }
       });
 
       if (error) throw error;
 
-      const categorized = data?.categorized || {};
+      if (!data) {
+        throw new Error('No data returned from API');
+      }
 
-      // Build wheel data structure
+      // Consume credits
+      await consumeCredits({
+        feature: 'answer_the_public',
+        metadata: { keyword: seedKeyword, total_results: data.total }
+      });
+
+      // Build wheel data structure from the API response
       const wheelData: WheelData = {
-        who: categorized.questions?.filter((q: string) => q.toLowerCase().startsWith('who')) || [],
-        what: categorized.questions?.filter((q: string) => q.toLowerCase().startsWith('what')) || [],
-        when: categorized.questions?.filter((q: string) => q.toLowerCase().startsWith('when')) || [],
-        where: categorized.questions?.filter((q: string) => q.toLowerCase().startsWith('where')) || [],
-        why: categorized.questions?.filter((q: string) => q.toLowerCase().startsWith('why')) || [],
-        how: categorized.questions?.filter((q: string) => q.toLowerCase().startsWith('how')) || [],
-        are: categorized.questions?.filter((q: string) => q.toLowerCase().startsWith('are')) || [],
-        can: categorized.questions?.filter((q: string) => q.toLowerCase().startsWith('can')) || [],
-        will: categorized.questions?.filter((q: string) => q.toLowerCase().startsWith('will')) || [],
+        who: data.questions?.who || [],
+        what: data.questions?.what || [],
+        when: data.questions?.when || [],
+        where: data.questions?.where || [],
+        why: data.questions?.why || [],
+        how: data.questions?.how || [],
+        are: data.questions?.are || [],
+        can: data.questions?.can || [],
+        will: data.questions?.will || [],
         prepositions: {
-          for: categorized.prepositions?.filter((q: string) => q.includes(' for ')) || [],
-          with: categorized.prepositions?.filter((q: string) => q.includes(' with ')) || [],
-          without: categorized.prepositions?.filter((q: string) => q.includes(' without ')) || [],
-          to: categorized.prepositions?.filter((q: string) => q.includes(' to ')) || [],
-          versus: categorized.comparisons || [],
-          near: categorized.prepositions?.filter((q: string) => q.includes(' near ')) || [],
-          like: categorized.comparisons?.filter((q: string) => q.includes(' like ')) || [],
+          for: data.prepositions?.for || [],
+          with: data.prepositions?.with || [],
+          without: data.prepositions?.without || [],
+          to: data.prepositions?.to || [],
+          versus: data.prepositions?.versus || [],
+          near: data.prepositions?.near || [],
+          like: data.prepositions?.like || [],
         },
       };
 
       setWheelData(wheelData);
-      toast.success("Wheel generated successfully!");
+      
+      if (data.cached) {
+        toast.success("Wheel generated from cache!");
+      } else {
+        toast.success(`Wheel generated with ${data.total} questions!`);
+      }
     } catch (error) {
       console.error("Wheel generation error:", error);
-      toast.error("Failed to generate wheel");
+      toast.error(error instanceof Error ? error.message : "Failed to generate wheel");
     } finally {
       setIsLoading(false);
     }
@@ -122,9 +144,10 @@ export function AnswerThePublicWheel() {
     : 0;
 
   return (
-    <div className="space-y-6">
-      {/* Input */}
-      <Card>
+    <FeatureGate feature="answer_the_public" featureKey="answer_the_public_unlimited">
+      <div className="space-y-6">
+        {/* Input */}
+        <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <HelpCircle className="w-5 h-5 text-primary" />
@@ -230,6 +253,7 @@ export function AnswerThePublicWheel() {
         </>
       )}
     </div>
+    </FeatureGate>
   );
 }
 

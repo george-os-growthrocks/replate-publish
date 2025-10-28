@@ -2,11 +2,24 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 import Stripe from 'https://esm.sh/stripe@14.21.0';
 
-const stripe = new Stripe('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', {
+const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY');
+if (!STRIPE_SECRET_KEY) {
+  throw new Error('STRIPE_SECRET_KEY environment variable is not set');
+}
+
+const stripe = new Stripe(STRIPE_SECRET_KEY, {
   apiVersion: '2023-10-16',
 });
 
 const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET') || '';
+
+// Calculate bonus credits based on purchase amount
+function calculateBonusCredits(credits: number): number {
+  if (credits >= 5000) return 1000;
+  if (credits >= 1000) return 150;
+  if (credits >= 500) return 50;
+  return 0;
+}
 
 serve(async (req) => {
   const signature = req.headers.get('stripe-signature');
@@ -35,27 +48,73 @@ serve(async (req) => {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
         const userId = session.metadata?.user_id;
-        const planId = session.metadata?.plan_id;
+        const purchaseType = session.metadata?.purchase_type;
 
-        if (!userId || !planId) break;
+        if (!userId) break;
 
-        const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
+        if (purchaseType === 'credits') {
+          // Handle credit purchase
+          const creditAmount = parseInt(session.metadata?.credit_amount || '0');
+          const bonusCredits = calculateBonusCredits(creditAmount);
+          const totalCredits = creditAmount + bonusCredits;
 
-        // Create or update subscription
-        await supabaseAdmin.from('user_subscriptions').upsert({
-          user_id: userId,
-          plan_id: planId,
-          stripe_customer_id: session.customer as string,
-          stripe_subscription_id: subscription.id,
-          status: subscription.status === 'trialing' ? 'trialing' : 'active',
-          billing_cycle: session.metadata?.billing_cycle || 'monthly',
-          current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-          current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-          trial_end: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null,
-          updated_at: new Date().toISOString(),
-        });
+          // Add credits to user account
+          await supabaseAdmin.rpc('add_credits', {
+            p_user_id: userId,
+            p_credits_amount: totalCredits,
+            p_transaction_type: 'purchase',
+            p_stripe_payment_intent_id: session.payment_intent as string,
+            p_metadata: {
+              base_credits: creditAmount,
+              bonus_credits: bonusCredits,
+              amount_paid: session.amount_total ? session.amount_total / 100 : 0,
+            },
+          });
 
-        console.log('Subscription created for user:', userId);
+          console.log('Credits added for user:', userId, 'Amount:', totalCredits);
+        } else if (purchaseType === 'feature') {
+          // Handle individual feature purchase
+          const featureKey = session.metadata?.feature_key;
+          if (!featureKey) break;
+
+          const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
+
+          // Add feature access
+          await supabaseAdmin.from('user_feature_access').upsert({
+            user_id: userId,
+            feature_key: featureKey,
+            feature_name: featureKey.replace(/_/g, ' '),
+            purchase_type: 'monthly_subscription',
+            stripe_subscription_id: subscription.id,
+            status: 'active',
+            purchase_price: session.amount_total ? session.amount_total / 100 : 0,
+            updated_at: new Date().toISOString(),
+          });
+
+          console.log('Feature unlocked for user:', userId, 'Feature:', featureKey);
+        } else {
+          // Handle subscription purchase
+          const planId = session.metadata?.plan_id;
+          if (!planId) break;
+
+          const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
+
+          // Create or update subscription
+          await supabaseAdmin.from('user_subscriptions').upsert({
+            user_id: userId,
+            plan_id: planId,
+            stripe_customer_id: session.customer as string,
+            stripe_subscription_id: subscription.id,
+            status: subscription.status === 'trialing' ? 'trialing' : 'active',
+            billing_cycle: session.metadata?.billing_cycle || 'monthly',
+            current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+            current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+            trial_end: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null,
+            updated_at: new Date().toISOString(),
+          });
+
+          console.log('Subscription created for user:', userId);
+        }
         break;
       }
 

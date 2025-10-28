@@ -29,6 +29,7 @@ import KeywordDensityChecker from "./pages/free-tools/KeywordDensityChecker";
 import PAAExtractor from "./pages/free-tools/PAAExtractor";
 import HreflangBuilder from "./pages/free-tools/HreflangBuilder";
 import CWVPulse from "./pages/free-tools/CWVPulse";
+import MetaDescriptionGenerator from "./pages/free-tools/MetaDescriptionGenerator";
 import QueriesPage from "./pages/QueriesPage";
 import PagesPage from "./pages/PagesPage";
 import CountriesPage from "./pages/CountriesPage";
@@ -115,6 +116,7 @@ const App = () => (
                        <Route path="/free-tools/paa-extractor" element={<PAAExtractor />} />
                        <Route path="/free-tools/hreflang-builder" element={<HreflangBuilder />} />
                        <Route path="/free-tools/cwv-pulse" element={<CWVPulse />} />
+                       <Route path="/free-tools/meta-description-generator" element={<MetaDescriptionGenerator />} />
                        <Route path="/privacy" element={<PrivacyPage />} />
                        <Route path="/terms" element={<TermsPage />} />
                        <Route path="/cookies" element={<CookiesPage />} />

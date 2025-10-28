@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import type { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,6 +13,52 @@ import ReactMarkdown from "react-markdown";
 interface Message {
   role: "user" | "assistant";
   content: string;
+}
+
+interface GscSite {
+  siteUrl: string;
+}
+
+interface GscSitesResponse {
+  sites?: GscSite[];
+  error?: string;
+}
+
+interface TrackedKeyword {
+  keyword: string;
+  current_position: number;
+  search_volume: number | null;
+  previous_position?: number | null;
+}
+
+interface GscQuery {
+  query: string;
+  clicks: number;
+  impressions: number;
+  ctr?: number;
+  position?: number;
+}
+
+interface AlgorithmImpactRow {
+  detected_at: string;
+  severity: string;
+  affected_keywords: string[];
+  avg_position_drop: number | null;
+}
+
+interface ChatbotRequestPayload {
+  messages: Message[];
+  projectContext: Record<string, unknown> | null;
+  sessionId: string;
+  userId: string | undefined;
+}
+
+interface ChatbotErrorDetails {
+  message: string;
+  name?: string;
+  stack?: string;
+  response?: unknown;
+  request?: ChatbotRequestPayload | Record<string, unknown> | null;
 }
 
 const quickPrompts = [
@@ -42,7 +89,7 @@ const quickPrompts = [
 ];
 
 export function SEOAIChatbot() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [selectedProperty, setSelectedProperty] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -58,6 +105,7 @@ export function SEOAIChatbot() {
   const [showQuickPrompts, setShowQuickPrompts] = useState(true);
   const [showDebugDialog, setShowDebugDialog] = useState(false);
   const [debugCopied, setDebugCopied] = useState(false);
+  const [lastError, setLastError] = useState<ChatbotErrorDetails | null>(null);
   const [properties, setProperties] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -131,18 +179,20 @@ export function SEOAIChatbot() {
     setIsLoading(true);
     setShowQuickPrompts(false);
 
+    let requestPayload: ChatbotRequestPayload | null = null;
+
     try {
-      let projectContext = null;
+      let projectContext: Record<string, unknown> | null = null;
       if (user) {
         // Fetch COMPREHENSIVE user data
         try {
           console.log('🔍 Fetching comprehensive context for', selectedProperty || 'all properties');
           
           // 1. Get user's properties from GSC sites
-          let userProperties = [];
+          let userProperties: string[] = [];
           try {
             console.log('🔄 Calling gsc-sites function...');
-            const { data: sitesData, error: sitesError } = await supabase.functions.invoke("gsc-sites");
+            const { data: sitesData, error: sitesError } = await supabase.functions.invoke<GscSitesResponse>("gsc-sites");
             
             console.log('📥 gsc-sites response:', sitesData);
             console.log('❌ gsc-sites error:', sitesError);
@@ -162,7 +212,7 @@ export function SEOAIChatbot() {
                 console.log('⚠️ Using selected property as fallback:', userProperties);
               }
             } else if (sitesData?.sites) {
-              userProperties = sitesData.sites.map((s: any) => s.siteUrl);
+              userProperties = sitesData.sites.map((s) => s.siteUrl);
               console.log('✅ Loaded properties:', userProperties);
             } else {
               console.log('⚠️ No sites in response, using selected property:', selectedProperty);
@@ -170,7 +220,7 @@ export function SEOAIChatbot() {
                 userProperties = [selectedProperty];
               }
             }
-          } catch (err) {
+          } catch (err: unknown) {
             console.error('💥 Failed to fetch GSC sites:', err);
             // Use selected property as fallback
             if (selectedProperty) {
@@ -180,24 +230,24 @@ export function SEOAIChatbot() {
           }
 
           // 2. SKIP tracked keywords (causing 400 errors - will fix later)
-          let trackedKeywords = null;
+          const trackedKeywords: TrackedKeyword[] | null = null;
           console.log('⏭️ Skipping tracked keywords query to prevent 400 errors');
 
           // 3. SKIP GSC queries (causing 400 errors - will fix later)
-          let gscQueries = null;
+          const gscQueries: GscQuery[] | null = null;
           console.log('⏭️ Skipping GSC queries to prevent 400 errors');
 
         // 4. Get recent algorithm impacts
-        let algorithmImpacts = null;
+        let algorithmImpacts: AlgorithmImpactRow[] | null = null;
         try {
           const { data: impactsData } = await supabase
-            .from("algorithm_impacts")
+            .from<AlgorithmImpactRow>("algorithm_impacts")
             .select("detected_at, severity, affected_keywords, avg_position_drop")
             .eq("user_id", user.id)
             .order("detected_at", { ascending: false })
             .limit(10);
-          algorithmImpacts = impactsData;
-        } catch (err) {
+          algorithmImpacts = impactsData ?? null;
+        } catch (err: unknown) {
           console.log('Could not fetch algorithm impacts:', err);
         }
 
@@ -205,14 +255,14 @@ export function SEOAIChatbot() {
         projectContext = {
           properties: userProperties || [],
           currentProperty: selectedProperty,
-          trackedKeywords: trackedKeywords?.map((k: any) => ({
+          trackedKeywords: trackedKeywords?.map((k) => ({
             keyword: k.keyword,
             position: k.current_position,
             volume: k.search_volume,
             change: k.previous_position ? k.previous_position - k.current_position : null,
           })) || [],
           recentQueries: gscQueries || [],
-          algorithmImpacts: algorithmImpacts?.map((a: any) => ({
+          algorithmImpacts: algorithmImpacts?.map((a) => ({
             date: a.detected_at,
             severity: a.severity,
             keywords: a.affected_keywords,
@@ -226,7 +276,7 @@ export function SEOAIChatbot() {
             queries: gscQueries?.length || 0,
             impacts: algorithmImpacts?.length || 0
           });
-        } catch (contextError) {
+        } catch (contextError: unknown) {
           console.error("Failed to fetch user context:", contextError);
           projectContext = {
             selected_property: selectedProperty,
@@ -238,12 +288,16 @@ export function SEOAIChatbot() {
         }
       }
 
+      requestPayload = {
+        messages: newMessages,
+        projectContext,
+        sessionId,
+        userId: user?.id,
+      };
+
       const { data, error } = await supabase.functions.invoke("seo-ai-chat", {
         body: {
-          messages: newMessages,
-          projectContext,
-          sessionId,
-          userId: user?.id,
+          ...requestPayload,
         },
       });
 
@@ -251,22 +305,40 @@ export function SEOAIChatbot() {
 
       if (error) {
         console.error("Edge function error:", error);
+        setLastError({
+          message: error.message || "Failed to get response from AI",
+          name: error.name,
+          stack: error.stack,
+          response: error,
+          request: requestPayload,
+        });
         throw new Error(error.message || "Failed to get response from AI");
       }
 
       if (!data?.message || data.message.trim() === "") {
         console.error("❌ No message in response:", data);
+
         
         // Check if there's an error field
         if (data?.error) {
+          setLastError({
+            message: data.error,
+            response: data,
+            request: requestPayload,
+          });
           throw new Error(data.error);
         }
-        
+
         // Check if there's debug info
         if (data?.debug) {
           console.error("Debug info:", data.debug);
+          setLastError({
+            message: "AI response missing message content",
+            response: data,
+            request: requestPayload,
+          });
         }
-        
+
         throw new Error("The AI service returned an incomplete response. Please try again or rephrase your question.");
       }
 
@@ -286,18 +358,29 @@ export function SEOAIChatbot() {
           messages: [...newMessages, assistantMessage],
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("💥 Chat error:", error);
-      console.error("💥 Error stack:", error?.stack);
+      if (error instanceof Error) {
+        console.error("💥 Error stack:", error.stack);
+      }
       console.error("💥 Error details:", {
-        message: error?.message,
-        name: error?.name,
-        cause: error?.cause,
+        message: error instanceof Error ? error.message : undefined,
+        name: error instanceof Error ? error.name : undefined,
+        cause: error instanceof Error ? (error as { cause?: unknown }).cause : undefined,
         full: error
       });
-      
+
+      const responsePayload = (error as { response?: unknown } | undefined)?.response;
+      setLastError(prev => ({
+        message: error instanceof Error ? error.message : prev?.message || "Failed to get response",
+        name: error instanceof Error ? error.name : prev?.name,
+        stack: error instanceof Error ? error.stack : prev?.stack,
+        response: responsePayload ?? prev?.response,
+        request: prev?.request ?? requestPayload,
+      }));
+
       const errorMessage = error instanceof Error ? error.message : "Failed to get response";
-      
+
       toast({
         title: "AI Error",
         description: errorMessage,
@@ -660,6 +743,47 @@ export function SEOAIChatbot() {
               </div>
             </div>
 
+            {/* Error Details */}
+            <div className="rounded-lg border p-4 bg-muted/50">
+              <h3 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                ⚠️ Latest Error Details
+              </h3>
+              {lastError ? (
+                <div className="space-y-2 text-sm">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-muted-foreground">Message:</span>
+                    <span className="font-mono text-xs whitespace-pre-wrap">{lastError.message}</span>
+                  </div>
+                  {lastError.name && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Type:</span>
+                      <span className="font-mono text-xs">{lastError.name}</span>
+                    </div>
+                  )}
+                  {lastError.stack && (
+                    <div className="flex flex-col gap-1">
+                      <span className="text-muted-foreground">Stack Trace:</span>
+                      <pre className="bg-background border rounded p-2 text-[11px] overflow-auto max-h-40 whitespace-pre-wrap">{lastError.stack}</pre>
+                    </div>
+                  )}
+                  {lastError.request && (
+                    <div className="flex flex-col gap-1">
+                      <span className="text-muted-foreground">Last Request Payload:</span>
+                      <pre className="bg-background border rounded p-2 text-[11px] overflow-auto max-h-40 whitespace-pre-wrap">{JSON.stringify(lastError.request, null, 2)}</pre>
+                    </div>
+                  )}
+                  {lastError.response && (
+                    <div className="flex flex-col gap-1">
+                      <span className="text-muted-foreground">Last Response/Error Object:</span>
+                      <pre className="bg-background border rounded p-2 text-[11px] overflow-auto max-h-40 whitespace-pre-wrap">{JSON.stringify(lastError.response, null, 2)}</pre>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="text-muted-foreground text-sm">No errors captured yet in this session.</p>
+              )}
+            </div>
+
             {/* Copy All Button */}
             <div className="flex gap-2">
               <Button
@@ -679,10 +803,10 @@ export function SEOAIChatbot() {
                       filterProperty: localStorage.getItem('anotherseo_filter_property'),
                     }
                   };
-                        navigator.clipboard.writeText(JSON.stringify(debugInfo, null, 2));
-                        setDebugCopied(true);
-                        setTimeout(() => setDebugCopied(false), 2000);
-                        toast({ title: 'Debug info copied!', description: 'Paste it to share with support' });
+                  navigator.clipboard.writeText(JSON.stringify(debugInfo, null, 2));
+                  setDebugCopied(true);
+                  setTimeout(() => setDebugCopied(false), 2000);
+                  toast({ title: 'Debug info copied!', description: 'Paste it to share with support' });
                 }}
                 variant="outline"
                 className="flex-1"

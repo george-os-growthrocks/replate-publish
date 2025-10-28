@@ -14,7 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      algorithm_impacts: {
+        Row: {
+          id: string;
+          user_id: string;
+          detected_at: string;
+          severity: string;
+          affected_keywords: string[];
+          avg_position_drop: number | null;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          detected_at?: string;
+          severity?: string;
+          affected_keywords?: string[];
+          avg_position_drop?: number | null;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          detected_at?: string;
+          severity?: string;
+          affected_keywords?: string[];
+          avg_position_drop?: number | null;
+        };
+        Relationships: [];
+      };
+      chatbot_conversations: {
+        Row: {
+          id: string;
+          user_id: string;
+          project_id: string | null;
+          messages: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          project_id?: string | null;
+          messages: Json;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          project_id?: string | null;
+          messages?: Json;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     }
     Views: {
       [_ in never]: never
