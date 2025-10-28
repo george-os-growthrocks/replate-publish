@@ -7,9 +7,59 @@ import { ArrowRight, Calendar, Clock, User } from "lucide-react";
 
 const blogPosts = [
   {
-                    slug: "announcing-anotherseoguru-launch",
+    slug: "free-seo-toolkit-2026",
+    title: "The Ultimate Free SEO Toolkit for 2026 (No Sign-Up, No Fluff)",
+    excerpt: "Build your free SEO stack: title sim, PAA extractor, schema generator, CWV pulse, log analyzer, and more. Templates + metrics you can use today.",
+    author: "SEO Team",
+    date: "October 28, 2025",
+    readTime: "8 min read",
+    category: "SEO Tools",
+    image: "/hero-image.jpg"
+  },
+  {
+    slug: "llm-seo-chatgpt-perplexity",
+    title: "LLM SEO: How to Get Cited by ChatGPT & Perplexity",
+    excerpt: "A field guide to earning citations in ChatGPT and Perplexity: Q&A formatting, freshness, source-worthiness, schema, and measurement.",
+    author: "SEO Team",
+    date: "October 28, 2025",
+    readTime: "7 min read",
+    category: "AI Search",
+    image: "/hero-image.jpg"
+  },
+  {
+    slug: "log-file-seo-guide",
+    title: "Log-File SEO: The Fastest Way to Find Crawl Waste",
+    excerpt: "Learn to parse access logs, spot crawl traps, and fix budget-draining patterns—step by step with sample queries.",
+    author: "SEO Team",
+    date: "October 28, 2025",
+    readTime: "9 min read",
+    category: "Technical SEO",
+    image: "/hero-image.jpg"
+  },
+  {
+    slug: "hreflang-guide",
+    title: "Hreflang Without Tears: ccTLDs vs. Subfolders vs. Subdomains",
+    excerpt: "A pragmatic framework for choosing your international URL strategy—with hreflang templates that actually work.",
+    author: "SEO Team",
+    date: "October 28, 2025",
+    readTime: "8 min read",
+    category: "International SEO",
+    image: "/hero-image.jpg"
+  },
+  {
+    slug: "internal-linking-scale",
+    title: "Internal Linking at Scale: From GSC Exports to Smart Anchors",
+    excerpt: "Use queries, clusters, and templates to deploy internal links that move rankings—minus the manual pain.",
+    author: "SEO Team",
+    date: "October 28, 2025",
+    readTime: "10 min read",
+    category: "Content Strategy",
+    image: "/hero-image.jpg"
+  },
+  {
+    slug: "announcing-anotherseoguru-launch",
     title: "Announcing AnotherSEOGuru: The Most Advanced SEO Platform + AI Content Engine",
-    excerpt: "We're thrilled to announce the launch of AnotherSEOGuru - a revolutionary SEO platform that combines 25+ powerful SEO tools with cutting-edge AI content generation. Discover how we're democratizing professional SEO for businesses of all sizes.",
+    excerpt: "We're thrilled to announce the launch of AnotherSEOGuru - a revolutionary SEO platform that combines 25+ powerful SEO tools with cutting-edge AI content generation.",
     author: "AnotherSEOGuru Team",
     date: "October 27, 2025",
     readTime: "8 min read",

@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Sparkles, Copy, Check, ArrowRight, Code2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
+import { RelatedToolsSection } from "@/components/free-tools/RelatedToolsSection";
+import { getRelatedTools } from "@/lib/free-tools-data";
 
 type SchemaType = "article" | "product" | "local-business" | "faq" | "breadcrumb" | "person" | "organization";
 
@@ -412,6 +414,8 @@ export default function SchemaGenerator() {
             </div>
           </div>
         </main>
+
+        <RelatedToolsSection tools={getRelatedTools("schema-generator")} />
 
         <Footer />
       </div>

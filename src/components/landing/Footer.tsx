@@ -105,6 +105,11 @@ inate search rankings and scale your content like a pro.
                 </Link>
               </li>
               <li>
+                <Link to="/changelog" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Changelog
+                </Link>
+              </li>
+              <li>
                 <Link to="/guides" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   SEO Guides
                 </Link>

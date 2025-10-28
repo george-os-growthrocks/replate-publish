@@ -26,6 +26,9 @@ import HeadingAnalyzer from "./pages/free-tools/HeadingAnalyzer";
 import RobotsTxtGenerator from "./pages/free-tools/RobotsTxtGenerator";
 import SchemaGenerator from "./pages/free-tools/SchemaGenerator";
 import KeywordDensityChecker from "./pages/free-tools/KeywordDensityChecker";
+import PAAExtractor from "./pages/free-tools/PAAExtractor";
+import HreflangBuilder from "./pages/free-tools/HreflangBuilder";
+import CWVPulse from "./pages/free-tools/CWVPulse";
 import QueriesPage from "./pages/QueriesPage";
 import PagesPage from "./pages/PagesPage";
 import CountriesPage from "./pages/CountriesPage";
@@ -56,6 +59,17 @@ import { ScrollToTop } from "@/components/ScrollToTop";
 import CookiesPage from "./pages/CookiesPage";
 import GDPRPage from "./pages/GDPRPage";
 import SecurityPage from "./pages/SecurityPage";
+import HelpCenterPage from "./pages/HelpCenterPage";
+import ChangelogPage from "./pages/ChangelogPage";
+import FreeToolkitPost from "./pages/blog/FreeToolkitPost";
+import LLMSEOPost from "./pages/blog/LLMSEOPost";
+import LogFileSEOPost from "./pages/blog/LogFileSEOPost";
+import HreflangGuidePost from "./pages/blog/HreflangGuidePost";
+import InternalLinkingPost from "./pages/blog/InternalLinkingPost";
+import FreeToolsPage from "./pages/FreeToolsPage";
+import ConnectSearchConsole from "./pages/help/ConnectSearchConsole";
+import KeywordClusteringGuide from "./pages/help/KeywordClusteringGuide";
+import CWVTroubleshooting from "./pages/help/CWVTroubleshooting";
 
 const queryClient = new QueryClient();
 
@@ -84,6 +98,7 @@ const App = () => (
                        <Route path="/glossary" element={<SeoGlossaryPage />} />
                        <Route path="/blog" element={<BlogPage />} />
                        <Route path="/blog/:slug" element={<BlogPostPage />} />
+                       <Route path="/free-tools" element={<FreeToolsPage />} />
                        
                        {/* Free Tools */}
                        <Route path="/free-tools/ai-overview-checker" element={<AiOverviewChecker />} />
@@ -94,15 +109,31 @@ const App = () => (
                        <Route path="/free-tools/robots-txt-generator" element={<RobotsTxtGenerator />} />
                        <Route path="/free-tools/schema-generator" element={<SchemaGenerator />} />
                        <Route path="/free-tools/keyword-density-checker" element={<KeywordDensityChecker />} />
+                       <Route path="/free-tools/paa-extractor" element={<PAAExtractor />} />
+                       <Route path="/free-tools/hreflang-builder" element={<HreflangBuilder />} />
+                       <Route path="/free-tools/cwv-pulse" element={<CWVPulse />} />
                        <Route path="/privacy" element={<PrivacyPage />} />
                        <Route path="/terms" element={<TermsPage />} />
                        <Route path="/cookies" element={<CookiesPage />} />
                        <Route path="/gdpr" element={<GDPRPage />} />
                        <Route path="/security" element={<SecurityPage />} />
+                       <Route path="/help" element={<HelpCenterPage />} />
+                       <Route path="/changelog" element={<ChangelogPage />} />
+                       
+                       {/* Blog Posts */}
+                       <Route path="/blog/free-seo-toolkit-2026" element={<FreeToolkitPost />} />
+                       <Route path="/blog/llm-seo-chatgpt-perplexity" element={<LLMSEOPost />} />
+                       <Route path="/blog/log-file-seo-guide" element={<LogFileSEOPost />} />
+                       <Route path="/blog/hreflang-guide" element={<HreflangGuidePost />} />
+                       <Route path="/blog/internal-linking-scale" element={<InternalLinkingPost />} />
+                       
+                       {/* Help Articles */}
+                       <Route path="/help/connect-search-console" element={<ConnectSearchConsole />} />
+                       <Route path="/help/keyword-clustering-guide" element={<KeywordClusteringGuide />} />
+                       <Route path="/help/cwv-troubleshooting" element={<CWVTroubleshooting />} />
                        
                        {/* Redirect Coming Soon to Contact */}
                        <Route path="/roadmap" element={<ContactPage />} />
-                       <Route path="/help" element={<ContactPage />} />
                        <Route path="/guides" element={<ContactPage />} />
                        <Route path="/api" element={<ContactPage />} />
                        <Route path="/careers" element={<ContactPage />} />

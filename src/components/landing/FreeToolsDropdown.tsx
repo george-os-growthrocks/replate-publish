@@ -7,7 +7,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, Sparkles, Layers, FileText, FileCode, Heading, Bot, Code2, BarChart3 } from "lucide-react";
+import { ChevronDown, Sparkles, Layers, FileText, FileCode, Heading, Bot, Code2, BarChart3, Search, Globe, Gauge } from "lucide-react";
 
 export function FreeToolsDropdown() {
   return (
@@ -76,6 +76,53 @@ export function FreeToolsDropdown() {
             <div>
               <div className="font-semibold text-sm mb-0.5">Keyword Density Checker</div>
               <div className="text-xs text-muted-foreground">Analyze keyword usage in content</div>
+            </div>
+          </Link>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem asChild>
+          <Link 
+            to="/free-tools/paa-extractor" 
+            className="flex items-start gap-3 p-3 cursor-pointer"
+          >
+            <Search className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+            <div>
+              <div className="font-semibold text-sm mb-0.5">PAA Extractor</div>
+              <div className="text-xs text-muted-foreground">Extract People Also Ask questions</div>
+            </div>
+          </Link>
+        </DropdownMenuItem>
+
+        <DropdownMenuSeparator />
+        
+        <div className="px-2 py-1.5">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            Technical SEO
+          </p>
+        </div>
+
+        <DropdownMenuItem asChild>
+          <Link 
+            to="/free-tools/cwv-pulse" 
+            className="flex items-start gap-3 p-3 cursor-pointer"
+          >
+            <Gauge className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+            <div>
+              <div className="font-semibold text-sm mb-0.5">CWV Pulse</div>
+              <div className="text-xs text-muted-foreground">Check Core Web Vitals scores</div>
+            </div>
+          </Link>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem asChild>
+          <Link 
+            to="/free-tools/hreflang-builder" 
+            className="flex items-start gap-3 p-3 cursor-pointer"
+          >
+            <Globe className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+            <div>
+              <div className="font-semibold text-sm mb-0.5">Hreflang Builder</div>
+              <div className="text-xs text-muted-foreground">International SEO tag generator</div>
             </div>
           </Link>
         </DropdownMenuItem>

@@ -56,7 +56,12 @@ export function LandingNav() {
             >
               Features
             </Link>
-            <FreeToolsDropdown />
+            <Link 
+              to="/free-tools" 
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Free Tools
+            </Link>
             <Link 
               to="/pricing" 
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
@@ -64,16 +69,10 @@ export function LandingNav() {
               Pricing
             </Link>
             <Link 
-              to="/glossary" 
+              to="/blog" 
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
-              SEO Glossary
-            </Link>
-            <Link 
-              to="/about" 
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              About
+              Blog
             </Link>
             <Link 
               to="/contact" 
@@ -142,7 +141,7 @@ export function LandingNav() {
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="lg:hidden py-4 border-t border-border">
+          <div className="lg:hidden py-4 border-t border-border bg-background/95 backdrop-blur-md">
             <div className="flex flex-col gap-4">
               <Link 
                 to="/features" 
@@ -152,6 +151,13 @@ export function LandingNav() {
                 Features
               </Link>
               <Link 
+                to="/free-tools" 
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-2"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Free Tools
+              </Link>
+              <Link 
                 to="/pricing" 
                 className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-2"
                 onClick={() => setIsMobileMenuOpen(false)}
@@ -159,18 +165,11 @@ export function LandingNav() {
                 Pricing
               </Link>
               <Link 
-                to="/glossary" 
+                to="/blog" 
                 className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-2"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                SEO Glossary
-              </Link>
-              <Link 
-                to="/about" 
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-2"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                About
+                Blog
               </Link>
               <Link 
                 to="/contact" 

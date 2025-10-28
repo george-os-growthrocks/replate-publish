@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { LandingNav } from "@/components/landing/LandingNav";
 import { Footer } from "@/components/landing/Footer";
+import { RelatedToolsSection } from "@/components/free-tools/RelatedToolsSection";
+import { getRelatedTools } from "@/lib/free-tools-data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -304,6 +306,8 @@ export default function ChatGptPromptsLibrary() {
             </Card>
           </div>
         </main>
+
+        <RelatedToolsSection tools={getRelatedTools("chatgpt-prompts")} />
 
         <Footer />
       </div>

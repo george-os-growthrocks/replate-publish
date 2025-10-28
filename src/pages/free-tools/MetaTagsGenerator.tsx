@@ -10,6 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Sparkles, Copy, Check, ArrowRight, FileText } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
+import { RelatedToolsSection } from "@/components/free-tools/RelatedToolsSection";
+import { getRelatedTools } from "@/lib/free-tools-data";
 
 export default function MetaTagsGenerator() {
   const [title, setTitle] = useState("");
@@ -422,6 +424,8 @@ export default function MetaTagsGenerator() {
             </div>
           </div>
         </main>
+
+        <RelatedToolsSection tools={getRelatedTools("meta-tags")} />
 
         <Footer />
       </div>

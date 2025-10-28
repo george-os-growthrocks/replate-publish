@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { LandingNav } from "@/components/landing/LandingNav";
 import { Footer } from "@/components/landing/Footer";
+import { RelatedToolsSection } from "@/components/free-tools/RelatedToolsSection";
+import { getRelatedTools } from "@/lib/free-tools-data";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -300,6 +302,8 @@ export default function KeywordClusteringTool() {
             </div>
           </div>
         </main>
+
+        <RelatedToolsSection tools={getRelatedTools("keyword-clustering")} />
 
         <Footer />
       </div>
