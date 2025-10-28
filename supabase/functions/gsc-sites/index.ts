@@ -34,10 +34,59 @@ serve(async (req) => {
     if (userError) throw new Error(`Auth error: ${userError.message}`);
     if (!user) throw new Error('Unauthorized - no user found');
 
-    const { provider_token } = await req.json();
-    if (!provider_token) {
-      throw new Error('No Google access token provided. Please sign out and sign in again with Google.');
+    console.log('✅ User authenticated:', user.id);
+
+    // Try to get provider_token from database first
+    let provider_token = null;
+    
+    console.log('🔍 Looking for stored OAuth token in database...');
+    const { data: tokenData, error: tokenError } = await supabaseClient
+      .from('user_oauth_tokens')
+      .select('access_token, refresh_token, expires_at')
+      .eq('user_id', user.id)
+      .eq('provider', 'google')
+      .single();
+
+    if (tokenError) {
+      console.error('❌ Error fetching token from database:', tokenError);
+    } else if (tokenData) {
+      console.log('✅ Found stored token in database');
+      provider_token = tokenData.access_token;
+      
+      // Check if token is expired
+      if (tokenData.expires_at) {
+        const expiresAt = new Date(tokenData.expires_at);
+        const now = new Date();
+        if (expiresAt <= now) {
+          console.warn('⚠️ Stored token is expired. User needs to re-authenticate.');
+          provider_token = null;
+        }
+      }
     }
+
+    // Fallback: try to get from request body
+    if (!provider_token) {
+      try {
+        const body = await req.json();
+        provider_token = body.provider_token;
+        console.log('📥 Received provider_token from request:', provider_token ? 'Yes' : 'No');
+      } catch (e) {
+        console.log('⚠️ No JSON body provided');
+      }
+    }
+
+    // Last resort: try to get from session (rarely works)
+    if (!provider_token) {
+      const { data: session } = await supabaseClient.auth.getSession();
+      provider_token = session?.session?.provider_token;
+      console.log('🔑 Provider token from session:', provider_token ? 'Yes' : 'No');
+    }
+
+    if (!provider_token) {
+      throw new Error('No Google access token available. Please sign out and sign in again with Google to grant access to Search Console.');
+    }
+
+    console.log('🚀 Fetching GSC sites for user:', user.id);
 
     const response = await fetch('https://www.googleapis.com/webmasters/v3/sites', {
       headers: {

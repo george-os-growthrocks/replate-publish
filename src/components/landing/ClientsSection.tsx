@@ -21,13 +21,13 @@ const clients = [
   },
   {
     name: "ALK Hotel",
-    logo: "https://hotelssifnos.com/uploads/alkhotel.png",
+    logo: "/assets/alkhotel.png",
     type: "image",
     showName: true
   },
   {
     name: "Morpheas",
-    logo: "https://hotelssifnos.com/uploads/morpheas-logo.png",
+    logo: "/assets/morpheas-logo.png",
     type: "image",
     noGrayscale: true,
     invertColors: true,
@@ -35,7 +35,7 @@ const clients = [
   },
   {
     name: "Meropi Rooms",
-    logo: "https://hotelssifnos.com/uploads/meropirooms.png",
+    logo: "/assets/meropirooms.png",
     type: "image",
     noGrayscale: true,
     invertColors: true,
@@ -51,117 +51,117 @@ const clients = [
   },
   {
     name: "The Agency",
-    logo: "https://hotelssifnos.com/uploads/theagencylogo.png",
+    logo: "/assets/theagencylogo.png",
     type: "image"
   },
   {
     name: "Petsville",
-    logo: "https://hotelssifnos.com/uploads/petsville.png",
+    logo: "/assets/petsville.png",
     type: "image"
   },
   {
     name: "RAC SA",
-    logo: "https://hotelssifnos.com/uploads/rac-sa.jpg",
+    logo: "/assets/rac sa.jpg",
     type: "image"
   },
   {
     name: "Athens Rent a Car",
-    logo: "https://hotelssifnos.com/uploads/athensrentacar.png",
+    logo: "/assets/athensrentacar.png",
     type: "image"
   },
   {
     name: "Rent a Car Antiparos",
-    logo: "https://hotelssifnos.com/uploads/rentacarantiparos.png",
+    logo: "/assets/rentacarantiparos.png",
     type: "image"
   },
   {
     name: "Health Assistance",
-    logo: "https://hotelssifnos.com/uploads/healthassistance.png",
+    logo: "/assets/healthassistance.png",
     type: "image"
   },
   {
     name: "Allazw Diatrofi",
-    logo: "https://hotelssifnos.com/uploads/allazwdiatrofi.png",
+    logo: "/assets/allazwdiatrofi.png",
     type: "image"
   },
   {
     name: "Box2Box",
-    logo: "https://hotelssifnos.com/uploads/box2box_logo.png",
+    logo: "/assets/box2box_logo.png",
     type: "image"
   },
   {
     name: "EEF EDU",
-    logo: "https://hotelssifnos.com/uploads/eefedu.png",
+    logo: "/assets/eefedu.png",
     type: "image"
   },
   {
     name: "Active Sport",
-    logo: "https://hotelssifnos.com/uploads/activesport.png",
+    logo: "/assets/activesport.png",
     type: "image"
   },
   {
     name: "Sports Factory Outlet",
-    logo: "https://hotelssifnos.com/uploads/sportsfactory-outlet-logo-17153332223.webp",
+    logo: "/assets/sportsfactory-outlet-logo-17153332223.webp",
     type: "image"
   },
   {
     name: "Sneaker10",
-    logo: "https://hotelssifnos.com/uploads/sneaker10-logo-17075791422.webp",
+    logo: "/assets/sneaker10-logo-17075791422.webp",
     type: "image"
   },
   {
     name: "Run Dome",
-    logo: "https://hotelssifnos.com/uploads/rundome-logo-17075791815.webp",
+    logo: "/assets/rundome-logo-17075791815.webp",
     type: "image"
   },
   {
     name: "Slam Dunk",
-    logo: "https://hotelssifnos.com/uploads/slam-dunk-logo-17075791644.webp",
+    logo: "/assets/slam-dunk-logo-17075791644.webp",
     type: "image"
   },
   {
     name: "Cosmos Sport",
-    logo: "https://hotelssifnos.com/uploads/cosmos-sport-logo-17075792651.webp",
+    logo: "/assets/cosmos-sport-logo-17075792651.webp",
     type: "image"
   },
   {
     name: "JD Sports",
-    logo: "https://hotelssifnos.com/uploads/jd-desktop-logo.webp",
+    logo: "/assets/jd-desktop-logo.webp",
     type: "image"
   },
   {
     name: "Villarreal",
-    logo: "https://hotelssifnos.com/uploads/logo-villarreal-web.png",
+    logo: "/assets/logo-villarreal-web.png",
     type: "image"
   },
   {
     name: "Antiparos Rent a Car",
-    logo: "https://hotelssifnos.com/uploads/antiparosrentacar.png",
+    logo: "/assets/antiparosrentacar.png",
     type: "image"
   },
   {
     name: "Aggelos Rentals",
-    logo: "https://hotelssifnos.com/uploads/aggelosrentals.png",
+    logo: "/assets/aggelosrentals.png",
     type: "image"
   },
   {
     name: "Antiparos Transfer",
-    logo: "https://hotelssifnos.com/uploads/antiparostransfer.png",
+    logo: "/assets/antiparostransfer.png",
     type: "image"
   },
   {
     name: "Antiparos Rooms",
-    logo: "https://hotelssifnos.com/uploads/antiparosrooms.png",
+    logo: "/assets/antiparosrooms.png",
     type: "image"
   },
   {
     name: "Villa Olivia Clara",
-    logo: "https://hotelssifnos.com/uploads/villa-olivia-clara-logo-768x204.png",
+    logo: "/assets/villa-olivia-clara-logo-768x204.png",
     type: "image"
   },
   {
     name: "Elite Hospitality",
-    logo: "https://hotelssifnos.com/uploads/elitehospitality.png",
+    logo: "/assets/elitehospitality.png",
     type: "image"
   },
 ];

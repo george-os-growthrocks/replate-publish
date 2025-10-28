@@ -308,6 +308,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <Brain className={cn("h-[18px] w-[18px]", !sidebarCollapsed && "mr-3")} />
                 {!sidebarCollapsed && <span>Intelligence</span>}
               </Button>
+              <Button variant="ghost" className={cn("w-full justify-start rounded-xl text-sm transition-colors", location.pathname === "/llm-citations" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground", sidebarCollapsed && "justify-center px-2")} onClick={() => navigate("/llm-citations")}>
+                <Activity className={cn("h-[18px] w-[18px]", !sidebarCollapsed && "mr-3")} />
+                {!sidebarCollapsed && <span>LLM Citations</span>}
+              </Button>
               <Button variant="ghost" className={cn("w-full justify-start rounded-xl text-sm transition-colors", location.pathname === "/alerts" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground", sidebarCollapsed && "justify-center px-2")} onClick={() => navigate("/alerts")}>
                 <Bell className={cn("h-[18px] w-[18px]", !sidebarCollapsed && "mr-3")} />
                 {!sidebarCollapsed && <span>Alerts</span>}

@@ -23,10 +23,40 @@ const Auth = () => {
     // Listen for auth state changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed:", event, session ? "Session exists" : "No session");
       
       if (event === "SIGNED_IN" && session) {
+        console.log("User signed in, attempting to store OAuth token");
+        
+        // Try to capture and store the provider token
+        try {
+          const providerToken = session.provider_token;
+          const providerRefreshToken = session.provider_refresh_token;
+          
+          if (providerToken) {
+            console.log("📥 Found provider_token, storing it...");
+            
+            const { error } = await supabase.functions.invoke("store-oauth-token", {
+              body: {
+                provider_token: providerToken,
+                provider_refresh_token: providerRefreshToken,
+                expires_at: session.expires_at,
+              }
+            });
+            
+            if (error) {
+              console.error("❌ Failed to store OAuth token:", error);
+            } else {
+              console.log("✅ OAuth token stored successfully!");
+            }
+          } else {
+            console.warn("⚠️ No provider_token in session");
+          }
+        } catch (error) {
+          console.error("Error storing OAuth token:", error);
+        }
+        
         console.log("User signed in, redirecting to dashboard");
         navigate("/dashboard", { replace: true });
       }

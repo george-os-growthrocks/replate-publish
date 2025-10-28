@@ -87,7 +87,7 @@ export function Hero() {
               {/* OpenAI */}
               <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-card border border-border hover:border-primary/50 transition-colors">
                 <img 
-                  src="/src/assets/openai.webp" 
+                  src="/assets/openai.webp" 
                   alt="OpenAI" 
                   className="w-5 h-5"
                 />
@@ -97,7 +97,7 @@ export function Hero() {
               {/* Anthropic (Claude) */}
               <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-card border border-border hover:border-primary/50 transition-colors">
                 <img 
-                  src="/src/assets/Claude_A.png" 
+                  src="/assets/Claude_A.png" 
                   alt="Anthropic Claude" 
                   className="w-5 h-5"
                 />

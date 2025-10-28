@@ -203,11 +203,11 @@ inate search rankings and scale your content like a pro.
             {/* Payment Methods */}
             <div className="flex flex-col items-center md:items-end gap-2">
               <p className="text-xs text-muted-foreground">We accept</p>
-              <img 
-                src="/src/payment-methods.png" 
-                alt="Accepted payment methods: Visa, Mastercard, Amex, iDEAL, JCB, Bancontact, Apple Pay, Google Pay, PayPal" 
-                className="h-6 opacity-70 hover:opacity-100 transition-opacity"
-              />
+                  <img 
+                    src="/payment-methods.png" 
+                    alt="Accepted payment methods: Visa, Mastercard, Amex, iDEAL, JCB, Bancontact, Apple Pay, Google Pay, PayPal" 
+                    className="h-6 opacity-70 hover:opacity-100 transition-opacity"
+                  />
             </div>
           </div>
         </div>

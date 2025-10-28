@@ -29,10 +29,54 @@ serve(async (req) => {
     if (userError) throw new Error(`Auth error: ${userError.message}`);
     if (!user) throw new Error('Unauthorized - no user found');
 
-    const { provider_token, siteUrl, startDate, endDate, dimensions, rowLimit = 25000, dimensionFilterGroups } = await req.json();
+    console.log('✅ User authenticated:', user.id);
+
+    // Parse request body
+    const body = await req.json();
+    const { siteUrl, startDate, endDate, dimensions, rowLimit = 25000, dimensionFilterGroups } = body;
+
+    // Try to get provider_token from database first
+    let provider_token = body.provider_token;
+    
+    if (!provider_token) {
+      console.log('🔍 Looking for stored OAuth token in database...');
+      const { data: tokenData, error: tokenError } = await supabaseClient
+        .from('user_oauth_tokens')
+        .select('access_token, refresh_token, expires_at')
+        .eq('user_id', user.id)
+        .eq('provider', 'google')
+        .single();
+
+      if (tokenError) {
+        console.error('❌ Error fetching token from database:', tokenError);
+      } else if (tokenData) {
+        console.log('✅ Found stored token in database');
+        provider_token = tokenData.access_token;
+        
+        // Check if token is expired
+        if (tokenData.expires_at) {
+          const expiresAt = new Date(tokenData.expires_at);
+          const now = new Date();
+          if (expiresAt <= now) {
+            console.warn('⚠️ Stored token is expired. User needs to re-authenticate.');
+            provider_token = null;
+          }
+        }
+      } else {
+        console.log('⚠️ No stored token found in database');
+      }
+    }
+
+    // Last resort: try to get from session
+    if (!provider_token) {
+      console.log('🔑 Trying to get token from session...');
+      const { data: session } = await supabaseClient.auth.getSession();
+      provider_token = session?.session?.provider_token;
+      console.log('🔑 Provider token from session:', provider_token ? 'Yes' : 'No');
+    }
 
     if (!provider_token) {
-      throw new Error('No Google access token provided. Please sign out and sign in again with Google.');
+      throw new Error('No Google access token available. Please sign out and sign in again with Google to grant access to Search Console.');
     }
 
     if (!siteUrl || !startDate || !endDate) {

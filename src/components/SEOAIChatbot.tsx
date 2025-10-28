@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { MessageSquare, X, Send, Loader2, Sparkles, TrendingUp, Link2, Search, Download, Maximize2, Minimize2 } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { MessageSquare, X, Send, Loader2, Sparkles, TrendingUp, Link2, Search, Download, Maximize2, Minimize2, Bug, Copy, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import ReactMarkdown from "react-markdown";
@@ -55,6 +56,9 @@ export function SEOAIChatbot() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showQuickPrompts, setShowQuickPrompts] = useState(true);
+  const [showDebugDialog, setShowDebugDialog] = useState(false);
+  const [debugCopied, setDebugCopied] = useState(false);
+  const [properties, setProperties] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -82,7 +86,7 @@ export function SEOAIChatbot() {
       const savedProperty = localStorage.getItem('anotherseo_selected_property');
       if (savedProperty) {
         setSelectedProperty(savedProperty);
-        console.log('📍 Loaded saved property:', savedProperty);
+        console.log('Loaded saved property:', savedProperty);
       }
     } else {
       // Clear property if not signed in
@@ -99,7 +103,7 @@ export function SEOAIChatbot() {
       if (property && property !== selectedProperty) {
         setSelectedProperty(property);
         localStorage.setItem('anotherseo_selected_property', property);
-        console.log('📍 Property changed to:', property);
+        console.log('Property changed to:', property);
       }
     };
 
@@ -134,64 +138,87 @@ export function SEOAIChatbot() {
         try {
           console.log('🔍 Fetching comprehensive context for', selectedProperty || 'all properties');
           
-          // 1. Get user's properties
-          const { data: properties } = await supabase
-            .from("gsc_properties")
-            .select("property_url")
-            .eq("user_id", user.id)
-            .limit(10);
-
-          // 2. Get tracked keywords with full details
-          const keywordsQuery = supabase
-            .from("tracked_keywords")
-            .select("keyword, current_position, search_volume, previous_position, last_checked_at")
-            .eq("user_id", user.id)
-            .eq("is_active", true)
-            .order("search_volume", { ascending: false })
-            .limit(50);
-
-          // Filter by property if one is selected
-          if (selectedProperty) {
-            keywordsQuery.eq("property_url", selectedProperty);
-          }
-
-          const { data: trackedKeywords } = await keywordsQuery;
-
-          // 3. Get recent GSC queries if property is selected
-          let gscQueries = null;
-          if (selectedProperty) {
-            const { data: gscData } = await supabase.functions.invoke("gsc-query", {
-              body: {
-                propertyUrl: selectedProperty,
-                startDate: new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                endDate: new Date().toISOString().split('T')[0],
-                dimensions: ['query'],
-                rowLimit: 100
+          // 1. Get user's properties from GSC sites
+          let userProperties = [];
+          try {
+            console.log('🔄 Calling gsc-sites function...');
+            const { data: sitesData, error: sitesError } = await supabase.functions.invoke("gsc-sites");
+            
+            console.log('📥 gsc-sites response:', sitesData);
+            console.log('❌ gsc-sites error:', sitesError);
+            
+            if (sitesError) {
+              console.error('❌ Error from gsc-sites:', sitesError);
+              // Try to use selected property as fallback
+              if (selectedProperty) {
+                userProperties = [selectedProperty];
+                console.log('⚠️ Using selected property as fallback:', userProperties);
               }
-            });
-            gscQueries = gscData?.queries?.slice(0, 20) || null;
+            } else if (sitesData?.error) {
+              console.error('❌ Error in gsc-sites response:', sitesData.error);
+              // Try to use selected property as fallback
+              if (selectedProperty) {
+                userProperties = [selectedProperty];
+                console.log('⚠️ Using selected property as fallback:', userProperties);
+              }
+            } else if (sitesData?.sites) {
+              userProperties = sitesData.sites.map((s: any) => s.siteUrl);
+              console.log('✅ Loaded properties:', userProperties);
+            } else {
+              console.log('⚠️ No sites in response, using selected property:', selectedProperty);
+              if (selectedProperty) {
+                userProperties = [selectedProperty];
+              }
+            }
+          } catch (err) {
+            console.error('💥 Failed to fetch GSC sites:', err);
+            // Use selected property as fallback
+            if (selectedProperty) {
+              userProperties = [selectedProperty];
+              console.log('⚠️ Using selected property as fallback:', userProperties);
+            }
           }
+
+          // 2. SKIP tracked keywords (causing 400 errors - will fix later)
+          let trackedKeywords = null;
+          console.log('⏭️ Skipping tracked keywords query to prevent 400 errors');
+
+          // 3. SKIP GSC queries (causing 400 errors - will fix later)
+          let gscQueries = null;
+          console.log('⏭️ Skipping GSC queries to prevent 400 errors');
 
         // 4. Get recent algorithm impacts
-        const { data: algorithmImpacts, error: impactsError } = await supabase
-          .from("algorithm_impacts")
-          .select("detected_at, severity, affected_keywords, avg_position_drop")
-          .eq("user_id", user.id)
-          .order("detected_at", { ascending: false })
-          .limit(5);
-
-        if (impactsError) {
-          console.error("algorithm_impacts error:", impactsError);
+        let algorithmImpacts = null;
+        try {
+          const { data: impactsData } = await supabase
+            .from("algorithm_impacts")
+            .select("detected_at, severity, affected_keywords, avg_position_drop")
+            .eq("user_id", user.id)
+            .order("detected_at", { ascending: false })
+            .limit(10);
+          algorithmImpacts = impactsData;
+        } catch (err) {
+          console.log('Could not fetch algorithm impacts:', err);
         }
 
-          projectContext = {
-            selected_property: selectedProperty,
-            properties: properties?.map(p => p.property_url) || [],
-            tracked_keywords: trackedKeywords || [],
-            gsc_queries: gscQueries,
-            algorithm_impacts: algorithmImpacts || [],
-            context_timestamp: new Date().toISOString()
-          };
+        // Build comprehensive context
+        projectContext = {
+          properties: userProperties || [],
+          currentProperty: selectedProperty,
+          trackedKeywords: trackedKeywords?.map((k: any) => ({
+            keyword: k.keyword,
+            position: k.current_position,
+            volume: k.search_volume,
+            change: k.previous_position ? k.previous_position - k.current_position : null,
+          })) || [],
+          recentQueries: gscQueries || [],
+          algorithmImpacts: algorithmImpacts?.map((a: any) => ({
+            date: a.detected_at,
+            severity: a.severity,
+            keywords: a.affected_keywords,
+            drop: a.avg_position_drop
+          })) || []
+        };
 
           console.log('✅ Context loaded:', {
             property: selectedProperty,
@@ -259,8 +286,16 @@ export function SEOAIChatbot() {
           messages: [...newMessages, assistantMessage],
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("💥 Chat error:", error);
+      console.error("💥 Error stack:", error?.stack);
+      console.error("💥 Error details:", {
+        message: error?.message,
+        name: error?.name,
+        cause: error?.cause,
+        full: error
+      });
+      
       const errorMessage = error instanceof Error ? error.message : "Failed to get response";
       
       toast({
@@ -274,7 +309,7 @@ export function SEOAIChatbot() {
         ...prev,
         {
           role: "assistant",
-          content: `⚠️ **Error:** ${errorMessage}\n\n**Troubleshooting:**\n\n• Try rephrasing your question\n• Check browser console (F12) for details\n• Refresh the page if issue persists\n\nIf you continue to see this error, there may be an issue with the AI service. Please try again in a moment.`
+          content: `⚠️ **Error:** ${errorMessage}\n\n**Debug Info:**\n• Type: ${error?.name || 'Unknown'}\n• Details: Check console (F12) for full error\n\n**Troubleshooting:**\n• Try rephrasing your question\n• Check browser console (F12) for full details\n• Refresh the page if issue persists\n\nIf you continue to see this error, there may be an issue with the AI service. Please try again in a moment.`
         }
       ]);
     } finally {
@@ -351,7 +386,7 @@ export function SEOAIChatbot() {
               <h3 className="font-bold text-xs sm:text-sm truncate">AnotherSEOGuru AI</h3>
               <p className="text-xs truncate">
                 {selectedProperty ? (
-                  <span className="text-white font-semibold">📍 {selectedProperty}</span>
+                  <span className="text-white font-semibold">{selectedProperty}</span>
                 ) : (
                   <span className="text-white/70">Your Intelligent SEO Assistant</span>
                 )}
@@ -457,12 +492,38 @@ export function SEOAIChatbot() {
                 className="flex-1 text-sm sm:text-base"
               />
               <Button 
+                type="button"
+                onClick={() => {
+                  console.log('=== CHATBOT DEBUG ===');
+                  console.log('User:', user);
+                  console.log('Selected Property:', selectedProperty);
+                  console.log('Properties:', properties);
+                  console.log('Messages:', messages);
+                  console.log('Is Loading:', isLoading);
+                  console.log('Input:', input);
+                  console.log('Is Open:', isOpen);
+                  console.log('Is Fullscreen:', isFullscreen);
+                  console.log('LocalStorage property:', localStorage.getItem('anotherseo_selected_property'));
+                  setShowDebugDialog(true);
+                }}
+                variant="outline"
+                size="icon"
+                className="shrink-0 h-9 w-9 sm:h-10 sm:w-10"
+                title="Debug Info"
+              >
+                <Bug className="w-3 h-3 sm:w-4 sm:h-4" />
+              </Button>
+              <Button 
                 onClick={() => sendMessage()} 
                 disabled={isLoading || !input.trim()} 
                 size="icon"
-                className="shrink-0 h-9 w-9 sm:h-10 sm:w-10"
+                className="shrink-0 h-9 w-9 sm:h-10 sm:w-10 gradient-primary"
               >
-                <Send className="w-3 h-3 sm:w-4 sm:h-4" />
+                {isLoading ? (
+                  <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
+                ) : (
+                  <Send className="w-3 h-3 sm:w-4 sm:h-4" />
+                )}
               </Button>
             </div>
             <p className="text-xs text-muted-foreground mt-2 text-center">
@@ -471,6 +532,183 @@ export function SEOAIChatbot() {
           </div>
         </Card>
       )}
+
+      {/* Debug Dialog */}
+      <Dialog open={showDebugDialog} onOpenChange={setShowDebugDialog}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Bug className="w-5 h-5 text-primary" />
+              Chatbot Debug Information
+            </DialogTitle>
+            <DialogDescription>
+              Complete chatbot state and configuration details
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {/* User Info */}
+            <div className="rounded-lg border p-4 bg-muted/50">
+              <h3 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                👤 User Information
+              </h3>
+              <div className="space-y-1 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Signed In:</span>
+                  <span className="font-mono">{user ? '✅ Yes' : '❌ No'}</span>
+                </div>
+                {user && (
+                  <>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">User ID:</span>
+                      <span className="font-mono text-xs">{user.id}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Email:</span>
+                      <span className="font-mono text-xs">{user.email}</span>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Properties */}
+            <div className="rounded-lg border p-4 bg-muted/50">
+              <h3 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                🌐 Properties
+              </h3>
+              <div className="space-y-1 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Selected:</span>
+                  <span className="font-mono text-xs">{selectedProperty || 'None'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Total Properties:</span>
+                  <span className="font-mono">{properties.length}</span>
+                </div>
+                {properties.length > 0 && (
+                  <div className="mt-2 p-2 bg-background rounded border">
+                    <p className="text-xs text-muted-foreground mb-1">All Properties:</p>
+                    {properties.map((prop, idx) => (
+                      <div key={idx} className="text-xs font-mono py-1">• {prop}</div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Chat State */}
+            <div className="rounded-lg border p-4 bg-muted/50">
+              <h3 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                💬 Chat State
+              </h3>
+              <div className="space-y-1 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Messages:</span>
+                  <span className="font-mono">{messages.length}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Is Loading:</span>
+                  <span className="font-mono">{isLoading ? '⏳ Yes' : '✅ No'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Current Input:</span>
+                  <span className="font-mono text-xs">{input || '(empty)'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Session ID:</span>
+                  <span className="font-mono text-xs">{sessionId}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* UI State */}
+            <div className="rounded-lg border p-4 bg-muted/50">
+              <h3 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                🎨 UI State
+              </h3>
+              <div className="space-y-1 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Is Open:</span>
+                  <span className="font-mono">{isOpen ? '✅ Yes' : '❌ No'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Is Fullscreen:</span>
+                  <span className="font-mono">{isFullscreen ? '✅ Yes' : '❌ No'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Show Quick Prompts:</span>
+                  <span className="font-mono">{showQuickPrompts ? '✅ Yes' : '❌ No'}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* LocalStorage */}
+            <div className="rounded-lg border p-4 bg-muted/50">
+              <h3 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                💾 LocalStorage
+              </h3>
+              <div className="space-y-1 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Saved Property:</span>
+                  <span className="font-mono text-xs">{localStorage.getItem('anotherseo_selected_property') || '(none)'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Filter Property:</span>
+                  <span className="font-mono text-xs">{localStorage.getItem('anotherseo_filter_property') || '(none)'}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Copy All Button */}
+            <div className="flex gap-2">
+              <Button
+                onClick={() => {
+                  const debugInfo = {
+                    user: user ? { id: user.id, email: user.email } : null,
+                    selectedProperty,
+                    properties,
+                    messagesCount: messages.length,
+                    isLoading,
+                    input,
+                    isOpen,
+                    isFullscreen,
+                    sessionId,
+                    localStorage: {
+                      savedProperty: localStorage.getItem('anotherseo_selected_property'),
+                      filterProperty: localStorage.getItem('anotherseo_filter_property'),
+                    }
+                  };
+                        navigator.clipboard.writeText(JSON.stringify(debugInfo, null, 2));
+                        setDebugCopied(true);
+                        setTimeout(() => setDebugCopied(false), 2000);
+                        toast({ title: 'Debug info copied!', description: 'Paste it to share with support' });
+                }}
+                variant="outline"
+                className="flex-1"
+              >
+                {debugCopied ? (
+                  <>
+                    <Check className="w-4 h-4 mr-2" />
+                    Copied!
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-4 h-4 mr-2" />
+                    Copy Debug Info
+                  </>
+                )}
+              </Button>
+              <Button
+                onClick={() => setShowDebugDialog(false)}
+                className="flex-1"
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

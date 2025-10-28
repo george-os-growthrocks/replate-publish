@@ -317,17 +317,17 @@ export default function KeywordClusteringPage() {
           filteredClusters.map((cluster, index) => {
             const mainQuery = queries?.find(q => q.query === cluster.mainKeyword);
             const intentColors = {
-              informational: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
-              commercial: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
-              transactional: 'bg-green-500/10 text-green-500 border-green-500/20',
-              navigational: 'bg-purple-500/10 text-purple-500 border-purple-500/20',
+              informational: 'bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-500/30',
+              commercial: 'bg-amber-500/20 text-amber-800 dark:text-amber-400 border-amber-500/30',
+              transactional: 'bg-green-500/20 text-green-700 dark:text-green-400 border-green-500/30',
+              navigational: 'bg-purple-500/20 text-purple-700 dark:text-purple-400 border-purple-500/30',
             };
 
             const difficultyColors = {
-              low: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-              medium: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-              high: 'bg-orange-500/10 text-orange-400 border-orange-500/20',
-              very_high: 'bg-red-500/10 text-red-400 border-red-500/20',
+              low: 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-500/30',
+              medium: 'bg-amber-500/20 text-amber-800 dark:text-amber-400 border-amber-500/30',
+              high: 'bg-orange-500/20 text-orange-700 dark:text-orange-400 border-orange-500/30',
+              very_high: 'bg-red-500/20 text-red-700 dark:text-red-400 border-red-500/30',
             };
 
             const priorityColor = cluster.metrics.priorityScore > 70 

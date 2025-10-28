@@ -21,6 +21,11 @@ import BlogPostPage from "./pages/BlogPostPage";
 import AiOverviewChecker from "./pages/free-tools/AiOverviewChecker";
 import ChatGptPromptsLibrary from "./pages/free-tools/ChatGptPromptsLibrary";
 import KeywordClusteringTool from "./pages/free-tools/KeywordClusteringTool";
+import MetaTagsGenerator from "./pages/free-tools/MetaTagsGenerator";
+import HeadingAnalyzer from "./pages/free-tools/HeadingAnalyzer";
+import RobotsTxtGenerator from "./pages/free-tools/RobotsTxtGenerator";
+import SchemaGenerator from "./pages/free-tools/SchemaGenerator";
+import KeywordDensityChecker from "./pages/free-tools/KeywordDensityChecker";
 import QueriesPage from "./pages/QueriesPage";
 import PagesPage from "./pages/PagesPage";
 import CountriesPage from "./pages/CountriesPage";
@@ -42,6 +47,7 @@ import RankingTrackerPage from "./pages/RankingTrackerPage";
 import SEOIntelligencePage from "./pages/SEOIntelligencePage";
 import AlertsPage from "./pages/AlertsPage";
 import SettingsPage from "./pages/SettingsPage";
+import LLMCitationPage from "./pages/LLMCitationPage";
 import NotFound from "./pages/NotFound";
 import { SEOAIChatbot } from "@/components/SEOAIChatbot";
 import { TrialPopup } from "@/components/TrialPopup";
@@ -83,6 +89,11 @@ const App = () => (
                        <Route path="/free-tools/ai-overview-checker" element={<AiOverviewChecker />} />
                        <Route path="/free-tools/chatgpt-seo-prompts" element={<ChatGptPromptsLibrary />} />
                        <Route path="/free-tools/keyword-clustering" element={<KeywordClusteringTool />} />
+                       <Route path="/free-tools/meta-tags-generator" element={<MetaTagsGenerator />} />
+                       <Route path="/free-tools/heading-analyzer" element={<HeadingAnalyzer />} />
+                       <Route path="/free-tools/robots-txt-generator" element={<RobotsTxtGenerator />} />
+                       <Route path="/free-tools/schema-generator" element={<SchemaGenerator />} />
+                       <Route path="/free-tools/keyword-density-checker" element={<KeywordDensityChecker />} />
                        <Route path="/privacy" element={<PrivacyPage />} />
                        <Route path="/terms" element={<TermsPage />} />
                        <Route path="/cookies" element={<CookiesPage />} />
@@ -122,6 +133,7 @@ const App = () => (
                   <Route path="/content-gap" element={<DashboardLayout><ContentGapPage /></DashboardLayout>} />
                   <Route path="/ranking-tracker" element={<DashboardLayout><RankingTrackerPage /></DashboardLayout>} />
                   <Route path="/seo-intelligence" element={<DashboardLayout><SEOIntelligencePage /></DashboardLayout>} />
+                  <Route path="/llm-citations" element={<DashboardLayout><LLMCitationPage /></DashboardLayout>} />
                   <Route path="/alerts" element={<DashboardLayout><AlertsPage /></DashboardLayout>} />
                   <Route path="/settings" element={<DashboardLayout><SettingsPage /></DashboardLayout>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

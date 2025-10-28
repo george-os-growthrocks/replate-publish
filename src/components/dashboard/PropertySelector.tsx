@@ -121,8 +121,8 @@ const PropertySelector = ({ onPropertySelect, selectedProperty }: PropertySelect
         <p className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase leading-tight">
           Active Property
         </p>
-        <p className="text-sm font-semibold truncate mt-0.5">
-          📍 <span className="text-primary">{displayProperty}</span>
+        <p className="text-sm font-semibold truncate mt-0.5 text-primary">
+          {displayProperty}
         </p>
       </div>
       
