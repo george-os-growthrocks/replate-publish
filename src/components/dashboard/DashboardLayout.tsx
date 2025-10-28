@@ -221,6 +221,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <Target className={cn("h-[18px] w-[18px]", !sidebarCollapsed && "mr-3")} />
                 {!sidebarCollapsed && <span>SERP Analysis</span>}
               </Button>
+              <Button variant="ghost" className={cn("w-full justify-start rounded-xl text-sm transition-colors", location.pathname === "/serp-preview" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground", sidebarCollapsed && "justify-center px-2")} onClick={() => navigate("/serp-preview")}>
+                <Eye className={cn("h-[18px] w-[18px]", !sidebarCollapsed && "mr-3")} />
+                {!sidebarCollapsed && <span>SERP Preview</span>}
+              </Button>
             </div>
 
             {/* Competitive */}
@@ -293,6 +297,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <ShoppingCart className={cn("h-[18px] w-[18px]", !sidebarCollapsed && "mr-3")} />
                 {!sidebarCollapsed && <span>E-commerce</span>}
               </Button>
+              <Button variant="ghost" className={cn("w-full justify-start rounded-xl text-sm transition-colors", location.pathname === "/social-media-seo" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground", sidebarCollapsed && "justify-center px-2")} onClick={() => navigate("/social-media-seo")}>
+                <Smartphone className={cn("h-[18px] w-[18px]", !sidebarCollapsed && "mr-3")} />
+                {!sidebarCollapsed && <span>Social Media SEO</span>}
+              </Button>
             </div>
 
             {/* AI Tools */}
@@ -309,6 +317,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <Button variant="ghost" className={cn("w-full justify-start rounded-xl text-sm transition-colors", location.pathname === "/seo-intelligence" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground", sidebarCollapsed && "justify-center px-2")} onClick={() => navigate("/seo-intelligence")}>
                 <Brain className={cn("h-[18px] w-[18px]", !sidebarCollapsed && "mr-3")} />
                 {!sidebarCollapsed && <span>Intelligence</span>}
+              </Button>
+              <Button variant="ghost" className={cn("w-full justify-start rounded-xl text-sm transition-colors", location.pathname === "/analytics-dashboard" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground", sidebarCollapsed && "justify-center px-2")} onClick={() => navigate("/analytics-dashboard")}>
+                <BarChart3 className={cn("h-[18px] w-[18px]", !sidebarCollapsed && "mr-3")} />
+                {!sidebarCollapsed && <span>GA4 Analytics</span>}
               </Button>
               <Button variant="ghost" className={cn("w-full justify-start rounded-xl text-sm transition-colors", location.pathname === "/answer-the-public" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground", sidebarCollapsed && "justify-center px-2")} onClick={() => navigate("/answer-the-public")}>
                 <HelpCircle className={cn("h-[18px] w-[18px]", !sidebarCollapsed && "mr-3")} />

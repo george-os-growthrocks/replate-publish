@@ -79,6 +79,9 @@ import AnswerThePublicPage from "./pages/AnswerThePublicPage";
 import SEOReportPage from "./pages/SEOReportPage";
 import CreditUsageAnalytics from "./pages/CreditUsageAnalytics";
 import Index from "./pages/Index";
+import SocialMediaSEO from "./pages/SocialMediaSEO";
+import SERPPreviewPage from "./pages/SERPPreviewPage";
+import AnalyticsDashboard from "./pages/AnalyticsDashboard";
 
 const queryClient = new QueryClient();
 
@@ -186,6 +189,7 @@ const App = () => (
                   <Route path="/onpage-seo" element={<DashboardLayout><OnPageSeoPage /></DashboardLayout>} />
                   <Route path="/backlinks" element={<DashboardLayout><BacklinksPage /></DashboardLayout>} />
                   <Route path="/serp-analysis" element={<DashboardLayout><SerpAnalysisPage /></DashboardLayout>} />
+                  <Route path="/serp-preview" element={<DashboardLayout><SERPPreviewPage /></DashboardLayout>} />
                   <Route path="/site-audit" element={<DashboardLayout><SiteAuditPage /></DashboardLayout>} />
                   <Route path="/repurpose" element={<DashboardLayout><RepurposePage /></DashboardLayout>} />
                   <Route path="/keyword-clustering" element={<DashboardLayout><KeywordClusteringPage /></DashboardLayout>} />
@@ -195,6 +199,8 @@ const App = () => (
                   <Route path="/llm-citations" element={<DashboardLayout><LLMCitationPage /></DashboardLayout>} />
                   <Route path="/alerts" element={<DashboardLayout><AlertsPage /></DashboardLayout>} />
                   <Route path="/answer-the-public" element={<DashboardLayout><AnswerThePublicPage /></DashboardLayout>} />
+                  <Route path="/social-media-seo" element={<DashboardLayout><SocialMediaSEO /></DashboardLayout>} />
+                  <Route path="/analytics-dashboard" element={<DashboardLayout><AnalyticsDashboard /></DashboardLayout>} />
                   <Route path="/projects" element={<DashboardLayout><ProjectsPage /></DashboardLayout>} />
                   <Route path="/credit-analytics" element={<DashboardLayout><CreditUsageAnalytics /></DashboardLayout>} />
                   <Route path="/settings" element={<DashboardLayout><SettingsPage /></DashboardLayout>} />

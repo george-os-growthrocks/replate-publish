@@ -219,6 +219,84 @@ export type Database = {
         };
         Relationships: [];
       };
+      ga4_properties: {
+        Row: {
+          id: string;
+          user_id: string;
+          property_id: string;
+          property_name: string;
+          website_url: string | null;
+          industry_category: string | null;
+          time_zone: string | null;
+          currency_code: string | null;
+          is_active: boolean;
+          last_synced_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          property_id: string;
+          property_name: string;
+          website_url?: string | null;
+          industry_category?: string | null;
+          time_zone?: string | null;
+          currency_code?: string | null;
+          is_active?: boolean;
+          last_synced_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          property_id?: string;
+          property_name?: string;
+          website_url?: string | null;
+          industry_category?: string | null;
+          time_zone?: string | null;
+          currency_code?: string | null;
+          is_active?: boolean;
+          last_synced_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      ga4_reports_cache: {
+        Row: {
+          id: string;
+          user_id: string;
+          property_id: string;
+          report_type: string;
+          date_range: string;
+          report_data: Json;
+          created_at: string;
+          expires_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          property_id: string;
+          report_type: string;
+          date_range: string;
+          report_data: Json;
+          created_at?: string;
+          expires_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          property_id?: string;
+          report_type?: string;
+          date_range?: string;
+          report_data?: Json;
+          created_at?: string;
+          expires_at?: string;
+        };
+        Relationships: [];
+      };
     }
     Views: {
       [_ in never]: never
