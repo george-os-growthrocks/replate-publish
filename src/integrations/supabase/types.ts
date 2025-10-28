@@ -65,6 +65,72 @@ export type Database = {
         };
         Relationships: [];
       };
+      user_profiles: {
+        Row: {
+          id: string;
+          user_id: string;
+          first_name: string | null;
+          last_name: string | null;
+          avatar_url: string | null;
+          company_name: string | null;
+          website_url: string | null;
+          job_title: string | null;
+          industry: string | null;
+          team_size: string | null;
+          monthly_traffic: string | null;
+          primary_goals: string | null;
+          bio: string | null;
+          twitter_handle: string | null;
+          linkedin_url: string | null;
+          onboarding_completed: boolean | null;
+          onboarding_step: number | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          first_name?: string | null;
+          last_name?: string | null;
+          avatar_url?: string | null;
+          company_name?: string | null;
+          website_url?: string | null;
+          job_title?: string | null;
+          industry?: string | null;
+          team_size?: string | null;
+          monthly_traffic?: string | null;
+          primary_goals?: string | null;
+          bio?: string | null;
+          twitter_handle?: string | null;
+          linkedin_url?: string | null;
+          onboarding_completed?: boolean | null;
+          onboarding_step?: number | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          first_name?: string | null;
+          last_name?: string | null;
+          avatar_url?: string | null;
+          company_name?: string | null;
+          website_url?: string | null;
+          job_title?: string | null;
+          industry?: string | null;
+          team_size?: string | null;
+          monthly_traffic?: string | null;
+          primary_goals?: string | null;
+          bio?: string | null;
+          twitter_handle?: string | null;
+          linkedin_url?: string | null;
+          onboarding_completed?: boolean | null;
+          onboarding_step?: number | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     }
     Views: {
       [_ in never]: never

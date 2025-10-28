@@ -4,12 +4,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Target, Search, Loader2, TrendingUp, ExternalLink, Bug } from "lucide-react";
+import { Target, Search, Loader2, TrendingUp, ExternalLink, Bug, Zap } from "lucide-react";
 import { useDomainCompetitors } from "@/hooks/useDataForSEO";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
+import { useCredits } from "@/hooks/useCreditManager";
 
 // Debug logging utility
 async function addDebugLog(action: string, details: any) {
@@ -32,6 +33,7 @@ export default function CompetitorAnalysisPage() {
   const [searchDomain, setSearchDomain] = useState("");
   const [showDebug, setShowDebug] = useState(false);
   const [debugInfo, setDebugInfo] = useState<any>(null);
+  const { checkCredits, consumeCredits } = useCredits();
 
   const { data: competitorData, isLoading, error } = useDomainCompetitors(
     {
@@ -43,7 +45,7 @@ export default function CompetitorAnalysisPage() {
     !!searchDomain
   );
 
-  // Log data changes
+  // Log data changes and consume credits on success
   useEffect(() => {
     if (competitorData) {
       addDebugLog('Competitor Data Received', {
@@ -66,8 +68,18 @@ export default function CompetitorAnalysisPage() {
         },
         response: competitorData
       });
+
+      // Consume credits after successful analysis
+      consumeCredits({
+        feature: 'competitor_analysis',
+        credits: 5,
+        metadata: {
+          domain: searchDomain,
+          competitors_found: competitorData?.tasks?.[0]?.result?.length || 0
+        }
+      });
     }
-  }, [competitorData, searchDomain]);
+  }, [competitorData, searchDomain, consumeCredits]);
 
   useEffect(() => {
     if (error) {
@@ -93,11 +105,18 @@ export default function CompetitorAnalysisPage() {
     }
   }, [error, searchDomain]);
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     if (!targetDomain.trim()) {
       toast.error("Please enter a domain");
       return;
     }
+
+    // Check credits before analysis
+    const hasCredits = await checkCredits('competitor_analysis');
+    if (!hasCredits) {
+      return; // useCreditManager will show the error toast
+    }
+
     const cleanDomain = targetDomain.trim().replace(/^https?:\/\//, '').replace(/\/$/, '');
     addDebugLog('Starting Competitor Analysis', {
       originalInput: targetDomain,

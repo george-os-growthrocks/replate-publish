@@ -2,7 +2,29 @@
 // These tools allow the AI to fetch real-time data and execute actions
 
 // Deno global type (for edge functions)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 declare const Deno: any;
+
+interface ToolContext {
+  selected_property?: string;
+  currentProperty?: string;
+  properties?: string[];
+  gsc_queries?: Array<{ query: string; clicks: number; impressions: number; ctr?: number; position?: number }>;
+  tracked_keywords?: Array<{ keyword: string; current_position: number; search_volume: number | null; previous_position?: number | null }>;
+  [key: string]: unknown;
+}
+
+interface ToolArgs {
+  keyword?: string;
+  location?: string;
+  dimension?: string;
+  filter_query?: string;
+  limit?: number;
+  target?: string;
+  url?: string;
+  target_keyword?: string;
+  [key: string]: unknown;
+}
 
 export const tools = [
   {
@@ -132,27 +154,27 @@ export const tools = [
 ];
 
 // Tool execution logic
-export async function executeTool(toolName: string, args: any, context: any): Promise<any> {
+export async function executeTool(toolName: string, args: ToolArgs, context: ToolContext): Promise<Record<string, unknown>> {
   console.log(`🔧 Executing tool: ${toolName}`, args);
   
   switch (toolName) {
     case "analyze_keyword":
-      return await analyzeKeyword(args.keyword, args.location || "2840", context);
+      return await analyzeKeyword(args.keyword || "", args.location || "2840", context);
     
     case "get_gsc_data":
-      return await getGscData(args.dimension, args.filter_query, args.limit || 20, context);
+      return await getGscData(args.dimension || "query", args.filter_query, args.limit || 20, context);
     
     case "analyze_competitors":
-      return await analyzeCompetitors(args.keyword, args.location || "2840", args.limit || 10, context);
+      return await analyzeCompetitors(args.keyword || "", args.location || "2840", args.limit || 10, context);
     
     case "check_backlinks":
-      return await checkBacklinks(args.target, args.limit || 50, context);
+      return await checkBacklinks(args.target || "", args.limit || 50, context);
     
     case "run_site_audit":
-      return await runSiteAudit(args.url, context);
+      return await runSiteAudit(args.url || "", context);
     
     case "analyze_page":
-      return await analyzePage(args.url, args.target_keyword, context);
+      return await analyzePage(args.url || "", args.target_keyword, context);
     
     default:
       return { error: `Unknown tool: ${toolName}` };
@@ -160,7 +182,7 @@ export async function executeTool(toolName: string, args: any, context: any): Pr
 }
 
 // Helper function to call DataForSEO API
-async function callDataForSEO(endpoint: string, body: any) {
+async function callDataForSEO(endpoint: string, body: Record<string, unknown>) {
   const login = Deno.env.get('DATAFORSEO_LOGIN');
   const password = Deno.env.get('DATAFORSEO_PASSWORD');
   
@@ -194,7 +216,7 @@ async function callDataForSEO(endpoint: string, body: any) {
 }
 
 // Individual tool implementations
-async function analyzeKeyword(keyword: string, location: string, context: any) {
+async function analyzeKeyword(keyword: string, location: string, context: ToolContext) {
   console.log(`Analyzing keyword: ${keyword} in location ${location}`);
   
   // Try to get real data from DataForSEO
@@ -211,7 +233,7 @@ async function analyzeKeyword(keyword: string, location: string, context: any) {
       search_volume: data.keyword_info?.search_volume || 0,
       keyword_difficulty: data.keyword_info?.competition_level || 0,
       cpc: data.keyword_info?.cpc || 0,
-      related_keywords: data.keywords_data?.slice(0, 10).map((k: any) => ({
+      related_keywords: data.keywords_data?.slice(0, 10).map((k: { keyword: string; search_volume: number; competition_level: number }) => ({
         keyword: k.keyword,
         volume: k.search_volume,
         difficulty: k.competition_level,
@@ -238,7 +260,7 @@ async function analyzeKeyword(keyword: string, location: string, context: any) {
   };
 }
 
-async function getGscData(dimension: string, filterQuery: string | undefined, limit: number, context: any) {
+async function getGscData(dimension: string, filterQuery: string | undefined, limit: number, context: ToolContext) {
   if (!context.selected_property) {
     return { error: "No property selected. Please select a property first." };
   }
@@ -246,7 +268,7 @@ async function getGscData(dimension: string, filterQuery: string | undefined, li
   // Use the GSC data from context if available
   if (dimension === "query" && context.gsc_queries) {
     const queries = filterQuery 
-      ? context.gsc_queries.filter((q: any) => q.query.includes(filterQuery))
+      ? context.gsc_queries.filter((q) => q.query.includes(filterQuery))
       : context.gsc_queries;
     
     return {
@@ -264,7 +286,7 @@ async function getGscData(dimension: string, filterQuery: string | undefined, li
   };
 }
 
-async function analyzeCompetitors(keyword: string, location: string, limit: number, context: any) {
+async function analyzeCompetitors(keyword: string, location: string, limit: number, context: ToolContext) {
   console.log(`Analyzing competitors for: ${keyword}`);
   
   // Try to get real data from DataForSEO SERP API
@@ -280,14 +302,14 @@ async function analyzeCompetitors(keyword: string, location: string, limit: numb
       keyword,
       location,
       total_results: data.total_count || 0,
-      top_competitors: data.items.slice(0, limit).map((item: any, idx: number) => ({
+      top_competitors: data.items.slice(0, limit).map((item: { domain?: string; url?: string; rank_absolute?: number; serp_item?: { serp_features?: string[] } }, idx: number) => ({
         position: idx + 1,
         domain: item.domain || new URL(item.url || 'https://example.com').hostname,
         url: item.url || '',
         domain_authority: item.rank_absolute || 0,
         serp_features: item.serp_item?.serp_features || [],
       })),
-      user_position: context.tracked_keywords?.find((k: any) => k.keyword.toLowerCase() === keyword.toLowerCase())?.current_position || "Not ranking",
+      user_position: context.tracked_keywords?.find((k) => k.keyword.toLowerCase() === keyword.toLowerCase())?.current_position || "Not ranking",
       data_source: 'DataForSEO',
     };
   }
@@ -318,13 +340,13 @@ async function analyzeCompetitors(keyword: string, location: string, limit: numb
         serp_features: ["sitelinks", "reviews"]
       }
     ],
-    user_position: context.tracked_keywords?.find((k: any) => k.keyword.toLowerCase() === keyword.toLowerCase())?.current_position || "Not ranking",
+    user_position: context.tracked_keywords?.find((k) => k.keyword.toLowerCase() === keyword.toLowerCase())?.current_position || "Not ranking",
     data_source: 'placeholder',
     note: 'DataForSEO API not configured.'
   };
 }
 
-async function checkBacklinks(target: string, limit: number, context: any) {
+async function checkBacklinks(target: string, limit: number, context: ToolContext) {
   console.log(`Checking backlinks for: ${target}`);
   
   // Try to get real data from DataForSEO Backlinks API
@@ -341,7 +363,7 @@ async function checkBacklinks(target: string, limit: number, context: any) {
       domain_authority: data.rank || 0,
       follow_backlinks: data.backlinks_dofollow || 0,
       nofollow_backlinks: data.backlinks_nofollow || 0,
-      top_backlinks: (data.items || []).slice(0, limit).map((item: any) => ({
+      top_backlinks: (data.items || []).slice(0, limit).map((item: { url_from?: string; anchor?: string; dofollow?: boolean }) => ({
         from_url: item.url_from || '',
         anchor: item.anchor || 'No anchor',
         type: item.dofollow ? 'dofollow' : 'nofollow',
@@ -374,7 +396,7 @@ async function checkBacklinks(target: string, limit: number, context: any) {
   };
 }
 
-async function runSiteAudit(url: string, context: any) {
+async function runSiteAudit(url: string, context: ToolContext) {
   console.log(`Running site audit for: ${url}`);
   
   // Try to get real data from Firecrawl first
@@ -406,7 +428,7 @@ async function runSiteAudit(url: string, context: any) {
         const metaDescMatch = html.match(/<meta\s+name=["']description["']\s+content=["']([^"']+)["']/i);
         const h1Matches = html.match(/<h1[^>]*>([^<]+)<\/h1>/gi);
         const imgMatches = html.match(/<img[^>]*>/gi);
-        const imgsWithoutAlt = imgMatches ? imgMatches.filter(img => !img.includes('alt=')).length : 0;
+        const imgsWithoutAlt = imgMatches ? imgMatches.filter((img: string) => !img.includes('alt=')).length : 0;
         
         return {
           url,
@@ -464,6 +486,7 @@ async function runSiteAudit(url: string, context: any) {
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function calculateSEOScore(title: any, desc: any, h1s: any, imgsWithoutAlt: number): number {
   let score = 50; // Base score
   
@@ -482,7 +505,7 @@ function calculateSEOScore(title: any, desc: any, h1s: any, imgsWithoutAlt: numb
   return Math.min(score, 100);
 }
 
-async function analyzePage(url: string, targetKeyword: string | undefined, context: any) {
+async function analyzePage(url: string, targetKeyword: string | undefined, context: ToolContext) {
   console.log(`Analyzing page: ${url}`);
   
   // Try to get real data from Firecrawl

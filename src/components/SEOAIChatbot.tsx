@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import type { User } from "@supabase/supabase-js";
+import type { Json } from "@/integrations/supabase/types";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -241,12 +242,12 @@ export function SEOAIChatbot() {
         let algorithmImpacts: AlgorithmImpactRow[] | null = null;
         try {
           const { data: impactsData } = await supabase
-            .from<AlgorithmImpactRow>("algorithm_impacts")
+            .from("algorithm_impacts")
             .select("detected_at, severity, affected_keywords, avg_position_drop")
             .eq("user_id", user.id)
             .order("detected_at", { ascending: false })
             .limit(10);
-          algorithmImpacts = impactsData ?? null;
+          algorithmImpacts = (impactsData as AlgorithmImpactRow[] | null) ?? null;
         } catch (err: unknown) {
           console.log('Could not fetch algorithm impacts:', err);
         }
@@ -355,7 +356,7 @@ export function SEOAIChatbot() {
         await supabase.from("chatbot_conversations").insert({
           user_id: user.id,
           project_id: null,
-          messages: [...newMessages, assistantMessage],
+          messages: [...newMessages, assistantMessage] as unknown as Json,
         });
       }
     } catch (error: unknown) {
@@ -388,11 +389,12 @@ export function SEOAIChatbot() {
       });
       
       // Add error message to chat for better UX
+      const errorType = error instanceof Error ? error.name : 'Unknown';
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
-          content: `⚠️ **Error:** ${errorMessage}\n\n**Debug Info:**\n• Type: ${error?.name || 'Unknown'}\n• Details: Check console (F12) for full error\n\n**Troubleshooting:**\n• Try rephrasing your question\n• Check browser console (F12) for full details\n• Refresh the page if issue persists\n\nIf you continue to see this error, there may be an issue with the AI service. Please try again in a moment.`
+          content: `⚠️ **Error:** ${errorMessage}\n\n**Debug Info:**\n• Type: ${errorType}\n• Details: Check console (F12) for full error\n\n**Troubleshooting:**\n• Try rephrasing your question\n• Check browser console (F12) for full details\n• Refresh the page if issue persists\n\nIf you continue to see this error, there may be an issue with the AI service. Please try again in a moment.`
         }
       ]);
     } finally {

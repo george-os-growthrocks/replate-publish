@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { AvatarUpload } from "@/components/profile/AvatarUpload";
 import { User, Building, Globe, Briefcase, Users, TrendingUp, Save, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -12,6 +13,7 @@ import { toast } from "sonner";
 export function ProfileSettings() {
   const [userEmail, setUserEmail] = useState("");
   const [userId, setUserId] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
   const [profile, setProfile] = useState({
     firstName: "",
     lastName: "",
@@ -46,6 +48,7 @@ export function ProfileSettings() {
         .maybeSingle();
       
       if (profileData) {
+        setAvatarUrl(profileData.avatar_url || "");
         setProfile({
           firstName: profileData.first_name || "",
           lastName: profileData.last_name || "",
@@ -127,6 +130,13 @@ export function ProfileSettings() {
 
   return (
     <div className="space-y-6">
+      {/* Avatar Upload */}
+      <AvatarUpload
+        currentAvatarUrl={avatarUrl}
+        userEmail={userEmail}
+        onUploadComplete={(url) => setAvatarUrl(url)}
+      />
+
       {/* Basic Info Card */}
       <Card>
         <CardHeader>
@@ -139,23 +149,6 @@ export function ProfileSettings() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Avatar */}
-          <div className="flex items-center gap-6">
-            <Avatar className="h-24 w-24 ring-2 ring-primary/20">
-              <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-white text-3xl font-bold">
-                {profile.firstName?.charAt(0) || userEmail?.charAt(0).toUpperCase() || "U"}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <Button variant="outline" size="sm" disabled>
-                <Upload className="w-4 h-4 mr-2" />
-                Upload Photo
-              </Button>
-              <p className="text-xs text-muted-foreground mt-2">
-                JPG, PNG or GIF. Max size 2MB.
-              </p>
-            </div>
-          </div>
 
           <div className="grid md:grid-cols-2 gap-4">
             <div>

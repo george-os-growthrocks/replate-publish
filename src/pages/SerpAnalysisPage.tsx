@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -10,25 +10,49 @@ import { toast } from "sonner";
 import { optimizeForSerpFeature } from "@/lib/seo-algorithms";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
+import { useCredits } from "@/hooks/useCreditManager";
 
 export default function SerpAnalysisPage() {
   const [keyword, setKeyword] = useState("");
   const [searchKeyword, setSearchKeyword] = useState("");
   const [locationCode, setLocationCode] = useState(2300); // Greece default
   const [languageCode, setLanguageCode] = useState("el"); // Greek default
+  const { checkCredits, consumeCredits } = useCredits();
 
   const { data: serpData, isLoading, error } = useSerpAdvanced(
     { keyword: searchKeyword, location_code: locationCode, language_code: languageCode, device: "desktop" },
     !!searchKeyword
   );
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     if (!keyword.trim()) {
       toast.error("Please enter a keyword");
       return;
     }
+
+    // Check credits before SERP analysis
+    const hasCredits = await checkCredits('serp_analysis');
+    if (!hasCredits) {
+      return;
+    }
+
     setSearchKeyword(keyword.trim());
   };
+
+  // Consume credits after successful SERP analysis
+  useEffect(() => {
+    if (serpData && searchKeyword) {
+      consumeCredits({
+        feature: 'serp_analysis',
+        credits: 3,
+        metadata: {
+          keyword: searchKeyword,
+          location: locationCode,
+          results_count: serpItems?.length || 0
+        }
+      });
+    }
+  }, [serpData, searchKeyword]);
 
   const serpResult = serpData?.tasks?.[0]?.result?.[0];
   const serpItems = serpResult?.items || [];

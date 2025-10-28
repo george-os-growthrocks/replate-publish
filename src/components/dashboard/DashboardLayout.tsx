@@ -9,6 +9,7 @@ import { NotificationCenter } from "@/components/dashboard/NotificationCenter";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { BrandIcon } from "@/components/BrandLogo";
 import { UserProfileDropdown } from "@/components/dashboard/UserProfileDropdown";
+import { CreditCounter } from "@/components/dashboard/CreditCounter";
 import { Footer } from "@/components/landing/Footer";
 import {
   LayoutDashboard,
@@ -102,10 +103,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
-      {/* Mobile Overlay */}
+      {/* Mobile Overlay with Backdrop Blur */}
       {mobileMenuOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden animate-in fade-in duration-200"
           onClick={() => setMobileMenuOpen(false)}
         />
       )}
@@ -390,7 +391,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <div className="flex-1 min-w-[200px]">
                   <DateRangePicker value={dateRange} onChange={setDateRange} />
                 </div>
-                <Select value={device} onValueChange={(v: any) => setDevice(v)}>
+                <Select value={device} onValueChange={(v: string) => setDevice(v)}>
                   <SelectTrigger className="h-9 w-[110px] rounded-xl hover:bg-muted text-xs flex-shrink-0">
                     <Monitor className="h-3.5 w-3.5 mr-1.5 opacity-80" />
                     <SelectValue />
@@ -404,6 +405,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 </Select>
                 <ThemeToggle />
                 <NotificationCenter />
+                <CreditCounter />
                 <UserProfileDropdown userEmail={userEmail} userPlan="Free" />
               </div>
               
@@ -454,6 +456,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <div className="ml-auto flex items-center gap-2">
                 <ThemeToggle />
                 <NotificationCenter />
+                <CreditCounter />
                 <UserProfileDropdown userEmail={userEmail} userPlan="Free" />
               </div>
             </div>
