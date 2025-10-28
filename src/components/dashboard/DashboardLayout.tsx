@@ -2,13 +2,14 @@ import { useEffect, useState, ReactNode } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useFilters } from "@/contexts/FilterContext";
 import PropertySelector from "@/components/dashboard/PropertySelector";
 import { DateRangePicker } from "@/components/dashboard/DateRangePicker";
 import { NotificationCenter } from "@/components/dashboard/NotificationCenter";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { BrandIcon } from "@/components/BrandLogo";
+import { UserProfileDropdown } from "@/components/dashboard/UserProfileDropdown";
+import { Footer } from "@/components/landing/Footer";
 import {
   LayoutDashboard,
   TrendingUp,
@@ -133,22 +134,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </Button>
         </div>
 
-        {/* User Info */}
-        <div className="p-4 border-b border-border">
-          <div className={cn("flex items-center gap-3", sidebarCollapsed && "justify-center")}>
-            <Avatar className="h-10 w-10">
-              <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-500 text-white">
-                {userEmail?.charAt(0).toUpperCase() || "U"}
-              </AvatarFallback>
-            </Avatar>
-            {!sidebarCollapsed && (
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate text-foreground">{userEmail}</p>
-                <p className="text-xs text-muted-foreground">Free Plan</p>
-              </div>
-            )}
-          </div>
-        </div>
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto py-4">
@@ -379,6 +364,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <div className="ml-auto flex items-center gap-2">
               <ThemeToggle />
               <NotificationCenter />
+              <UserProfileDropdown userEmail={userEmail} userPlan="Free" />
             </div>
           </div>
         </div>
@@ -387,6 +373,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <div className="px-6 py-6 space-y-6">
           {children}
         </div>
+
+        {/* Footer */}
+        <Footer />
       </main>
     </div>
   );

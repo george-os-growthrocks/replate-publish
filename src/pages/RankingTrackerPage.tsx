@@ -410,7 +410,7 @@ export default function RankingTrackerPage() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-400 bg-clip-text text-transparent">
             Ranking Tracker
           </h1>
           <p className="text-muted-foreground">
@@ -426,7 +426,7 @@ export default function RankingTrackerPage() {
       </div>
 
       {/* Add Keyword Input */}
-      <Card className="bg-gradient-to-br from-slate-900/90 to-slate-950/90 border-white/10">
+      <Card className="bg-gradient-to-br from-slate-50 to-slate-100/50 dark:from-slate-900/90 dark:to-slate-950/90 border-slate-200 dark:border-white/10">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Plus className="h-5 w-5 text-primary" />
@@ -471,7 +471,7 @@ export default function RankingTrackerPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <Card className="bg-slate-950/80 border-white/10">
+        <Card className="bg-slate-100/50 dark:bg-slate-950/80 border-slate-200 dark:border-white/10">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
               <Target className="h-4 w-4" />
@@ -481,39 +481,39 @@ export default function RankingTrackerPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border-emerald-500/20">
+        <Card className="bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 dark:from-emerald-500/10 dark:to-emerald-600/5 border-emerald-500/30 dark:border-emerald-500/20">
           <CardContent className="p-4">
-            <div className="flex items-center gap-2 text-sm text-emerald-200/70 mb-1">
+            <div className="flex items-center gap-2 text-sm text-emerald-700 dark:text-emerald-200/70 mb-1">
               <TrendingUp className="h-4 w-4" />
               Improving
             </div>
-            <div className="text-2xl font-bold text-emerald-300">{stats.improving}</div>
+            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-300">{stats.improving}</div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-red-500/10 to-red-600/5 border-red-500/20">
+        <Card className="bg-gradient-to-br from-red-500/20 to-red-600/10 dark:from-red-500/10 dark:to-red-600/5 border-red-500/30 dark:border-red-500/20">
           <CardContent className="p-4">
-            <div className="flex items-center gap-2 text-sm text-red-200/70 mb-1">
+            <div className="flex items-center gap-2 text-sm text-red-700 dark:text-red-200/70 mb-1">
               <TrendingDown className="h-4 w-4" />
               Declining
             </div>
-            <div className="text-2xl font-bold text-red-300">{stats.declining}</div>
+            <div className="text-2xl font-bold text-red-600 dark:text-red-300">{stats.declining}</div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-amber-500/10 to-amber-600/5 border-amber-500/20">
+        <Card className="bg-gradient-to-br from-amber-500/20 to-amber-600/10 dark:from-amber-500/10 dark:to-amber-600/5 border-amber-500/30 dark:border-amber-500/20">
           <CardContent className="p-4">
-            <div className="flex items-center gap-2 text-sm text-amber-200/70 mb-1">
+            <div className="flex items-center gap-2 text-sm text-amber-700 dark:text-amber-200/70 mb-1">
               <Minus className="h-4 w-4" />
               Stable
             </div>
-            <div className="text-2xl font-bold text-amber-300">{stats.stable}</div>
+            <div className="text-2xl font-bold text-amber-600 dark:text-amber-300">{stats.stable}</div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-primary/10 to-purple-500/5 border-primary/20">
+        <Card className="bg-gradient-to-br from-primary/20 to-purple-500/10 dark:from-primary/10 dark:to-purple-500/5 border-primary/30 dark:border-primary/20">
           <CardContent className="p-4">
-            <div className="flex items-center gap-2 text-sm text-primary/70 mb-1">
+            <div className="flex items-center gap-2 text-sm text-primary dark:text-primary/70 mb-1">
               <Award className="h-4 w-4" />
               Top 3
             </div>
@@ -521,7 +521,7 @@ export default function RankingTrackerPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-slate-950/80 border-white/10">
+        <Card className="bg-slate-100/50 dark:bg-slate-950/80 border-slate-200 dark:border-white/10">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
               <BarChart3 className="h-4 w-4" />
@@ -559,7 +559,7 @@ export default function RankingTrackerPage() {
               {keywordMetrics.map((kw) => (
                 <Card
                   key={kw.keyword}
-                  className={`bg-slate-950/80 border-l-4 cursor-pointer hover:bg-slate-950 transition-colors ${
+                  className={`bg-slate-50 dark:bg-slate-950/80 border-l-4 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-950 transition-colors ${
                     kw.trend === 'up'
                       ? 'border-l-emerald-500'
                       : kw.trend === 'down'
@@ -664,7 +664,7 @@ export default function RankingTrackerPage() {
         <TabsContent value="details" className="space-y-4">
           {selectedKeywordData ? (
             <>
-              <Card className="bg-slate-950/80 border-white/10">
+              <Card className="bg-slate-50 dark:bg-slate-950/80 border-slate-200 dark:border-white/10">
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div>

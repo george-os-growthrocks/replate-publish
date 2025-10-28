@@ -145,7 +145,7 @@ export default function SEOIntelligencePage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
+        <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-400 bg-clip-text text-transparent">
           SEO Intelligence
         </h1>
         <p className="text-muted-foreground">
@@ -198,7 +198,7 @@ export default function SEOIntelligencePage() {
             </CardContent>
           </Card>
 
-          <Card className="bg-slate-950/80 border-white/10">
+          <Card className="bg-slate-50 dark:bg-slate-950/80 border-slate-200 dark:border-white/10">
             <CardContent className="p-4">
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                 <BarChart3 className="h-4 w-4" />
@@ -208,7 +208,7 @@ export default function SEOIntelligencePage() {
             </CardContent>
           </Card>
 
-          <Card className="bg-slate-950/80 border-white/10">
+          <Card className="bg-slate-50 dark:bg-slate-950/80 border-slate-200 dark:border-white/10">
             <CardContent className="p-4">
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                 <Eye className="h-4 w-4" />
@@ -238,7 +238,7 @@ export default function SEOIntelligencePage() {
         </TabsList>
 
         <TabsContent value="algorithm" className="space-y-4">
-          <Card className="bg-slate-950/80 border-white/10 p-4 mb-4">
+          <Card className="bg-slate-50 dark:bg-slate-950/80 border-slate-200 dark:border-white/10 p-4 mb-4">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="font-semibold mb-1">Algorithm Impact Analysis</h3>
@@ -277,7 +277,7 @@ export default function SEOIntelligencePage() {
         </TabsContent>
 
         <TabsContent value="recommendations" className="space-y-4">
-          <Card className="bg-slate-950/80 border-white/10">
+          <Card className="bg-slate-50 dark:bg-slate-950/80 border-slate-200 dark:border-white/10">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-primary" />
@@ -304,7 +304,7 @@ export default function SEOIntelligencePage() {
         </TabsContent>
 
         <TabsContent value="insights" className="space-y-4">
-          <Card className="bg-slate-950/80 border-white/10 p-12 text-center">
+          <Card className="bg-slate-50 dark:bg-slate-950/80 border-slate-200 dark:border-white/10 p-12 text-center">
             <BarChart3 className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
             <h3 className="text-lg font-semibold mb-2">Deep Insights Coming Soon</h3>
             <p className="text-sm text-muted-foreground mb-4">

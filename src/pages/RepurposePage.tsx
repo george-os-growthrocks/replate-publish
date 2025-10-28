@@ -919,59 +919,6 @@ export default function RepurposePage() {
         </section>
       </div>
 
-      {/* Footer */}
-      <footer className="border-t bg-card">
-        <div className="container mx-auto px-4 py-12">
-          <div className="grid md:grid-cols-5 gap-8 mb-8">
-            <div className="md:col-span-2">
-              <a className="flex items-center gap-2 mb-4" href="/">
-                <img src="/assets/png/logo-rGqeq24A.png" alt="AnotherSEOGuru" className="h-8" />
-                <span className="font-bold text-xl bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">AnotherSEOGuru</span>
-              </a>
-              <p className="text-sm text-muted-foreground mb-4">Enterprise-level SEO platform with advanced analytics, competitor research, and AI-powered content generation.</p>
-              <div className="flex flex-col gap-2">
-                <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAbMAAAAdCAMAAAAXUnKfAAAC7lBMVEUAAAD////////////////////////////////////////////////////////////////////////////////2uNAeS8YBb9AAV5/rABv3nhslO4AAAACAt+ceHh4Xm9f85O2dn6Dh6vX/WgAiLWX3wNVgpeHw9vvi7/r74eWvsLBfYGLv7+8MQ4i/2/Nygp4FTJMfbKt/f3/A1efg4ODW2t/HzdkTOX1tbnDH0vEhgdYBWbiPkJH+8fTj5+2fwt3bpbpzdnvx8/bA2+6QwOufyu6qvOr+9OLDxcZflsO/v7+Om7Hs7OtUYZaJanUhNG//3kBCPD7UCTXFEzRTsTOgIDFwsOVyj9vPz88/g7eBj6oRYqXhAjc2MDH/2ACOpeLHz386Yc0sVsoAabUwd7EAYaqyh5alfYoypFYBhj8Pjz0hmDszoThEqTbrRDazGzKNJzH9ugHN5/bA1u362uevy+GAr9pWeNQFVKuHio5FWYVXR0wQEBD/+vGu0/DP4O2csOdkg9j60NWPttWgqLVzg6/NnK0JT55uV16IREn9ykD+ywD+wwBChfRvpM3rr8WUzqJWaYuXdID/0gBAk9zD5MsZgb2r2bzAkaNic54sVo30g4lPT0/4qzr4lhilxfq5wdCBqc2drcn+6cWqtMWWoMG5u7373Jyl1ppltoVDrl0AfkAqJyb6phf0+PXV3vVZpPW5x+2Amt7W7dz+7dTA4M/1rbH7z40lRoX7xHDmQ2ntHzf1LQ1gpeL4yNs0ptrs1dnN6dBIbdD6wcQ0aKLugpvYiJWHio14wITabIGAgID+23DyZm18YGrwP1T91VDtX0wAfUC0GzLsECn8viX8eQz+ZwVYuOIYjclPi73WnaW/kaL3j5t9gIW9dX6AwnT6vFrGO1L2QR36hRH7SgT+VAGUu/hlm/WLzetQnN7iyMv94bi7lZdwvJNwu5M6UHh/xWaaX2N8f13mMV28nVhouk2ciEvIIkBetj/iuQ42YLvrAAAAFHRSTlMAP9+/n38g7xDPXzCAr29wUKCPHwUwcGwAAApFSURBVGjelNJLDgMhDAPQ8CkBhimt5PuftVSkml3jeevIWMgiMiMcbYqpwz1OXUw5Ff9pKr9cpXOH3/eqEBz2Pndc5XIEB3t65fJ93yA0i4wgDKuqIPS7uQ2EvOsmuFKR7UhEbJVtKjzRviE0Jpfue66+HZSHfGVQ9sYiGFrv5Q5QJr2EWPZ/6Y3tDtAbO8BIwvet0kBRWSo4pywvcJ6rLDiZXgIiv4RsC2Pb8n0Dn9v5vg/5CJln23S4CcyoXbx4C5pKcDYXIT7AGFjhXA09DKCOEmQIcwmnRgTPadHChWVlSiKat44dO3rUVmTzhAkTVqxAci8TCcmRjTbJETObKVm6ublZWqpjMZedWPci2IfPSQLB7jOaix9IAcHc7bVUijM1cQygQXmc2c3SNZBITXb2KQjNDw6K0ZyemZWdkxuC5F58RlHuNcIA02tKm5LEoKDcDYfXEB6MagWBpYsS0CQQCmdLQsGjeVIQMNd9MMeZvjkkzj5C4yyD6DhbfPp8ABjQO84aksSQQKIS/jhbJA0DM52wx9kdWJTtUb4Gj7RaesYZgNU6/XEhjAM4/k/8pnnCzMMM2rRTRw/U2k1naW0rRfqGIqvIZnnVhHWtri0qa50VFusIQVyxRdxHiCDivonwAnGECBEEL/2eTmtVn07r+Leddqavnnzye2a6n+1VtLPdCxY2Imu2JGu2r0yzebeWL1+2bM2aCRMmcJdmt5e/NOvCqj8wG2bKb5LF0GxD15/t5JpZ7+XMevTo8bBLtpOFZjVYhlJRLJkPQMI7M6FfUf7BbIZg2Iz/ZFZzf5qhmdyUMat0Op2y29hs4fVYLHb7ArB22Wy2/iXMJpl+K1qu2Vyu2abOMcO25NDmFZgdOZlOp3cgECFBFyFJSIwlmAtgJn4pf21WJZSoqoTZHY4Zl2yajlbEjF7Vv5ooFWnEyOwYE4vFNgGrulGuVG18M/6YYZMtRmYnEGuUHt/sZs7sJTN7kTPbzdkb3V/TeDmIQKjkUhyE1I0lFgBm5/1rs+7IktIEQcMXtxkcs2TDrKFTWs5ZF6Y+W48eXbt27dNSZowsO2gcs0qPrdLjcTMzFRdKwwZmNchVBdZjoJsFAPqr+43MFpgKGmRgNqQr1lPvxBue2enOrRF7kDM7zjGzjP/0DMBBxsJKQizolgRQ8E2wlTwzSZpu7uOTJGm0v1ny48FXxGxKrfCEtlCtbDMXeIcCPH7+/MopK3yYugpCBWZKQ0ODC5uIDRiwe6ke/xlEFTPVZs3AI0IkTMMyONmZ6sxb2rX0bWB1moVUt62xMQAyoofkArPzeAcbsyBvg5xvYDbxFzNHt+lGZq9KmuFAfQEXzhT+GA9eQhwuwILEESR1PLPpbVKF+Uyb9BYP0NZmNpuLm7WGNappq+untLS3tD9ZXS+k8HfK0OycvjfC+lWH9+8pMJs1ePCcOYsX9+vde+DAUX0Nn/Ujop47Z6Y22elmWRWHO0U7uEU5b2lLp+0G2HoQ28rMdoVCcnWgOhLwBORFAHKhGRqNGTRfmTx7zOzZCyab8G2KGphtZ1ujTjbqUbfm8vfGdzyzJNk4D4UA6nDWLHWEkKCFDZ43iYYcs+bRPr+/ebTk9/n8Etan+JyNpPUabe+I19KRNN7aEafttfEw1UqY3dXN9q6Cw985ZgytXz802zjE0Gy4TkYBo5uH25yix85mRnTa0Utuyl/arYzZCuw1M1NVtTEEoUBElvt79kN1f65Z1HQgqkQPDJp/aJLCzg3MxnWareuGc1b2M0gNzyxByHZ0AtD3wm3jCdrhvCn4R6LI/ayiooJ9chUzW92haXRkXKhnh9ZWIXyjQ0jxzXZu7H0RYOVQgEt3v53CvfH91MsAH7lm+qD9aN7cQpSIwjhelG0XulBfiw9qjVBjozDoqmjo2GXX0lkEX2obieiC7bNQsrZ0taWXCoMuWwsZ2NIuUWxFdKFio9iKeimigi6PQQQ99dBb33HctXTGOadY6z+7Z8ZBD+f4m++b73zzeVYCKjuLE2a4J+EIN4CxiAeSA5B0wu++8ccnAN7h+Hz0vOobUUKA41b3wJiwfjVoMrs6Yo9eaz0QzAYRX2Nm/ePMbiGyJbwGs/CrX5zja91YX1XKvAMJEXaHAGVPmVNoZqnYOzyhw6zd2rEX72fL0cw6rO1WXs837kHfmL58IllhtufE5iNHbOnk8Xpmfp+0xr57+9qvX1bgOulOOQYZ1fKNqDKzR5JRHqS3Ymhe1TeiOMuzLi8yC/V2WeI1Mcgw3j8BOo4edUww+zAIwPWA78PYem1m0ey2LSMP9wdbgzy5sV1rwCyHzFKnTp16uwS1QXNNfZNhTR0zE8uCctgY2QdtbvOONrOqmA6zDdbMyr332vFmhlFI+4aMJrO+E4tXJc4kjve9SCTO7FycTi/e2bcKj/sSxM70Y/2X+rE+MlMN7dEF49yVp+ocK8wCuFrjkJmr12mrdfunu7uHh4a7N52HCWZjPd7BQA9+bDVoMjuwEZstI9H9rQcw8m94PyNh460lFT1waDKD9/S5q0MIZxc6RTVsJNoVM6cikcg78w49O1uO1mVdTv6tyIxnX58tZV+fqXEjUZudJt/oslmIhCqzrl7b5s02D8CAxVnDDKENdyO200AU8pG2Ez3jYB5f5WuY1S2po9lyq8+MhI1nK8jeOECbGax4Tvzj3XPhdbfVHLFuItXudhM2x7CNoJdMbWrj3e5jgJbndvN/mge53xjZsjBzHoQ9R+zlXCDEAYWtegYPhC6kYMGmbmqjJ69fgXp1OjuN1mdRo/VZEZm5Ca9MhtfNERMdPLhCPbhxg9hYU/P64WUGyLSZ2SvMwiqz77XMSgWxNlr0qzvfGuqpuQSbjSFHzHGgwWx/a622gj6zixVmHYDSY+byggtcrji2uIPyJjSRGVJbqiskps3sGKjMHoPK7FItM7nUL4mKTxTXKKJPlIuiUvrmExVJlAv91FOLW5JeBmbrO7WY8dtY8o2HkRkJGDMNmHmcnlAo4BQCcWfAwwkeITTg4bj/+FnMxcOHY7EIQPrjx6dPbwIMDQ09eTIKdczEnC+fk0uKokBByil+0S9CPicWQfY3+VnMSL2Z6TOTMG/zgAT5DZgJIS8XCnABIR4QhDjHhcgm/MfMDFRlVsiLBbkk53NFWS7IyCxXxBOiP6/82+dnWbvR1EjECPVqxsPcvdY68U1jJvml8lIONx/4cUdaPzb41/zn1Bsfjqf0s0HjqTkcDl5rai2TUDSBA6Au6AITW78t9N8tUKpaHkVZeDWPmVlV/NUgyv5Xl6OJpThpGm0REWom5bc7w6BmkbU4ib1Ei6mkjMUoZ5N+6cfbQnvZzGQpApzDUgQ4n75wcirlYNmKFuezlG5Om4TSzRls/Zqor4QZc1mKbSlGu3C82Ha28Ztb5rH0S18cPFkl0qZJKpE2MZdITzXQoinMxeeqjN47ZyZjv4zjnT3L0CBNE71OZ/kpwnTjnyJMpe93QaXbecbjxYv8J9eAjDTyVqLaAAAAAElFTkSuQmCC" alt="Payment methods: Visa, Mastercard, Amex, PayPal, and more" className="h-6 object-contain object-left" />
-                <span className="text-xs text-muted-foreground">Secure payments powered by Stripe</span>
-              </div>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-4">SEO Tools</h3>
-              <ul className="space-y-2 text-sm">
-                <li><a className="text-muted-foreground hover:text-foreground transition-colors" href="/seo">Keyword Research</a></li>
-                <li><a className="text-muted-foreground hover:text-foreground transition-colors" href="/seo">SERP Tracking</a></li>
-                <li><a className="text-muted-foreground hover:text-foreground transition-colors" href="/seo">Backlink Analysis</a></li>
-                <li><a className="text-muted-foreground hover:text-foreground transition-colors" href="/seo">Traffic Analytics</a></li>
-                <li><a className="text-muted-foreground hover:text-foreground transition-colors" href="/seo">Site Audit</a></li>
-                <li><a className="text-muted-foreground hover:text-foreground transition-colors" href="/seo">Content Gap Analysis</a></li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-4">Company</h3>
-              <ul className="space-y-2 text-sm">
-                <li><a className="text-muted-foreground hover:text-foreground transition-colors" href="/about">About Us</a></li>
-                <li><a className="text-muted-foreground hover:text-foreground transition-colors" href="/jobs">Careers</a></li>
-                <li><a className="text-muted-foreground hover:text-foreground transition-colors" href="/contact">Contact Us</a></li>
-                <li><a className="text-muted-foreground hover:text-foreground transition-colors" href="/help">Help Center</a></li>
-                <li><a className="text-muted-foreground hover:text-foreground transition-colors" href="/#features">Features</a></li>
-                <li><a className="text-muted-foreground hover:text-foreground transition-colors" href="/pricing">Pricing</a></li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-4">Legal</h3>
-              <ul className="space-y-2 text-sm">
-                <li><a className="text-muted-foreground hover:text-foreground transition-colors" href="/privacy">Privacy Policy</a></li>
-                <li><a className="text-muted-foreground hover:text-foreground transition-colors" href="/terms">Terms of Service</a></li>
-                <li><a href="mailto:support@anotherseoguru.com" className="text-muted-foreground hover:text-foreground transition-colors">Support</a></li>
-              </ul>
-            </div>
-          </div>
-          <div className="pt-8 border-t text-center">
-            <p className="text-sm text-muted-foreground">© 2025 AnotherSEOGuru. All rights reserved.</p>
-            <p className="text-xs text-muted-foreground mt-2">Professional SEO platform for enterprise-level keyword research, competitor analysis, and content optimization.</p>
-          </div>
-        </div>
-      </footer>
-
       {/* Floating Debug Button */}
       <button
         onClick={() => setShowDebugPanel(!showDebugPanel)}

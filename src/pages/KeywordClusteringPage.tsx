@@ -223,21 +223,21 @@ export default function KeywordClusteringPage() {
           </div>
           <div className="text-3xl font-bold">{enrichedClusters.length}</div>
         </Card>
-        <Card className="p-6 bg-emerald-500/5 border-emerald-500/20">
-          <div className="text-sm text-emerald-200 mb-1 flex items-center gap-1">
+        <Card className="p-6 bg-emerald-500/10 dark:bg-emerald-500/5 border-emerald-500/30 dark:border-emerald-500/20">
+          <div className="text-sm text-emerald-700 dark:text-emerald-200 mb-1 flex items-center gap-1">
             <Zap className="h-3 w-3" />
             Quick Wins
           </div>
-          <div className="text-3xl font-bold text-emerald-400">{opportunityStats.quickWins}</div>
-          <div className="text-xs text-emerald-300/70">Low difficulty</div>
+          <div className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{opportunityStats.quickWins}</div>
+          <div className="text-xs text-emerald-600/80 dark:text-emerald-300/70">Low difficulty</div>
         </Card>
-        <Card className="p-6 bg-amber-500/5 border-amber-500/20">
-          <div className="text-sm text-amber-200 mb-1 flex items-center gap-1">
+        <Card className="p-6 bg-amber-500/10 dark:bg-amber-500/5 border-amber-500/30 dark:border-amber-500/20">
+          <div className="text-sm text-amber-700 dark:text-amber-200 mb-1 flex items-center gap-1">
             <Target className="h-3 w-3" />
             High Potential
           </div>
-          <div className="text-3xl font-bold text-amber-400">{opportunityStats.highPotential}</div>
-          <div className="text-xs text-amber-300/70">100+ clicks</div>
+          <div className="text-3xl font-bold text-amber-600 dark:text-amber-400">{opportunityStats.highPotential}</div>
+          <div className="text-xs text-amber-600/80 dark:text-amber-300/70">100+ clicks</div>
         </Card>
         <Card className="p-6">
           <div className="text-sm text-muted-foreground mb-1">Informational</div>
@@ -370,7 +370,7 @@ export default function KeywordClusteringPage() {
                 </div>
 
                 {/* SEO Metrics Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 p-4 bg-slate-900/30 rounded-lg">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 p-4 bg-slate-100/80 dark:bg-slate-900/30 rounded-lg">
                   <div>
                     <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
                       <Target className="h-3 w-3" />
@@ -387,7 +387,7 @@ export default function KeywordClusteringPage() {
                   </div>
                   <div>
                     <div className="text-xs text-muted-foreground mb-1">Potential Clicks</div>
-                    <div className="text-lg font-bold text-emerald-400">
+                    <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
                       +{cluster.metrics.potentialClicks.toLocaleString()}
                     </div>
                   </div>
@@ -399,19 +399,19 @@ export default function KeywordClusteringPage() {
 
                 {/* Performance Metrics */}
                 <div className="grid grid-cols-4 gap-3 mb-4">
-                  <div className="bg-slate-900/20 p-3 rounded">
+                  <div className="bg-slate-100/60 dark:bg-slate-900/20 p-3 rounded">
                     <div className="text-xs text-muted-foreground">Clicks</div>
                     <div className="text-sm font-semibold">{cluster.metrics.totalClicks.toLocaleString()}</div>
                   </div>
-                  <div className="bg-slate-900/20 p-3 rounded">
+                  <div className="bg-slate-100/60 dark:bg-slate-900/20 p-3 rounded">
                     <div className="text-xs text-muted-foreground">Impressions</div>
                     <div className="text-sm font-semibold">{cluster.metrics.totalImpressions.toLocaleString()}</div>
                   </div>
-                  <div className="bg-slate-900/20 p-3 rounded">
+                  <div className="bg-slate-100/60 dark:bg-slate-900/20 p-3 rounded">
                     <div className="text-xs text-muted-foreground">Expected CTR</div>
                     <div className="text-sm font-semibold">{(cluster.metrics.expectedCtr * 100).toFixed(1)}%</div>
                   </div>
-                  <div className="bg-slate-900/20 p-3 rounded">
+                  <div className="bg-slate-100/60 dark:bg-slate-900/20 p-3 rounded">
                     <div className="text-xs text-muted-foreground">Backlinks Needed</div>
                     <div className="text-sm font-semibold">{cluster.metrics.requiredBacklinks}</div>
                   </div>
