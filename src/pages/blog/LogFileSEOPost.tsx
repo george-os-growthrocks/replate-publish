@@ -78,6 +78,9 @@ export default function LogFileSEOPost() {
         <p>
           Pages removed from your sitemap but still in logs = orphaned content with external links or internal references you missed.
         </p>
+        <p>
+          <strong>Quick check:</strong> Use our <Link to="/free-tools/search-operators" className="text-primary hover:underline">Search Operators Builder</Link> with <code>site:yourdomain.com</code> combined with date filters to identify recently crawled pages that might be orphaned.
+        </p>
 
         <h2>The 5-Minute Crawl Audit</h2>
 

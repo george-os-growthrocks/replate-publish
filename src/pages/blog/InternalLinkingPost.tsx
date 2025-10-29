@@ -44,6 +44,9 @@ export default function InternalLinkingPost() {
         <p>
           For each cluster, identify your best-ranking page. That's your "parent" page. Other cluster keywords become internal link anchors pointing to the parent.
         </p>
+        <p>
+          <strong>Pro tip:</strong> Use our free <Link to="/free-tools/search-operators" className="text-primary hover:underline">Search Operators Builder</Link> to quickly find pages mentioning your target anchor phrases. Query like <code>site:yourdomain.com intext:"target anchor" -inurl:/target-page/</code> to discover unlinked mentions ready for internal links.
+        </p>
 
         <h2>Smart Anchor Text Templates</h2>
         <table>

@@ -133,6 +133,13 @@
     <priority>0.8</priority>
   </url>
   
+  <url>
+    <loc>https://anotherseoguru.com/free-tools/search-operators</loc>
+    <lastmod>2025-10-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
   <!-- Blog Section -->
   <url>
     <loc>https://anotherseoguru.com/blog</loc>
@@ -144,6 +151,13 @@
   <url>
     <loc>https://anotherseoguru.com/blog/free-seo-tools-2026</loc>
     <lastmod>2025-01-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <url>
+    <loc>https://anotherseoguru.com/blog/google-search-operators-2025</loc>
+    <lastmod>2025-10-29</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>

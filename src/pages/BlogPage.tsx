@@ -8,6 +8,16 @@ import { BreadcrumbListJsonLd } from "@/components/seo";
 
 const blogPosts = [
   {
+    slug: "google-search-operators-2025",
+    title: "Google Search Operators: 2025 Master List & SEO Playbook",
+    excerpt: "The 2025 field guide to Google search operators—what works, what’s flaky, what’s dead—and 21 real SEO workflows to find wins faster.",
+    author: "AnotherSEOGuru Editorial",
+    date: "October 29, 2025",
+    readTime: "12 min read",
+    category: "Technical SEO",
+    image: "/hero-image.jpg"
+  },
+  {
     slug: "free-seo-tools-2026",
     title: "Free SEO Tools 2026: 10 Game-Changing Tools to Boost Your Rankings Instantly",
     excerpt: "Discover the best free SEO tools for 2026 — AI Overview Checker, Keyword Clustering, Heading Analyzer, Schema Generator, and more.",

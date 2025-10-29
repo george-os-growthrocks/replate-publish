@@ -96,6 +96,8 @@ import EcommerceRankingsCaseStudy from "./pages/case-studies/EcommerceRankings";
 import SaaSContentStrategyCaseStudy from "./pages/case-studies/SaaSContentStrategy";
 import TechnicalSEOAuditCaseStudy from "./pages/case-studies/TechnicalSEOAudit";
 import FreeSEOTools2026Post from "./pages/blog/FreeSEOTools2026Post";
+import GoogleSearchOperators2025Post from "./pages/blog/GoogleSearchOperators2025Post";
+import SearchOperatorsTool from "./pages/free-tools/SearchOperatorsTool";
 
 const queryClient = new QueryClient();
 
@@ -156,6 +158,7 @@ const App = () => (
                        <Route path="/free-tools/hreflang-builder" element={<HreflangBuilder />} />
                        <Route path="/free-tools/cwv-pulse" element={<CWVPulse />} />
                        <Route path="/free-tools/meta-description-generator" element={<MetaDescriptionGenerator />} />
+                       <Route path="/free-tools/search-operators" element={<SearchOperatorsTool />} />
                        <Route path="/privacy" element={<PrivacyPage />} />
                        <Route path="/terms" element={<TermsPage />} />
                        <Route path="/cookies" element={<CookiesPage />} />
@@ -171,6 +174,7 @@ const App = () => (
                        <Route path="/blog/hreflang-guide" element={<HreflangGuidePost />} />
                        <Route path="/blog/internal-linking-scale" element={<InternalLinkingPost />} />
                        <Route path="/blog/free-seo-tools-2026" element={<FreeSEOTools2026Post />} />
+                        <Route path="/blog/google-search-operators-2025" element={<GoogleSearchOperators2025Post />} />
                        
                        {/* Help Articles */}
                        <Route path="/help/connect-search-console" element={<ConnectSearchConsole />} />

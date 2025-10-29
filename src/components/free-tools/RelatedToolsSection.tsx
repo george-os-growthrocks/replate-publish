@@ -22,6 +22,13 @@ export function RelatedToolsSection({
   title = "Related Free SEO Tools",
   description = "Explore more tools to supercharge your SEO workflow"
 }: RelatedToolsSectionProps) {
+  // Safety check: ensure tools is an array
+  const safeTools = Array.isArray(tools) ? tools : [];
+  
+  if (safeTools.length === 0) {
+    return null;
+  }
+
   return (
     <section className="py-12 bg-muted/30">
       <div className="container mx-auto px-4 max-w-6xl">
@@ -31,7 +38,7 @@ export function RelatedToolsSection({
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {tools.map((tool, index) => {
+          {safeTools.map((tool, index) => {
             const Icon = tool.icon;
             return (
               <Card key={index} className="group hover:shadow-lg transition-all duration-300 hover:border-primary/50">
