@@ -156,31 +156,21 @@ export function PricingSection() {
   const refetch = () => window.location.reload();
 
   const handleSelectPlan = (planName: string) => {
-    // Check if user is authenticated
+    // Stripe checkout is skipped for now - just signup
+    // Store plan selection for future use
+    localStorage.setItem('selected_plan', planName);
+    localStorage.setItem('selected_billing', billingCycle);
+    
+    // Redirect to signup if not authenticated
     if (!subscription) {
-      // Store plan selection in localStorage for after signup
-      localStorage.setItem('selected_plan', planName);
-      localStorage.setItem('selected_billing', billingCycle);
-      
-      // Redirect to signup page (email/password signup)
-      addLog(`User not authenticated, redirecting to signup...`);
+      addLog(`Redirecting to signup...`);
       window.location.href = '/signup';
       return;
     }
-
-    addLog(`Starting checkout process for: ${planName} (${billingCycle})`);
-    setShowDebug(true);
     
-    createCheckout({ planName, billingCycle }, {
-      onSuccess: (url) => {
-        addLog(`✅ Checkout URL received: ${url}`);
-        addLog(`Redirecting to Stripe...`);
-      },
-      onError: (error) => {
-        addLog(`❌ Checkout failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-        addLog(`Error details: ${JSON.stringify(error)}`);
-      }
-    });
+    // If already logged in, just go to dashboard
+    addLog(`Already logged in, going to dashboard...`);
+    window.location.href = '/dashboard';
   };
 
   const calculateSavings = (monthly: number, yearly: number | null) => {

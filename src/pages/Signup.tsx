@@ -69,35 +69,16 @@ const Signup = () => {
         // Track signup
         trackSignup();
         
-        toast.success("Account created successfully!");
+        toast.success("Account created successfully! Redirecting to dashboard...");
         
-        // If there's a selected plan, redirect to checkout
-        if (selectedPlan) {
-          // Sign in explicitly to establish session
-          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ 
-            email, 
-            password 
-          });
-          
-          if (signInError) {
-            console.error('Sign in error:', signInError);
-            toast.error('Please sign in to continue');
-            navigate('/login');
-            return;
-          }
-          
-          if (signInData.session) {
-            console.log('Session established, redirecting to checkout');
-            // Wait a moment for session to be fully stored
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            navigate(`/checkout?plan=${selectedPlan}&billing=${selectedBilling}`);
-          }
-        } else {
-          // Otherwise go to dashboard
-          setTimeout(() => {
-            navigate("/dashboard");
-          }, 1500);
-        }
+        // Clear plan selection from localStorage (Stripe checkout skipped for now)
+        localStorage.removeItem('selected_plan');
+        localStorage.removeItem('selected_billing');
+        
+        // Always go to dashboard - free plan will be auto-created by trigger
+        setTimeout(() => {
+          navigate("/dashboard");
+        }, 1500);
       }
     } catch (error) {
       console.error("Signup error:", error);
