@@ -153,8 +153,8 @@ export default function PAAExtractor() {
                 <Sparkles className="w-3 h-3 mr-1" />
                 100% Free Tool
               </Badge>
-              <h1 className="text-4xl md:text-5xl font-bold mb-4">
-                People Also Ask Extractor
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-foreground leading-tight">
+                Free <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">People Also Ask Extractor</span>
               </h1>
               <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
                 Turn Google's PAA questions into content briefs in seconds. De-dupe, categorize, and export—all free.
@@ -282,7 +282,7 @@ export default function PAAExtractor() {
                   {/* CTA */}
                   <Card className="mt-8 bg-gradient-to-br from-primary/10 to-secondary/10 border-primary/20">
                     <CardContent className="p-8 text-center">
-                      <h3 className="text-2xl font-bold mb-3">Want More Questions?</h3>
+                      <h3 className="text-2xl font-bold mb-3 text-foreground">Want More Questions?</h3>
                       <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
                         Sign up for unlimited extractions, bulk processing, and automatic content brief generation
                       </p>

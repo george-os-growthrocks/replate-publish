@@ -8,7 +8,6 @@ import { useCreateCheckout, useSubscription } from "@/hooks/useSubscription";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { addDebugLog } from "@/lib/utils";
 import { Database } from "@/integrations/supabase/types";
 import { UserSubscription, SubscriptionPlan as HookSubscriptionPlan } from "@/hooks/useSubscription";
 
@@ -150,16 +149,9 @@ const fallbackPlans: SubscriptionPlan[] = [
 
 export function PricingSection() {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
-  const [debugLogs, setDebugLogs] = useState<string[]>([]);
-  const [showDebug, setShowDebug] = useState(false);
   const { mutate: createCheckout, isPending: isCreatingCheckout } = useCreateCheckout();
   const { data: subscription } = useSubscription();
 
-  const addLog = (message: string) => {
-    const timestamp = new Date().toLocaleTimeString();
-    setDebugLogs(prev => [...prev, `[${timestamp}] ${message}`]);
-    console.log(`[CHECKOUT DEBUG] ${message}`);
-  };
 
   // Use fallback plans directly (database API is not working)
   const plans = fallbackPlans;
@@ -175,13 +167,11 @@ export function PricingSection() {
     
     // Redirect to signup if not authenticated
     if (!subscription) {
-      addLog(`Redirecting to signup...`);
       window.location.href = '/signup';
       return;
     }
     
     // If already logged in, just go to dashboard
-    addLog(`Already logged in, going to dashboard...`);
     window.location.href = '/dashboard';
   };
 
@@ -448,44 +438,6 @@ export function PricingSection() {
           </p>
         </div>
 
-        {/* Debug Console */}
-        <div className="fixed bottom-4 right-4 z-50">
-          <Button
-            onClick={() => setShowDebug(!showDebug)}
-            size="sm"
-            variant="outline"
-            className="mb-2 shadow-lg"
-          >
-            {showDebug ? 'Hide' : 'Show'} Debug Console {debugLogs.length > 0 && `(${debugLogs.length})`}
-          </Button>
-          
-          {showDebug && (
-            <div className="bg-black/95 text-green-400 rounded-lg p-4 max-w-2xl max-h-96 overflow-y-auto font-mono text-xs shadow-2xl border border-green-500/30">
-              <div className="flex justify-between items-center mb-2 pb-2 border-b border-green-500/30">
-                <span className="text-green-300 font-bold">🔍 Checkout Debug Console</span>
-                <Button
-                  onClick={() => setDebugLogs([])}
-                  size="sm"
-                  variant="ghost"
-                  className="h-6 text-green-400 hover:text-green-300"
-                >
-                  Clear
-                </Button>
-              </div>
-              {debugLogs.length === 0 ? (
-                <p className="text-green-500/50">No logs yet. Click "Start Free Trial" to see debug info...</p>
-              ) : (
-                <div className="space-y-1">
-                  {debugLogs.map((log, i) => (
-                    <div key={i} className="text-green-400 break-all">
-                      {log}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
         </div>
       </div>
     </section>

@@ -10,7 +10,6 @@ import {
   BarChart3,
   Sparkles,
   ExternalLink,
-  Bug,
   Zap,
   Brain,
   TrendingDown
@@ -19,7 +18,6 @@ import { KeywordOverview, calculateCPS } from "@/types/keyword-explorer";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useState } from "react";
 import React from "react";
-import { FeatureDebugPanel, DebugLog } from "@/components/debug/FeatureDebugPanel";
 import { 
   calculateKeywordValue, 
   analyzeSearchIntent,
@@ -42,35 +40,10 @@ export function KeywordOverviewPanel({
   loading
 }: KeywordOverviewPanelProps) {
   // ALL HOOKS MUST BE AT THE TOP - before any early returns
-  const [showDebug, setShowDebug] = useState(false);
-  const [debugLogs, setDebugLogs] = useState<DebugLog[]>([]);
 
-  const addDebugLog = (level: DebugLog['level'], message: string) => {
-    const log: DebugLog = {
-      timestamp: new Date().toLocaleTimeString(),
-      level,
-      message
-    };
-    console.log(`[${level.toUpperCase()}] ${message}`);
-    setDebugLogs(prev => [...prev, log]);
-  };
-
-  // Log overview data when it changes
+  // Overview data processing
   React.useEffect(() => {
-    if (overview) {
-      addDebugLog('info', `📊 Overview data received for: "${overview.keyword}"`);
-      addDebugLog('info', `Search Volume: ${overview.search_volume}`);
-      addDebugLog('info', `Monthly Searches Array Length: ${overview.monthly_searches?.length || 0}`);
-      
-      if (overview.monthly_searches && overview.monthly_searches.length > 0) {
-        addDebugLog('success', `✅ Found ${overview.monthly_searches.length} months of trend data`);
-        addDebugLog('info', `First month: ${JSON.stringify(overview.monthly_searches[0])}`);
-        addDebugLog('info', `Last month: ${JSON.stringify(overview.monthly_searches[overview.monthly_searches.length - 1])}`);
-      } else {
-        addDebugLog('warn', '⚠️ No monthly_searches data in overview');
-        addDebugLog('info', `Full overview structure: ${JSON.stringify(Object.keys(overview))}`);
-      }
-    }
+    // Overview data is ready for processing
   }, [overview]);
 
   // Prepare 12-month trend data (before early returns)
@@ -83,21 +56,6 @@ export function KeywordOverviewPanel({
       };
     }) || [];
 
-  // Log trend data preparation
-  React.useEffect(() => {
-    if (overview) {
-      addDebugLog('info', `📈 Trend data preparation: ${trendData.length} months`);
-      if (trendData.length === 0) {
-        addDebugLog('warn', `⚠️ No trend data! monthly_searches array: ${overview.monthly_searches ? 'exists but empty' : 'missing'}`);
-        if (overview.monthly_searches) {
-          addDebugLog('info', `Raw monthly_searches: ${JSON.stringify(overview.monthly_searches)}`);
-        }
-      } else {
-        addDebugLog('success', `✅ Trend data ready: ${trendData.length} months`);
-        addDebugLog('info', `Sample data point: ${JSON.stringify(trendData[0])}`);
-      }
-    }
-  }, [overview?.monthly_searches]);
 
   // Early returns AFTER all hooks
   if (loading) {
@@ -292,15 +250,6 @@ export function KeywordOverviewPanel({
         <Card className="col-span-2">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-sm font-medium">12-Month Trend</CardTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowDebug(!showDebug)}
-              className="h-7 gap-1"
-            >
-              <Bug className="h-3 w-3" />
-              Debug
-            </Button>
           </CardHeader>
           <CardContent>
             {trendData.length > 0 ? (
@@ -523,39 +472,6 @@ export function KeywordOverviewPanel({
         </Card>
       </div>
 
-      {/* Debug Panel */}
-      {showDebug && (
-        <Card className="col-span-full">
-          <CardHeader>
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Bug className="h-4 w-4" />
-              Debug Information
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <p className="text-xs font-semibold mb-2">Raw Overview Data:</p>
-                <pre className="text-xs bg-muted p-3 rounded border border-border overflow-x-auto max-h-64">
-                  {JSON.stringify(overview, null, 2)}
-                </pre>
-              </div>
-              <div>
-                <p className="text-xs font-semibold mb-2">Monthly Searches Array:</p>
-                <pre className="text-xs bg-muted p-3 rounded border border-border overflow-x-auto max-h-64">
-                  {JSON.stringify(overview.monthly_searches || 'null', null, 2)}
-                </pre>
-              </div>
-              <div>
-                <p className="text-xs font-semibold mb-2">Prepared Trend Data:</p>
-                <pre className="text-xs bg-muted p-3 rounded border border-border overflow-x-auto max-h-64">
-                  {JSON.stringify(trendData, null, 2)}
-                </pre>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Parent Topic & Top Result */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -606,12 +522,6 @@ export function KeywordOverviewPanel({
         )}
       </div>
 
-      {/* Debug Logs Panel */}
-      <FeatureDebugPanel
-        logs={debugLogs}
-        featureName="Keyword Overview"
-        onClear={() => setDebugLogs([])}
-      />
     </div>
   );
 }

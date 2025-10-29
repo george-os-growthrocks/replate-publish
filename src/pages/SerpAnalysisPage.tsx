@@ -11,7 +11,6 @@ import { optimizeForSerpFeature } from "@/lib/seo-algorithms";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { useCredits } from "@/hooks/useCreditManager";
-import { FeatureDebugPanel, DebugLog } from "@/components/debug/FeatureDebugPanel";
 
 export default function SerpAnalysisPage() {
   const [keyword, setKeyword] = useState("");
@@ -19,17 +18,6 @@ export default function SerpAnalysisPage() {
   const [locationCode, setLocationCode] = useState(2300); // Greece default
   const [languageCode, setLanguageCode] = useState("el"); // Greek default
   const { checkCredits, consumeCredits } = useCredits();
-  const [debugLogs, setDebugLogs] = useState<DebugLog[]>([]);
-
-  const addDebugLog = (level: DebugLog['level'], message: string) => {
-    const log: DebugLog = {
-      timestamp: new Date().toLocaleTimeString(),
-      level,
-      message
-    };
-    console.log(`[${level.toUpperCase()}] ${message}`);
-    setDebugLogs(prev => [...prev, log]);
-  };
 
   const { data: serpData, isLoading, error } = useSerpAdvanced(
     { keyword: searchKeyword, location_code: locationCode, language_code: languageCode, device: "desktop" },
@@ -45,21 +33,16 @@ export default function SerpAnalysisPage() {
     // Check credits before SERP analysis
     const hasCredits = await checkCredits('serp_analysis');
     if (!hasCredits) {
-      addDebugLog('warn', '⚠️ Insufficient credits for SERP analysis');
       return;
     }
 
-    addDebugLog('info', `🔍 Starting SERP analysis for keyword: "${keyword.trim()}"`);
-    addDebugLog('info', `Location: ${locationCode}, Language: ${languageCode}`);
     setSearchKeyword(keyword.trim());
   };
 
   // Consume credits after successful SERP analysis
   useEffect(() => {
     if (serpData && searchKeyword) {
-      addDebugLog('success', `✅ SERP data received for "${searchKeyword}"`);
       const resultCount = serpData?.tasks?.[0]?.result?.[0]?.items_count || 0;
-      addDebugLog('info', `Found ${resultCount} SERP items`);
       consumeCredits({
         feature: 'serp_analysis',
         credits: 3,
@@ -662,12 +645,6 @@ export default function SerpAnalysisPage() {
         </Card>
       )}
 
-      {/* Debug Panel */}
-      <FeatureDebugPanel
-        logs={debugLogs}
-        featureName="SERP Analysis"
-        onClear={() => setDebugLogs([])}
-      />
     </div>
   );
 }

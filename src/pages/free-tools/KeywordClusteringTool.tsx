@@ -180,7 +180,7 @@ export default function KeywordClusteringTool() {
                         <span className="text-sm font-bold text-primary">1</span>
                       </div>
                       <div>
-                        <h4 className="font-semibold text-sm mb-1">Paste Your Keywords</h4>
+                        <h4 className="font-semibold text-sm mb-1 text-foreground">Paste Your Keywords</h4>
                         <p className="text-sm text-muted-foreground">
                           Add up to 100 keywords, one per line. Can be from keyword research tools, Google Search Console, or competitor analysis.
                         </p>
@@ -192,7 +192,7 @@ export default function KeywordClusteringTool() {
                         <span className="text-sm font-bold text-primary">2</span>
                       </div>
                       <div>
-                        <h4 className="font-semibold text-sm mb-1">AI Analyzes Similarity</h4>
+                        <h4 className="font-semibold text-sm mb-1 text-foreground">AI Analyzes Similarity</h4>
                         <p className="text-sm text-muted-foreground">
                           Our AI uses semantic analysis to group keywords by topic, search intent, and content relevance.
                         </p>
@@ -204,7 +204,7 @@ export default function KeywordClusteringTool() {
                         <span className="text-sm font-bold text-primary">3</span>
                       </div>
                       <div>
-                        <h4 className="font-semibold text-sm mb-1">Get Organized Clusters</h4>
+                        <h4 className="font-semibold text-sm mb-1 text-foreground">Get Organized Clusters</h4>
                         <p className="text-sm text-muted-foreground">
                           Receive topical clusters with search intent classification and recommended content formats. Export as CSV.
                         </p>

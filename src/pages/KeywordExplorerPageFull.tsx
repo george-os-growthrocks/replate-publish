@@ -1,7 +1,5 @@
 import { useState } from "react";
 import React from "react";
-import { FeatureDebugPanel, DebugLog } from "@/components/debug/FeatureDebugPanel";
-import { Bug } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,8 +38,6 @@ import {
 } from "recharts";
 
 export default function KeywordExplorerPageFull() {
-  const [debugLogs, setDebugLogs] = useState<DebugLog[]>([]);
-  const [showDebug, setShowDebug] = useState(false);
   const [state, setState] = useState<KeywordExplorerState>({
     seedKeyword: "",
     locationCode: 2840,
@@ -71,25 +67,14 @@ export default function KeywordExplorerPageFull() {
   const [monthlyTrendData, setMonthlyTrendData] = useState<any[]>([]);
   const [isLoadingTrend, setIsLoadingTrend] = useState(false);
 
-  const addDebugLog = (level: DebugLog['level'], message: string) => {
-    const log: DebugLog = {
-      timestamp: new Date().toLocaleTimeString(),
-      level,
-      message
-    };
-    console.log(`[${level.toUpperCase()}] ${message}`);
-    setDebugLogs(prev => [...prev, log]);
-  };
 
   const fetchOverview = async () => {
     setState(prev => ({ ...prev, overviewLoading: true }));
-    addDebugLog('info', `🔍 Fetching overview for: "${state.seedKeyword}"`);
     
     try {
       // Get session token for auth
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
-        addDebugLog('error', '❌ No auth session - please login');
         toast.error('Please sign in again');
         setState(prev => ({ ...prev, overviewLoading: false }));
         return;
@@ -107,42 +92,15 @@ export default function KeywordExplorerPageFull() {
       });
 
       if (error) {
-        addDebugLog('error', `❌ Supabase function error: ${error.message}`);
         throw error;
       }
 
       if (data?.error) {
-        addDebugLog('error', `❌ API error: ${data.error}`);
         throw new Error(data.error);
       }
 
-      addDebugLog('info', `📦 Full API response received: ${JSON.stringify(Object.keys(data || {}))}`);
-
       const overview = data?.overview;
       if (overview) {
-        addDebugLog('info', `📊 Overview object keys: ${JSON.stringify(Object.keys(overview))}`);
-        addDebugLog('info', `📊 monthly_searches type: ${typeof overview.monthly_searches}`);
-        addDebugLog('info', `📊 monthly_searches is array: ${Array.isArray(overview.monthly_searches)}`);
-        addDebugLog('info', `📊 monthly_searches length: ${overview.monthly_searches?.length || 0}`);
-        
-        // Show debug info if available
-        if (overview._debug) {
-          addDebugLog('info', `🔍 Debug Info: History API Status ${overview._debug.history_api_status} - ${overview._debug.history_api_message}`);
-          addDebugLog('info', `🔍 History Item Keys: ${JSON.stringify(overview._debug.history_item_keys)}`);
-          addDebugLog('info', `🔍 Monthly Searches Found: ${overview._debug.monthly_searches_found}`);
-        }
-        
-        if (overview.monthly_searches && overview.monthly_searches.length > 0) {
-          addDebugLog('success', `✅ Found ${overview.monthly_searches.length} months of trend data`);
-          addDebugLog('info', `Sample: ${JSON.stringify(overview.monthly_searches[0])}`);
-        } else {
-          addDebugLog('warn', `⚠️ No monthly_searches data! Value: ${JSON.stringify(overview.monthly_searches)}`);
-          if (overview._debug?.history_api_status !== 20000) {
-            addDebugLog('error', `❌ History API returned error status: ${overview._debug?.history_api_status} - ${overview._debug?.history_api_message}`);
-          } else {
-            addDebugLog('warn', `ℹ️ API returned success but no monthly_searches data. This keyword may not have historical data available.`);
-          }
-        }
 
       setState(prev => ({
         ...prev,
@@ -165,14 +123,12 @@ export default function KeywordExplorerPageFull() {
         const trendCount = overview.monthly_searches?.length || 0;
         toast.success(`Overview loaded${trendCount > 0 ? ` with ${trendCount} months of trend data` : ''}!`);
       } else {
-        addDebugLog('error', `❌ No overview in response! Full data: ${JSON.stringify(data)}`);
         toast.warning("No data found for this keyword");
         setState(prev => ({ ...prev, overviewLoading: false }));
       }
     } catch (error) {
       console.error("Error fetching overview:", error);
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      addDebugLog('error', `❌ Failed to fetch overview: ${errorMessage}`);
       toast.error(`Failed to fetch overview: ${errorMessage}`);
       setState(prev => ({ ...prev, overviewLoading: false }));
     }
@@ -300,12 +256,10 @@ export default function KeywordExplorerPageFull() {
   // Load trend data for a keyword
   const loadMonthlyTrendForKeyword = async (keyword: string) => {
     setIsLoadingTrend(true);
-    addDebugLog('info', `📊 Loading monthly trend data for: "${keyword}"`);
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
-        addDebugLog('error', '❌ No auth session');
         setIsLoadingTrend(false);
         return;
       }
@@ -322,23 +276,19 @@ export default function KeywordExplorerPageFull() {
       });
 
       if (error) {
-        addDebugLog('error', `❌ API error: ${error.message}`);
         setIsLoadingTrend(false);
         return;
       }
 
       const overview = data?.overview;
       if (!overview) {
-        addDebugLog('error', '❌ No overview in response');
         setIsLoadingTrend(false);
         return;
       }
 
       const monthlySearches = overview.monthly_searches || [];
-      addDebugLog('info', `📊 Found ${monthlySearches.length} months of data`);
 
       if (monthlySearches.length === 0) {
-        addDebugLog('warn', '⚠️ No monthly search data available');
         setMonthlyTrendData([]);
         setIsLoadingTrend(false);
         return;
@@ -358,10 +308,8 @@ export default function KeywordExplorerPageFull() {
         });
 
       setMonthlyTrendData(chartData);
-      addDebugLog('success', `✅ Loaded ${chartData.length} months of trend data`);
     } catch (error: any) {
       console.error('💥 Monthly Trend Error:', error);
-      addDebugLog('error', `❌ Failed: ${error.message}`);
       setMonthlyTrendData([]);
     } finally {
       setIsLoadingTrend(false);
@@ -371,7 +319,6 @@ export default function KeywordExplorerPageFull() {
   // Load AI Overview for a keyword
   const loadAiOverviewForKeyword = async (keyword: string) => {
     setIsLoadingAiOverview(true);
-    addDebugLog('info', `🤖 Loading AI Overview for: "${keyword}"`);
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -396,7 +343,6 @@ export default function KeywordExplorerPageFull() {
       });
       
       if (error) {
-        addDebugLog('error', `❌ SERP error: ${error.message}`);
         setIsLoadingAiOverview(false);
         return;
       }
@@ -437,9 +383,7 @@ export default function KeywordExplorerPageFull() {
           content: content,
           sources: sources
         });
-        addDebugLog('success', `✅ AI Overview found with ${sources.length} sources`);
       } else {
-        addDebugLog('info', `ℹ️ No AI Overview detected. Items in result: ${serpResult?.items?.length || 0}`);
         setAiOverviewData(null);
       }
     } catch (error: any) {
@@ -560,15 +504,6 @@ export default function KeywordExplorerPageFull() {
             ) : (
               <><Search className="h-5 w-5 mr-2" />Analyze</>
             )}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowDebug(!showDebug)}
-            className="gap-2 h-12"
-          >
-            <Bug className="h-4 w-4" />
-            {showDebug ? 'Hide' : 'Show'} Debug
           </Button>
         </div>
       </Card>
@@ -824,14 +759,6 @@ export default function KeywordExplorerPageFull() {
         </Card>
       )}
 
-      {/* Debug Panel */}
-      {showDebug && (
-        <FeatureDebugPanel
-          logs={debugLogs}
-          featureName="Keyword Explorer Full"
-          onClear={() => setDebugLogs([])}
-        />
-      )}
     </div>
   );
 }

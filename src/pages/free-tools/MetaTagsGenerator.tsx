@@ -161,7 +161,7 @@ export default function MetaTagsGenerator() {
                                 {siteName && <span className="text-sm text-muted-foreground">{siteName}</span>}
                                 {url && <span className="text-xs text-muted-foreground">• {new URL(url).hostname}</span>}
                               </div>
-                              <h3 className="text-xl text-blue-600 hover:underline cursor-pointer line-clamp-2 mb-1">
+                              <h3 className="text-xl text-blue-600 dark:text-blue-400 hover:underline cursor-pointer line-clamp-2 mb-1">
                                 {title || "Your Page Title Will Appear Here"}
                               </h3>
                               <p className="text-sm text-muted-foreground line-clamp-2">
@@ -179,7 +179,7 @@ export default function MetaTagsGenerator() {
                           <div className="flex items-center gap-2 mb-1">
                             {siteName && <span className="text-xs text-muted-foreground truncate">{siteName}</span>}
                           </div>
-                          <h3 className="text-base text-blue-600 line-clamp-2 mb-1">
+                          <h3 className="text-base text-blue-600 dark:text-blue-400 line-clamp-2 mb-1">
                             {title || "Your Page Title"}
                           </h3>
                           <p className="text-xs text-muted-foreground line-clamp-3">

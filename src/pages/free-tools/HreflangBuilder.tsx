@@ -129,8 +129,8 @@ export default function HreflangBuilder() {
                 <Sparkles className="w-3 h-3 mr-1" />
                 International SEO
               </Badge>
-              <h1 className="text-4xl md:text-5xl font-bold mb-4">
-                Hreflang Tag Builder & Validator
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-foreground leading-tight">
+                Free <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">Hreflang Tag Builder</span>
               </h1>
               <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
                 Build bulletproof hreflang tags for your international website. No more wrong-country rankings.

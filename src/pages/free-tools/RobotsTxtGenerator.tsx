@@ -273,7 +273,7 @@ export default function RobotsTxtGenerator() {
                         <span className="text-sm font-bold text-primary">1</span>
                       </div>
                       <div>
-                        <h4 className="font-semibold text-sm mb-1">Download or Copy</h4>
+                        <h4 className="font-semibold text-sm mb-1 text-foreground">Download or Copy</h4>
                         <p className="text-sm text-muted-foreground">
                           Click the "Download" button to save the robots.txt file, or copy the content.
                         </p>
@@ -285,7 +285,7 @@ export default function RobotsTxtGenerator() {
                         <span className="text-sm font-bold text-primary">2</span>
                       </div>
                       <div>
-                        <h4 className="font-semibold text-sm mb-1">Upload to Root Directory</h4>
+                        <h4 className="font-semibold text-sm mb-1 text-foreground">Upload to Root Directory</h4>
                         <p className="text-sm text-muted-foreground">
                           Upload the file to your website's root directory (same folder as index.html). It should be accessible at <code className="bg-muted px-1 py-0.5 rounded">https://yoursite.com/robots.txt</code>
                         </p>
@@ -297,7 +297,7 @@ export default function RobotsTxtGenerator() {
                         <span className="text-sm font-bold text-primary">3</span>
                       </div>
                       <div>
-                        <h4 className="font-semibold text-sm mb-1">Test Your File</h4>
+                        <h4 className="font-semibold text-sm mb-1 text-foreground">Test Your File</h4>
                         <p className="text-sm text-muted-foreground">
                           Visit <code className="bg-muted px-1 py-0.5 rounded">yoursite.com/robots.txt</code> to verify it's accessible. You can also test it in Google Search Console under the "robots.txt Tester" tool.
                         </p>

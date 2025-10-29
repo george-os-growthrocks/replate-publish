@@ -37,24 +37,12 @@ interface CtrGapAnalysisProps {
 }
 
 function CtrGapAnalysis({ query, impressions, ctr, position }: CtrGapAnalysisProps) {
-  const [showDebug, setShowDebug] = useState(false);
   
   const { data: serpData, isLoading, error } = useSerpAdvanced(
     { keyword: query, location_code: 2840, language_code: "en", device: "desktop" },
     true // enabled
   );
 
-  // Enhanced debug logging
-  console.log("🔍 CTR Gap Analysis Debug:", {
-    query,
-    serpData,
-    isLoading,
-    error,
-    impressions,
-    ctr,
-    position,
-    timestamp: new Date().toISOString()
-  });
 
   if (isLoading) {
     return (
@@ -217,18 +205,6 @@ function CtrGapAnalysis({ query, impressions, ctr, position }: CtrGapAnalysisPro
             🔗 Sitelinks
           </Badge>
         )}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setShowDebug(!showDebug)}
-          className={`ml-auto text-xs h-6 px-2 ${
-            hasSignificantOpportunity 
-              ? "text-indigo-300 hover:text-indigo-100" 
-              : "text-slate-400 hover:text-slate-200"
-          }`}
-        >
-          🐛 {showDebug ? "Hide" : "Show"} Debug Info
-        </Button>
       </div>
 
       {/* Actionable Recommendations */}
@@ -319,164 +295,6 @@ function CtrGapAnalysis({ query, impressions, ctr, position }: CtrGapAnalysisPro
               ));
             })()}
           </div>
-        </div>
-      )}
-      
-      {/* Debug Panel */}
-      {showDebug && (
-        <div className="mt-3 p-4 rounded-lg bg-slate-950/80 border border-amber-500/30 space-y-3">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="h-6 w-6 rounded bg-amber-500/20 flex items-center justify-center">
-              <span className="text-amber-400 text-sm">🐛</span>
-            </div>
-            <div className="flex-1">
-              <h4 className="text-xs font-semibold text-amber-200">CTR Opportunity Debug Panel</h4>
-              {!hasSignificantOpportunity && (
-                <p className="text-[10px] text-slate-400 mt-0.5">
-                  {gap.gap <= 0 
-                    ? "✅ Page is performing at or above expected CTR" 
-                    : "ℹ️ Opportunity exists but below threshold (need 10+ potential clicks)"}
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* API Status */}
-          <div>
-            <div className="text-xs font-medium text-amber-300 mb-1">🔌 SERP Analysis Status</div>
-            <div className="bg-muted p-2 rounded border border-white/5 text-xs">
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">API Call Status:</span>
-                <span className={`font-medium ${
-                  serpData?.tasks?.[0]?.status_code === 20000 
-                    ? "text-emerald-400" 
-                    : serpData?.error 
-                    ? "text-red-400" 
-                    : "text-amber-400"
-                }`}>
-                  {serpData?.tasks?.[0]?.status_code === 20000 
-                    ? "✓ Success" 
-                    : serpData?.error 
-                    ? "✗ Failed" 
-                    : "⚠ Warning"}
-                </span>
-              </div>
-              {serpData?.tasks?.[0]?.status_message && (
-                <div className="mt-1 text-slate-400 text-[10px]">
-                  {serpData.tasks[0].status_message}
-                </div>
-              )}
-              {serpData?.tasks?.[0]?.result?.[0]?.items && (
-                <div className="mt-1 text-slate-400">
-                  Found {serpData.tasks[0].result[0].items.length} SERP items
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Input Parameters */}
-          <div>
-            <div className="text-xs font-medium text-amber-300 mb-1">📥 Input Parameters</div>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="bg-muted p-2 rounded border border-white/5">
-                <span className="text-muted-foreground">Query:</span>
-                <div className="text-foreground font-medium truncate">{query}</div>
-              </div>
-              <div className="bg-muted p-2 rounded border border-white/5">
-                <span className="text-muted-foreground">Position:</span>
-                <div className="text-foreground font-medium">{position.toFixed(1)}</div>
-              </div>
-              <div className="bg-muted p-2 rounded border border-white/5">
-                <span className="text-muted-foreground">Impressions:</span>
-                <div className="text-foreground font-medium">{impressions.toLocaleString()}</div>
-              </div>
-              <div className="bg-muted p-2 rounded border border-white/5">
-                <span className="text-muted-foreground">Current CTR:</span>
-                <div className="text-foreground font-medium">{(ctr * 100).toFixed(2)}%</div>
-              </div>
-            </div>
-          </div>
-
-          {/* SERP Features Detected */}
-          <div>
-            <div className="text-xs font-medium text-amber-300 mb-1">🎯 SERP Features Detected</div>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              {[
-                { label: "Featured Snippet", value: features.fs, color: "emerald" },
-                { label: "People Also Ask", value: features.paa, color: "blue" },
-                { label: "Paid Ads", value: features.adsTop && features.adsTop > 0, count: features.adsTop, color: "amber" },
-                { label: "Sitelinks", value: features.sitelinks, color: "purple" }
-              ].map((feature, i) => (
-                <div key={i} className="flex items-center justify-between bg-muted p-2 rounded border border-white/5">
-                  <span className="text-muted-foreground">{feature.label}:</span>
-                  <span className={`font-medium ${feature.value ? `text-${feature.color}-400` : 'text-muted-foreground'}`}>
-                    {feature.value ? (feature.count ? `Yes (${feature.count})` : "Yes") : "No"}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* CTR Calculation Results */}
-          <div>
-            <div className="text-xs font-medium text-amber-300 mb-1">📊 CTR Calculation Results</div>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="bg-muted p-2 rounded border border-white/5">
-                <span className="text-muted-foreground">Expected CTR:</span>
-                <div className="text-emerald-400 font-medium">{(gap.ctrExpected * 100).toFixed(2)}%</div>
-              </div>
-              <div className="bg-muted p-2 rounded border border-white/5">
-                <span className="text-muted-foreground">CTR Gap:</span>
-                <div className="text-amber-400 font-medium">{(gap.gap * 100).toFixed(2)}%</div>
-              </div>
-              <div className="bg-muted p-2 rounded border border-white/5">
-                <span className="text-muted-foreground">Extra Clicks:</span>
-                <div className="text-indigo-400 font-medium">{gap.potentialExtraClicks.toLocaleString()}</div>
-              </div>
-              <div className="bg-muted p-2 rounded border border-white/5">
-                <span className="text-muted-foreground">Opportunity Level:</span>
-                <div className={`font-medium ${
-                  gap.opportunity === 'high' ? 'text-red-400' : 
-                  gap.opportunity === 'medium' ? 'text-amber-400' : 
-                  'text-green-400'
-                }`}>
-                  {gap.opportunity.toUpperCase()}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* SERP Items Analysis */}
-          {serpData?.tasks?.[0]?.result?.[0]?.items && (
-            <div>
-              <div className="text-xs font-medium text-amber-300 mb-1">
-                📋 SERP Items ({serpData.tasks[0].result[0].items.length} total)
-              </div>
-              <div className="bg-muted p-2 rounded border border-white/5 max-h-32 overflow-y-auto">
-                <div className="space-y-1 text-xs">
-                  {(serpData.tasks[0].result[0].items as SerpItem[]).slice(0, 10).map((item: SerpItem, idx: number) => (
-                    <div key={idx} className="flex items-center gap-2 text-muted-foreground">
-                      <span className="text-foreground font-mono">#{idx + 1}</span>
-                      <Badge variant="outline" className="text-[10px]">{item.type}</Badge>
-                      {item.title && (
-                        <span className="truncate flex-1">{item.title}</span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Raw API Response */}
-          <details className="text-xs">
-            <summary className="cursor-pointer text-amber-300 font-medium hover:text-amber-200">
-              🔍 View Full API Response
-            </summary>
-            <pre className="mt-2 text-[10px] text-foreground bg-muted p-3 rounded border border-white/5 overflow-x-auto max-h-64">
-              {JSON.stringify(serpData, null, 2)}
-            </pre>
-          </details>
         </div>
       )}
     </div>

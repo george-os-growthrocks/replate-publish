@@ -124,8 +124,10 @@ export default function MetaDescriptionGenerator() {
         <div className="space-y-6">
           {/* Header */}
           <div>
-            <h1 className="text-3xl font-bold mb-2">Meta Description Generator</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-foreground leading-tight">
+              Free <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">Meta Description Generator</span>
+            </h1>
+            <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl">
               Generate AI-powered meta descriptions optimized for click-through rates
             </p>
           </div>
@@ -210,7 +212,7 @@ export default function MetaDescriptionGenerator() {
           {/* Results */}
           {variations.length > 0 && (
             <div className="space-y-4">
-              <h2 className="text-2xl font-semibold">Generated Variations</h2>
+              <h2 className="text-2xl font-semibold text-foreground">Generated Variations</h2>
               
               {variations.map((variation, index) => (
                 <Card key={index} className="relative">

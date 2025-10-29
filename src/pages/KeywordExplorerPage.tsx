@@ -9,19 +9,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Globe, Loader2, Bug } from "lucide-react";
+import { Search, Globe, Loader2 } from "lucide-react";
 import { KeywordOverviewPanel } from "@/components/keyword-explorer/KeywordOverviewPanel";
 import { KeywordIdeasTabs } from "@/components/keyword-explorer/KeywordIdeasTabs";
 import { SerpOverviewTable } from "@/components/keyword-explorer/SerpOverviewTable";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { KeywordExplorerState } from "@/types/keyword-explorer";
-import { FeatureDebugPanel, DebugLog } from "@/components/debug/FeatureDebugPanel";
-import { useState } from "react";
 
 export default function KeywordExplorerPage() {
-  const [debugLogs, setDebugLogs] = useState<DebugLog[]>([]);
-  const [showDebug, setShowDebug] = useState(false);
   const [state, setState] = useState<KeywordExplorerState>({
     seedKeyword: "",
     locationCode: 2840, // US default
@@ -43,26 +39,13 @@ export default function KeywordExplorerPage() {
     trafficLoading: false,
   });
 
-  const addDebugLog = (level: DebugLog['level'], message: string) => {
-    const log: DebugLog = {
-      timestamp: new Date().toLocaleTimeString(),
-      level,
-      message
-    };
-    console.log(`[${level.toUpperCase()}] ${message}`);
-    setDebugLogs(prev => [...prev, log]);
-  };
 
   const fetchOverview = async () => {
     setState(prev => ({ ...prev, overviewLoading: true }));
-    addDebugLog('info', `🔍 Fetching overview for: "${state.seedKeyword}"`);
-    addDebugLog('info', `Location: ${state.locationCode}, Language: ${state.languageCode}`);
-    
     try {
       // Get session token for auth
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
-        addDebugLog('error', '❌ No auth session - please login');
         toast.error('Please sign in again');
         setState(prev => ({ ...prev, overviewLoading: false }));
         return;
@@ -81,30 +64,15 @@ export default function KeywordExplorerPage() {
       });
 
       if (error) {
-        addDebugLog('error', `❌ Supabase function error: ${error.message}`);
         throw error;
       }
 
       if (data?.error) {
-        addDebugLog('error', `❌ API error: ${data.error}`);
         throw new Error(data.error);
       }
 
-      addDebugLog('info', `📦 Full API response received: ${JSON.stringify(Object.keys(data || {}))}`);
-
       const overview = data?.overview;
       if (overview) {
-        addDebugLog('info', `📊 Overview object keys: ${JSON.stringify(Object.keys(overview))}`);
-        addDebugLog('info', `📊 monthly_searches type: ${typeof overview.monthly_searches}`);
-        addDebugLog('info', `📊 monthly_searches is array: ${Array.isArray(overview.monthly_searches)}`);
-        addDebugLog('info', `📊 monthly_searches length: ${overview.monthly_searches?.length || 0}`);
-        
-        if (overview.monthly_searches && overview.monthly_searches.length > 0) {
-          addDebugLog('success', `✅ Found ${overview.monthly_searches.length} months of trend data`);
-          addDebugLog('info', `Sample: ${JSON.stringify(overview.monthly_searches[0])}`);
-        } else {
-          addDebugLog('warn', `⚠️ No monthly_searches data! Value: ${JSON.stringify(overview.monthly_searches)}`);
-        }
 
         setState(prev => ({
           ...prev,
@@ -127,14 +95,12 @@ export default function KeywordExplorerPage() {
         const trendCount = overview.monthly_searches?.length || 0;
         toast.success(trendCount > 0 ? `Overview loaded with ${trendCount} months of trend data` : "Overview loaded");
       } else {
-        addDebugLog('error', `❌ No overview in response! Full data: ${JSON.stringify(data)}`);
         toast.warning("No data found for this keyword");
         setState(prev => ({ ...prev, overviewLoading: false }));
       }
     } catch (error) {
       console.error("Error fetching overview:", error);
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      addDebugLog('error', `❌ Failed to fetch overview: ${errorMessage}`);
       toast.error(`Failed to fetch overview: ${errorMessage}`);
       setState(prev => ({ ...prev, overviewLoading: false }));
     }
@@ -302,15 +268,6 @@ export default function KeywordExplorerPage() {
               <><Search className="h-4 w-4 mr-2" />Search</>
             )}
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowDebug(!showDebug)}
-            className="gap-2"
-          >
-            <Bug className="h-4 w-4" />
-            {showDebug ? 'Hide' : 'Show'} Debug
-          </Button>
         </div>
       </Card>
 
@@ -380,14 +337,6 @@ export default function KeywordExplorerPage() {
         </Card>
       )}
 
-      {/* Debug Panel */}
-      {showDebug && (
-        <FeatureDebugPanel
-          logs={debugLogs}
-          featureName="Keyword Explorer"
-          onClear={() => setDebugLogs([])}
-        />
-      )}
     </div>
   );
 }

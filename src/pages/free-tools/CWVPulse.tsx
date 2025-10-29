@@ -135,8 +135,8 @@ export default function CWVPulse() {
                 <Sparkles className="w-3 h-3 mr-1" />
                 Core Web Vitals
               </Badge>
-              <h1 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
-                CWV Pulse: Core Web Vitals Checker
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-foreground leading-tight">
+                Free <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">CWV Pulse</span>: Core Web Vitals Checker
               </h1>
               <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
                 Check your LCP, INP, and CLS scores in seconds. Turn metrics into business outcomes.
