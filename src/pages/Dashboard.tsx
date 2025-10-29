@@ -5,7 +5,7 @@ import { RecentActivityFeed } from "@/components/dashboard/RecentActivityFeed";
 import { DashboardMetricsCards } from "@/components/dashboard/DashboardMetricsCards";
 import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
 import { DashboardRightSidebar } from "@/components/dashboard/DashboardRightSidebar";
-import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
+import { GSCDebugPanel } from "@/components/debug/GSCDebugPanel";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TrendingUp, Sparkles, Clock } from "lucide-react";
@@ -55,14 +55,16 @@ const Dashboard = () => {
                 access_token: providerToken,
                 refresh_token: refreshToken,
                 expires_at: expiresAt ? new Date(parseInt(expiresAt) * 1000).toISOString() : new Date(Date.now() + 3600 * 1000).toISOString(),
-                scope: 'https://www.googleapis.com/auth/webmasters.readonly',
+                scopes: ['https://www.googleapis.com/auth/webmasters.readonly'],
                 updated_at: new Date().toISOString(),
               }, {
-                onConflict: 'user_id,provider'
+                onConflict: 'user_id,provider',
+                ignoreDuplicates: false
               });
               
               if (error) {
                 console.error('❌ Failed to save token:', error);
+                console.error('Error details:', JSON.stringify(error, null, 2));
               } else {
                 console.log('✅ OAuth token saved successfully!');
               }
@@ -93,9 +95,6 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6">
-      {/* Onboarding Wizard */}
-      <OnboardingWizard />
-      
       {/* Hero Section */}
       {userEmail && <DashboardHero userEmail={userEmail} />}
       
@@ -125,6 +124,9 @@ const Dashboard = () => {
       <div className="lg:hidden">
         <DashboardRightSidebar />
       </div>
+      
+      {/* Debug Panel */}
+      <GSCDebugPanel />
     </div>
   );
 };

@@ -19,6 +19,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useSerpAdvanced } from "@/hooks/useDataForSEO";
 import { calculateCtrGapOpportunity } from "@/lib/seo-scoring";
 
+// SERP Item interface
+interface SerpItem {
+  type: string;
+  title?: string;
+  links?: Array<{ url: string }>;
+  rank_group?: number;
+  rank_absolute?: number;
+}
+
 // CTR Gap Analysis Component
 interface CtrGapAnalysisProps {
   query: string;
@@ -28,6 +37,7 @@ interface CtrGapAnalysisProps {
 }
 
 function CtrGapAnalysis({ query, impressions, ctr, position }: CtrGapAnalysisProps) {
+  const [showDebug, setShowDebug] = useState(false);
   
   const { data: serpData, isLoading, error } = useSerpAdvanced(
     { keyword: query, location_code: 2840, language_code: "en", device: "desktop" },
@@ -94,11 +104,11 @@ function CtrGapAnalysis({ query, impressions, ctr, position }: CtrGapAnalysisPro
   // Extract SERP features from DataForSEO response
   const extractFeatures = () => {
     try {
-      const items = serpData.tasks?.[0]?.result?.[0]?.items || [];
-      const hasFS = items.some((item: any) => item.type === "featured_snippet");
-      const hasPAA = items.some((item: any) => item.type === "people_also_ask");
-      const adsCount = items.filter((item: any) => item.type === "paid").length;
-      const hasSitelinks = items.some((item: any) => item.links?.length > 0);
+      const items = (serpData.tasks?.[0]?.result?.[0]?.items || []) as SerpItem[];
+      const hasFS = items.some((item: SerpItem) => item.type === "featured_snippet");
+      const hasPAA = items.some((item: SerpItem) => item.type === "people_also_ask");
+      const adsCount = items.filter((item: SerpItem) => item.type === "paid").length;
+      const hasSitelinks = items.some((item: SerpItem) => item.links && item.links.length > 0);
       
       console.log("🎯 SERP Features Extracted:", {
         totalItems: items.length,
@@ -106,7 +116,7 @@ function CtrGapAnalysis({ query, impressions, ctr, position }: CtrGapAnalysisPro
         hasPAA,
         adsCount,
         hasSitelinks,
-        itemTypes: items.map((item: any) => item.type)
+        itemTypes: items.map((item: SerpItem) => item.type)
       });
       
       return {
@@ -444,7 +454,7 @@ function CtrGapAnalysis({ query, impressions, ctr, position }: CtrGapAnalysisPro
               </div>
               <div className="bg-muted p-2 rounded border border-white/5 max-h-32 overflow-y-auto">
                 <div className="space-y-1 text-xs">
-                  {serpData.tasks[0].result[0].items.slice(0, 10).map((item: any, idx: number) => (
+                  {(serpData.tasks[0].result[0].items as SerpItem[]).slice(0, 10).map((item: SerpItem, idx: number) => (
                     <div key={idx} className="flex items-center gap-2 text-muted-foreground">
                       <span className="text-white font-mono">#{idx + 1}</span>
                       <Badge variant="outline" className="text-[10px]">{item.type}</Badge>

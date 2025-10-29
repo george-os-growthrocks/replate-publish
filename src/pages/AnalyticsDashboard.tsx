@@ -35,11 +35,105 @@ export default function AnalyticsDashboard() {
   const [reportData, setReportData] = useState<GA4ReportData | null>(null);
   const [needsAuth, setNeedsAuth] = useState(false);
 
+  // Handle OAuth callback from hash
+  useEffect(() => {
+    const handleOAuthCallback = async () => {
+      const hash = window.location.hash;
+      
+      if (hash.includes('access_token') && hash.includes('provider_token')) {
+        console.log('🔗 GA4 OAuth callback detected, processing...');
+        
+        // Extract all tokens from hash
+        const params = new URLSearchParams(hash.substring(1));
+        const accessToken = params.get('access_token');
+        const providerToken = params.get('provider_token');
+        const refreshToken = params.get('refresh_token');
+        const expiresAt = params.get('expires_at');
+        
+        console.log('🔑 GA4 Tokens found:', {
+          accessToken: accessToken ? 'Yes' : 'No',
+          providerToken: providerToken ? 'Yes' : 'No',
+          refreshToken: refreshToken ? 'Yes' : 'No'
+        });
+        
+        if (accessToken && providerToken) {
+          try {
+            // Use access token directly to get user info
+            const { data: { user }, error: userError } = await supabase.auth.getUser(accessToken);
+            
+            if (userError) {
+              console.error('❌ Error getting user with access token:', userError);
+              return;
+            }
+            
+            if (user) {
+              console.log('✅ User authenticated:', user.id);
+              
+              // CHECK if token already exists
+              const { data: existingToken } = await supabase
+                .from('user_oauth_tokens')
+                .select('scopes, access_token')
+                .eq('user_id', user.id)
+                .eq('provider', 'google')
+                .maybeSingle();
+              
+              if (existingToken) {
+                console.log('⚠️ OAuth token already exists - skipping overwrite to preserve GSC connection');
+                toast.info('Google Analytics connection uses existing token');
+                
+                // Clean up URL and don't reload (token already exists)
+                window.history.replaceState({}, '', '/analytics-dashboard');
+                return;
+              }
+              
+              // Only save if no token exists
+              const { error } = await supabase.from('user_oauth_tokens').insert({
+                user_id: user.id,
+                provider: 'google',
+                access_token: providerToken,
+                refresh_token: refreshToken,
+                expires_at: expiresAt ? new Date(parseInt(expiresAt) * 1000).toISOString() : new Date(Date.now() + 3600 * 1000).toISOString(),
+                scopes: [
+                  'https://www.googleapis.com/auth/webmasters.readonly',
+                  'https://www.googleapis.com/auth/analytics.readonly'
+                ],
+                updated_at: new Date().toISOString(),
+              });
+              
+              if (error) {
+                console.error('❌ Failed to save GA4 token:', error);
+                console.error('Error details:', JSON.stringify(error, null, 2));
+                toast.error('Failed to save Google Analytics connection');
+              } else {
+                console.log('✅ GA4 OAuth token saved successfully!');
+                toast.success('Google Analytics connected successfully!');
+              }
+            }
+          } catch (err) {
+            console.error('❌ Error processing GA4 OAuth:', err);
+          }
+        }
+        
+        // Clean up the URL and refresh to update UI
+        window.history.replaceState({}, '', '/analytics-dashboard');
+        console.log('🔄 Refreshing page to update UI...');
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
+      }
+    };
+    
+    handleOAuthCallback();
+  }, []);
+
   // Get current user
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user);
-    });
+    // Only get user if no OAuth processing
+    if (!window.location.hash.includes('access_token')) {
+      supabase.auth.getUser().then(({ data }) => {
+        setUser(data.user);
+      });
+    }
   }, []);
 
   // Fetch user's GA4 properties

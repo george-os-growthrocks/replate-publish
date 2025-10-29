@@ -284,7 +284,7 @@ export function PricingSection() {
               </div>
             </div>
             <div className="flex justify-center">
-              <Link to="/signup">
+              <Link to="/auth">
                 <Button size="lg" className="gradient-primary shadow-lg">
                   Sign Up Free - Start Now
                 </Button>

@@ -13,6 +13,73 @@ const Auth = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Handle OAuth callback from hash first
+    const handleOAuthCallback = async () => {
+      const hash = window.location.hash;
+      
+      if (hash.includes('access_token') && hash.includes('provider_token')) {
+        console.log('🔗 OAuth callback detected in Auth page...');
+        
+        // Extract all tokens from hash
+        const params = new URLSearchParams(hash.substring(1));
+        const accessToken = params.get('access_token');
+        const providerToken = params.get('provider_token');
+        const refreshToken = params.get('refresh_token');
+        const expiresAt = params.get('expires_at');
+        
+        console.log('🔑 Tokens found:', {
+          accessToken: accessToken ? 'Yes' : 'No',
+          providerToken: providerToken ? 'Yes' : 'No',
+          refreshToken: refreshToken ? 'Yes' : 'No'
+        });
+        
+        if (accessToken && providerToken) {
+          try {
+            // Use access token directly to get user info
+            const { data: { user }, error: userError } = await supabase.auth.getUser(accessToken);
+            
+            if (userError) {
+              console.error('❌ Error getting user with access token:', userError);
+            } else if (user) {
+              console.log('✅ User authenticated:', user.id);
+              
+              // Save to database directly
+              const { error } = await supabase.from('user_oauth_tokens').upsert({
+                user_id: user.id,
+                provider: 'google',
+                access_token: providerToken,
+                refresh_token: refreshToken,
+                expires_at: expiresAt ? new Date(parseInt(expiresAt) * 1000).toISOString() : new Date(Date.now() + 3600 * 1000).toISOString(),
+                scopes: ['https://www.googleapis.com/auth/webmasters.readonly'],
+                updated_at: new Date().toISOString(),
+              }, {
+                onConflict: 'user_id,provider',
+                ignoreDuplicates: false
+              });
+              
+              if (error) {
+                console.error('❌ Failed to save token:', error);
+                console.error('Error details:', JSON.stringify(error, null, 2));
+              } else {
+                console.log('✅ OAuth token saved successfully!');
+              }
+            }
+          } catch (err) {
+            console.error('❌ Error processing OAuth:', err);
+          }
+        }
+        
+        // Clean up URL and redirect
+        window.history.replaceState({}, '', '/auth');
+        setTimeout(() => {
+          navigate("/dashboard", { replace: true });
+        }, 500);
+        return;
+      }
+    };
+
+    handleOAuthCallback();
+    
     // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
@@ -28,46 +95,12 @@ const Auth = () => {
       console.log("Auth state changed:", event, session ? "Session exists" : "No session");
       
       if (event === "SIGNED_IN" && session) {
-        console.log("User signed in, attempting to store OAuth token");
+        console.log("User signed in");
         
         // Track signup in Google Analytics
         trackSignup();
         
-        // Try to capture and store the provider token
-        try {
-          const providerToken = session.provider_token;
-          const providerRefreshToken = session.provider_refresh_token;
-          const accessToken = session.access_token;
-
-          if (!accessToken) {
-            console.warn("⚠️ No access_token available in session; skipping OAuth token storage");
-          } else if (providerToken) {
-            console.log("📥 Found provider_token, storing it...");
-            
-            const { error } = await supabase.functions.invoke("store-oauth-token", {
-              body: {
-                provider_token: providerToken,
-                provider_refresh_token: providerRefreshToken,
-                expires_at: session.expires_at,
-              },
-              headers: {
-                Authorization: `Bearer ${accessToken}`,
-              },
-            });
-            
-            if (error) {
-              console.error("❌ Failed to store OAuth token:", error);
-            } else {
-              console.log("✅ OAuth token stored successfully!");
-            }
-          } else {
-            console.warn("⚠️ No provider_token in session");
-          }
-        } catch (error) {
-          console.error("Error storing OAuth token:", error);
-        }
-        
-        console.log("User signed in, redirecting to dashboard");
+        console.log("Redirecting to dashboard");
         navigate("/dashboard", { replace: true });
       }
       

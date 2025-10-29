@@ -3,6 +3,24 @@ import { supabase } from "@/integrations/supabase/client";
 import { GscRow } from "@/types/gsc";
 import { toast } from "sonner";
 
+interface DimensionFilter {
+  dimension: string;
+  operator: string;
+  expression: string;
+}
+
+interface DimensionFilterGroup {
+  filters: DimensionFilter[];
+}
+
+interface GSCApiRow {
+  clicks: number;
+  impressions: number;
+  ctr: number;
+  position: number;
+  keys: string[];
+}
+
 interface UseGscDataOptions {
   propertyUrl: string;
   startDate: string;
@@ -27,13 +45,25 @@ export function useGscData(options: UseGscDataOptions) {
   return useQuery({
     queryKey: ["gsc-data", propertyUrl, startDate, endDate, dimensions, country, device],
     queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      // Get user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("Please sign in to view data");
+      }
       
-      if (!session?.provider_token) {
-        throw new Error("No Google access token. Please sign out and sign in again.");
+      // Get OAuth token from database
+      const { data: tokenData, error: tokenError } = await supabase
+        .from('user_oauth_tokens')
+        .select('access_token')
+        .eq('user_id', user.id)
+        .eq('provider', 'google')
+        .maybeSingle();
+      
+      if (tokenError || !tokenData) {
+        throw new Error("No Google connection found. Please sign in with Google.");
       }
 
-      const dimensionFilterGroups: any[] = [];
+      const dimensionFilterGroups: DimensionFilterGroup[] = [];
 
       // Add country filter if specified
       if (country && country !== "ALL") {
@@ -59,7 +89,7 @@ export function useGscData(options: UseGscDataOptions) {
 
       const { data, error } = await supabase.functions.invoke("gsc-query", {
         body: {
-          provider_token: session.provider_token,
+          provider_token: tokenData.access_token,
           siteUrl: propertyUrl,
           startDate,
           endDate,
@@ -77,7 +107,7 @@ export function useGscData(options: UseGscDataOptions) {
       }
 
       // Transform rows to typed format
-      const rows: GscRow[] = data.rows.map((row: any) => {
+      const rows: GscRow[] = data.rows.map((row: GSCApiRow) => {
         const result: GscRow = {
           clicks: row.clicks || 0,
           impressions: row.impressions || 0,
@@ -91,7 +121,12 @@ export function useGscData(options: UseGscDataOptions) {
           if (dim === "query") result.query = keys[index];
           if (dim === "page") result.page = keys[index];
           if (dim === "country") result.country = keys[index];
-          if (dim === "device") result.device = keys[index];
+          if (dim === "device") {
+            const deviceValue = keys[index];
+            if (deviceValue === "DESKTOP" || deviceValue === "MOBILE" || deviceValue === "TABLET") {
+              result.device = deviceValue;
+            }
+          }
           if (dim === "date") result.date = keys[index];
         });
 
@@ -102,10 +137,6 @@ export function useGscData(options: UseGscDataOptions) {
     },
     enabled: enabled && !!propertyUrl && !!startDate && !!endDate,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    onError: (error: any) => {
-      console.error("Error fetching GSC data:", error);
-      toast.error("Failed to fetch Search Console data");
-    },
   });
 }
 

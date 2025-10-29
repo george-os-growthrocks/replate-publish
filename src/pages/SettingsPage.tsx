@@ -3,14 +3,48 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings, User, Bell, Database, Palette, CreditCard } from "lucide-react";
+import { Settings, User, Bell, Database, Palette, CreditCard, Link as LinkIcon } from "lucide-react";
 import { useFilters } from "@/contexts/FilterContext";
 import PropertySelector from "@/components/dashboard/PropertySelector";
 import { SubscriptionSettings } from "@/components/settings/SubscriptionSettings";
 import { ProfileSettings } from "@/components/settings/ProfileSettings";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import { Badge } from "@/components/ui/badge";
 
 export default function SettingsPage() {
   const { propertyUrl, setPropertyUrl } = useFilters();
+
+  // Check if Google Search Console is connected
+  const { data: isConnected, refetch } = useQuery({
+    queryKey: ['gsc-connection-status'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return false;
+
+      const { data, error } = await supabase
+        .from('user_oauth_tokens')
+        .select('access_token')
+        .eq('user_id', user.id)
+        .eq('provider', 'google')
+        .maybeSingle();
+
+      return !!data?.access_token;
+    }
+  });
+
+  const disconnectGoogle = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    await supabase
+      .from('user_oauth_tokens')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('provider', 'google');
+
+    refetch();
+  };
 
   return (
     <div className="space-y-6">
@@ -47,6 +81,41 @@ export default function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="general" className="space-y-6">
+          {/* Google Search Console Connection */}
+          <Card className="p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <LinkIcon className="h-5 w-5" />
+              <h3 className="text-lg font-semibold">Google Search Console</h3>
+              {isConnected && (
+                <Badge className="bg-green-500">Connected</Badge>
+              )}
+            </div>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Your Google Search Console connection is managed through Google Sign-in.
+              </p>
+              {isConnected ? (
+                <div className="flex items-center gap-3">
+                  <Button onClick={disconnectGoogle} variant="destructive" size="sm">
+                    Disconnect Google
+                  </Button>
+                  <p className="text-sm text-muted-foreground">
+                    Your Google Search Console is connected and properties are available
+                  </p>
+                </div>
+              ) : (
+                <div className="p-4 bg-muted rounded-lg">
+                  <p className="text-sm mb-2">To connect Google Search Console:</p>
+                  <ol className="text-sm text-muted-foreground space-y-1 ml-4">
+                    <li>1. Sign out of your account</li>
+                    <li>2. Sign in again using "Sign in with Google"</li>
+                    <li>3. Your properties will automatically appear</li>
+                  </ol>
+                </div>
+              )}
+            </div>
+          </Card>
+
           {/* Property Settings */}
       <Card className="p-6">
         <div className="flex items-center gap-3 mb-4">

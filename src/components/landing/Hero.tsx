@@ -49,7 +49,7 @@ export function Hero() {
               size="lg" 
               className="gradient-primary text-lg px-8 py-6 group"
             >
-              <Link to="/signup">
+              <Link to="/auth">
                 Start Free 7-Day Trial
                 <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
               </Link>

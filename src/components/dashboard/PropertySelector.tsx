@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Globe, ChevronDown, ExternalLink } from "lucide-react";
@@ -18,30 +18,50 @@ interface PropertySelectorProps {
   selectedProperty: string;
 }
 
+interface GSCSite {
+  siteUrl: string;
+  permissionLevel?: string;
+}
+
 const PropertySelector = ({ onPropertySelect, selectedProperty }: PropertySelectorProps) => {
   const [properties, setProperties] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    fetchProperties();
-  }, []);
-
-  const fetchProperties = async () => {
+  const fetchProperties = useCallback(async () => {
     try {
       setIsLoading(true);
       
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { user } } = await supabase.auth.getUser();
       
-      if (!session?.provider_token) {
-        toast.error("No Google access token. Please sign out and sign in again.");
+      if (!user) {
+        toast.error("Please sign in to view properties");
         return;
       }
       
+      // Get OAuth token from database
+      const { data: tokenData, error: tokenError } = await supabase
+        .from('user_oauth_tokens')
+        .select('access_token')
+        .eq('user_id', user.id)
+        .eq('provider', 'google')
+        .maybeSingle();
+      
+      if (tokenError || !tokenData) {
+        toast.error("No Google connection found. Please sign in with Google.", { duration: 10000 });
+        console.error('Token fetch error:', tokenError);
+        return;
+      }
+      
+      console.log('🔑 Fetching properties with stored token...');
+      
       const { data, error } = await supabase.functions.invoke("gsc-sites", {
-        body: { provider_token: session.provider_token }
+        body: { provider_token: tokenData.access_token }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('GSC sites error:', error);
+        throw error;
+      }
 
       if (data?.error) {
         toast.error(data.error, { duration: 10000 });
@@ -49,19 +69,28 @@ const PropertySelector = ({ onPropertySelect, selectedProperty }: PropertySelect
       }
 
       if (data?.sites && data.sites.length > 0) {
-        const siteUrls = data.sites.map((site: any) => site.siteUrl);
+        console.log(`✅ Found ${data.sites.length} properties`);
+        const siteUrls = data.sites.map((site: GSCSite) => site.siteUrl);
         setProperties(siteUrls);
         if (siteUrls.length > 0 && !selectedProperty) {
           onPropertySelect(siteUrls[0]);
         }
+      } else {
+        console.log('⚠️ No properties found');
+        toast.info("No Search Console properties found");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error fetching properties:", error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       toast.error("Failed to load Search Console properties. Check console for details.");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [selectedProperty, onPropertySelect]);
+
+  useEffect(() => {
+    fetchProperties();
+  }, [fetchProperties]);
 
   // Split properties by type
   const { domainProperties, websiteProperties } = useMemo(() => {

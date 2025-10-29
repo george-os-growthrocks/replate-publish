@@ -2,7 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Sparkles, Target, Settings, Calendar, TrendingUp } from "lucide-react";
+import { Sparkles, Target, Settings, Calendar } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSubscription, useCredits } from "@/hooks/useSubscription";
 import { useProjects } from "@/hooks/useProjects";
@@ -46,8 +46,8 @@ export function DashboardHero({ userEmail }: { userEmail: string }) {
   const healthLabel = healthScore >= 80 ? 'Excellent' : healthScore >= 50 ? 'Good' : 'Needs Attention';
 
   // Member since (from subscription or fallback)
-  const memberSince = subscription?.created_at 
-    ? new Date(subscription.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+  const memberSince = subscription?.current_period_start 
+    ? new Date(subscription.current_period_start).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
     : 'Oct 2025';
 
   return (

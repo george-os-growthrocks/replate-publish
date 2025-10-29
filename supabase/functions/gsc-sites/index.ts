@@ -16,106 +16,77 @@ serve(async (req: Request) => {
   }
 
   try {
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('No authorization header provided');
-    }
+    // Parse request body first
+    const body = await req.json();
+    let providerToken = body.provider_token;
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
-    
-    const supabaseClient = createClient(
-      supabaseUrl,
-      supabaseKey,
-      {
-        global: {
-          headers: { Authorization: authHeader },
-        },
+    console.log('📥 Provider token from request body:', providerToken ? 'Yes' : 'No');
+
+    // If provider_token is provided in body, use it directly (skip user auth)
+    if (providerToken) {
+      console.log('✅ Using provider_token from request body');
+    } else {
+      // No provider_token in body, need to authenticate and get from database
+      const authHeader = req.headers.get('Authorization');
+      if (!authHeader) {
+        throw new Error('No authorization header and no provider_token provided');
       }
-    );
 
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
-    if (userError) throw new Error(`Auth error: ${userError.message}`);
-    if (!user) throw new Error('Unauthorized - no user found');
+      const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+      const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+      
+      const supabaseClient = createClient(
+        supabaseUrl,
+        supabaseKey,
+        {
+          global: {
+            headers: { Authorization: authHeader },
+          },
+        }
+      );
 
-    console.log('✅ User authenticated:', user.id);
+      const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+      if (userError) throw new Error(`Auth error: ${userError.message}`);
+      if (!user) throw new Error('Unauthorized - no user found');
 
-    // Try to get provider_token from database first
-    let provider_token = null;
-    
-    console.log('🔍 Looking for stored OAuth token in database...');
-    const { data: tokenData, error: tokenError } = await supabaseClient
-      .from('user_oauth_tokens')
-      .select('access_token, refresh_token, expires_at')
-      .eq('user_id', user.id)
-      .eq('provider', 'google')
-      .single();
+      console.log('✅ User authenticated:', user.id);
+      
+      // Get provider_token from database
+      console.log('🔍 Looking for stored OAuth token in database...');
+      const { data: tokenData, error: tokenError } = await supabaseClient
+        .from('user_oauth_tokens')
+        .select('access_token, refresh_token, expires_at')
+        .eq('user_id', user.id)
+        .eq('provider', 'google')
+        .single();
 
-    if (tokenError) {
-      console.error('❌ Error fetching token from database:', tokenError);
-    } else if (tokenData) {
+      if (tokenError || !tokenData) {
+        throw new Error('No stored OAuth token found. Please sign in with Google.');
+      }
+
       console.log('✅ Found stored token in database');
-      provider_token = tokenData.access_token;
       
       // Check if token is expired
       if (tokenData.expires_at) {
         const expiresAt = new Date(tokenData.expires_at);
         const now = new Date();
         if (expiresAt <= now) {
-          console.warn('⚠️ Stored token is expired. User needs to re-authenticate.');
-          provider_token = null;
+          throw new Error('OAuth token expired. Please sign in with Google again.');
         }
       }
-    }
-
-    // Fallback: try to get from request body
-    if (!provider_token) {
-      try {
-        const body = await req.json();
-        provider_token = body.provider_token;
-        console.log('📥 Received provider_token from request:', provider_token ? 'Yes' : 'No');
-      } catch (e) {
-        console.log('⚠️ No JSON body provided');
-      }
-    }
-
-    // Last resort: try to get from session
-    if (!provider_token) {
-      const { data: session } = await supabaseClient.auth.getSession();
-      provider_token = session?.session?.provider_token;
-      console.log('🔑 Provider token from session:', provider_token ? 'Yes' : 'No');
       
-      // If we found it in session, save it to database for future use
-      if (provider_token && session?.session) {
-        console.log('💾 Saving token to database for future use...');
-        try {
-          await supabaseClient.from('user_oauth_tokens').upsert({
-            user_id: user.id,
-            provider: 'google',
-            access_token: provider_token,
-            expires_at: new Date(Date.now() + 3600 * 1000).toISOString(), // 1 hour from now
-            scope: 'https://www.googleapis.com/auth/webmasters.readonly',
-            updated_at: new Date().toISOString(),
-          }, {
-            onConflict: 'user_id,provider'
-          });
-          console.log('✅ Token saved successfully');
-        } catch (saveError) {
-          console.warn('⚠️ Could not save token:', saveError);
-          // Continue anyway since we have the token
-        }
-      }
+      providerToken = tokenData.access_token;
     }
 
-    if (!provider_token) {
-      throw new Error('No Google access token available. Please sign out and sign in again with Google to grant access to Search Console.');
+    if (!providerToken) {
+      throw new Error('No Google access token available.');
     }
 
-    console.log('🚀 Fetching GSC sites for user:', user.id);
+    console.log('🚀 Fetching GSC sites from Google API...');
 
     const response = await fetch('https://www.googleapis.com/webmasters/v3/sites', {
       headers: {
-        'Authorization': `Bearer ${provider_token}`,
+        'Authorization': `Bearer ${providerToken}`,
         'Content-Type': 'application/json',
       },
     });
