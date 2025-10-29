@@ -1,88 +1,50 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { z } from "https://deno.land/x/zod@v3.23.8/mod.ts";
+import {
+  DataForSEOClient,
+  validateRequest,
+  successResponse,
+  errorResponse,
+  handleCORS,
+} from "../_shared/dataforseo.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
-async function dfsFetch(path: string, body: any, login: string, password: string) {
-  const auth = btoa(`${login}:${password}`);
-  const res = await fetch(`https://api.dataforseo.com/v3/${path}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Basic ${auth}`,
-    },
-    body: JSON.stringify([body]),
-  });
-  
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`DataForSEO API error: ${text}`);
-  }
-  
-  return await res.json();
-}
-
-serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
-
-  try {
-    const dfsLogin = Deno.env.get("DATAFORSEO_LOGIN");
-    const dfsPassword = Deno.env.get("DATAFORSEO_PASSWORD");
-
-    if (!dfsLogin || !dfsPassword) {
-      throw new Error("DataForSEO credentials not configured");
-    }
-
-    const { 
-      target, // domain or URL
-      location_code = 2840,
-      language_code = "en",
-      include_serp_info = true,
-      limit = 1000,
-      offset = 0,
-      filters = null
-    } = await req.json();
-
-    if (!target) {
-      throw new Error("target domain or URL is required");
-    }
-
-    const payload = {
-      target,
-      location_code,
-      language_code,
-      include_serp_info,
-      limit,
-      offset,
-      ...(filters && { filters })
-    };
-
-    const data = await dfsFetch(
-      "dataforseo_labs/google/keywords_for_site/live",
-      payload,
-      dfsLogin,
-      dfsPassword
-    );
-
-    return new Response(JSON.stringify(data), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  } catch (error: any) {
-    console.error("DataForSEO Labs Keywords For Site error:", error);
-    return new Response(
-      JSON.stringify({ 
-        error: error.message,
-        details: "Failed to fetch keywords for site from DataForSEO Labs"
-      }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
-    );
-  }
+const RequestSchema = z.object({
+  target: z.string().min(1).max(255),
+  location_code: z.number().int().positive().default(2840),
+  language_code: z.string().regex(/^[a-z]{2}$/).default("en"),
+  limit: z.number().int().min(1).max(1000).default(100),
+  offset: z.number().int().min(0).default(0),
+  filters: z.array(z.any()).optional(),
+  order_by: z.array(z.string()).optional(),
 });
 
+serve(async (req) => {
+  const corsResponse = handleCORS(req);
+  if (corsResponse) return corsResponse;
+
+  try {
+    const params = await validateRequest(req, RequestSchema) as z.infer<typeof RequestSchema>;
+    const client = new DataForSEOClient();
+    
+    const payload: any = {
+      target: params.target,
+      location_code: params.location_code,
+      language_code: params.language_code,
+      limit: params.limit,
+      offset: params.offset,
+    };
+
+    if (params.filters) payload.filters = params.filters;
+    if (params.order_by) payload.order_by = params.order_by;
+    
+    const response = await client.post(
+      "dataforseo_labs/google/keywords_for_site/live",
+      payload
+    );
+    
+    const result: any = client.extractResult(response);
+    return successResponse(result);
+  } catch (error) {
+    return errorResponse(error);
+  }
+});

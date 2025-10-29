@@ -25,6 +25,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { FeatureDebugPanel, DebugLog } from "@/components/debug/FeatureDebugPanel";
 
 interface CrawlStatus {
   max_crawl_pages: number;
@@ -72,12 +73,15 @@ export default function SiteAuditPage() {
   const [auditData, setAuditData] = useState<AuditData | null>(null);
   const [activeTab, setActiveTab] = useState("summary");
   const pollIntervalRef = useRef<number | null>(null);
-  const [debugLog, setDebugLog] = useState<Array<{time: string, message: string, type: string}>>([]);
-  const [showDebug, setShowDebug] = useState(true);
+  const [debugLogs, setDebugLogs] = useState<DebugLog[]>([]);
 
-  const addDebugLog = (message: string, type: string = "info") => {
-    const time = new Date().toLocaleTimeString();
-    setDebugLog(prev => [...prev, { time, message, type }]);
+  const addDebugLog = (message: string, type: DebugLog['level'] = "info") => {
+    const log: DebugLog = {
+      timestamp: new Date().toLocaleTimeString(),
+      level: type,
+      message
+    };
+    setDebugLogs(prev => [...prev, log]);
     console.log(`[${type.toUpperCase()}] ${message}`);
   };
 
@@ -321,55 +325,10 @@ export default function SiteAuditPage() {
               )}
               {isLoading ? "Starting..." : "Start Audit"}
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowDebug(!showDebug)}
-            >
-              {showDebug ? "Hide" : "Show"} Debug
-            </Button>
           </div>
         </div>
       </Card>
 
-      {/* Debug Panel */}
-      {showDebug && debugLog.length > 0 && (
-        <Card className="p-4 border-blue-500/30 bg-blue-500/5">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              Debug Log ({debugLog.length} entries)
-            </h3>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setDebugLog([])}
-            >
-              Clear
-            </Button>
-          </div>
-          <div className="space-y-1 max-h-[400px] overflow-y-auto font-mono text-xs">
-            {debugLog.map((log, idx) => (
-              <div
-                key={idx}
-                className={`p-2 rounded ${
-                  log.type === "error"
-                    ? "bg-red-500/10 text-red-200"
-                    : log.type === "warn"
-                    ? "bg-amber-500/10 text-amber-200"
-                    : log.type === "success"
-                    ? "bg-emerald-500/10 text-emerald-200"
-                    : "bg-slate-800/50 text-slate-300"
-                }`}
-              >
-                <span className="text-muted-foreground">[{log.time}]</span>{" "}
-                <span className="font-semibold uppercase text-[10px]">[{log.type}]</span>{" "}
-                {log.message}
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
 
       {/* Crawl Progress */}
       {auditData && auditData.crawlProgress === 'in_progress' && (
@@ -677,6 +636,13 @@ export default function SiteAuditPage() {
           </div>
         </Card>
       )}
+
+      {/* Debug Panel */}
+      <FeatureDebugPanel
+        logs={debugLogs}
+        featureName="Site Audit"
+        onClear={() => setDebugLogs([])}
+      />
     </div>
   );
 }

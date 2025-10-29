@@ -135,7 +135,7 @@ serve(async (req) => {
     console.log('✅ Parent Topic:', parentTopic?.keyword || 'None');
 
     // Deduct credits (1 API call)
-    // @ts-ignore - RPC function exists at runtime
+    // @ts-expect-error - RPC function exists at runtime
     await supabase.rpc('deduct_credits', {
       p_user_id: user.id,
       p_amount: 1,

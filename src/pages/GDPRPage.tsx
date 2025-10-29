@@ -20,7 +20,7 @@ export default function GDPRPage() {
               <h1 className="text-5xl font-bold mb-6 text-foreground">GDPR Compliance</h1>
               <p className="text-muted-foreground mb-8">Last updated: October 27, 2025</p>
 
-              <div className="prose prose-lg dark:prose-invert max-w-none space-y-8">
+              <div className="prose prose-lg dark:prose-invert prose-headings:text-foreground max-w-none space-y-8">
                 <section>
                   <h2 className="text-2xl font-bold mb-4 text-foreground">1. Overview</h2>
                   <p className="text-muted-foreground">

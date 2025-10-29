@@ -160,13 +160,13 @@ function CtrGapAnalysis({ query, impressions, ctr, position }: CtrGapAnalysisPro
               : "bg-gradient-to-br from-slate-600 to-slate-700"
           }`}>
             {hasSignificantOpportunity ? (
-              <Zap className="h-5 w-5 text-white" />
+              <Zap className="h-5 w-5 text-primary-foreground" />
             ) : (
-              <Target className="h-5 w-5 text-white" />
+              <Target className="h-5 w-5 text-primary-foreground" />
             )}
           </div>
           <div>
-            <div className="text-sm font-semibold text-white">
+            <div className="text-sm font-semibold text-foreground">
               {hasSignificantOpportunity ? "CTR Opportunity Detected" : "CTR Analysis"}
             </div>
             <div className="text-xs text-slate-300/70 mt-0.5">
@@ -177,7 +177,7 @@ function CtrGapAnalysis({ query, impressions, ctr, position }: CtrGapAnalysisPro
         <div className="text-right">
           {hasSignificantOpportunity ? (
             <>
-              <div className="text-2xl font-bold text-white">
+              <div className="text-2xl font-bold text-foreground">
                 +{gap.potentialExtraClicks.toLocaleString()}
               </div>
               <div className="text-xs text-indigo-200/70">potential extra clicks</div>
@@ -312,7 +312,7 @@ function CtrGapAnalysis({ query, impressions, ctr, position }: CtrGapAnalysisPro
                 <div key={idx} className="flex items-start gap-2 text-sm">
                   <span className="text-lg mt-0.5">{rec.icon}</span>
                   <div className="flex-1">
-                    <div className="font-medium text-white">{rec.action}</div>
+                    <div className="font-medium text-foreground">{rec.action}</div>
                     <div className="text-xs text-emerald-200/70 mt-0.5">{rec.details}</div>
                   </div>
                 </div>
@@ -380,19 +380,19 @@ function CtrGapAnalysis({ query, impressions, ctr, position }: CtrGapAnalysisPro
             <div className="grid grid-cols-2 gap-2 text-xs">
               <div className="bg-muted p-2 rounded border border-white/5">
                 <span className="text-muted-foreground">Query:</span>
-                <div className="text-white font-medium truncate">{query}</div>
+                <div className="text-foreground font-medium truncate">{query}</div>
               </div>
               <div className="bg-muted p-2 rounded border border-white/5">
                 <span className="text-muted-foreground">Position:</span>
-                <div className="text-white font-medium">{position.toFixed(1)}</div>
+                <div className="text-foreground font-medium">{position.toFixed(1)}</div>
               </div>
               <div className="bg-muted p-2 rounded border border-white/5">
                 <span className="text-muted-foreground">Impressions:</span>
-                <div className="text-white font-medium">{impressions.toLocaleString()}</div>
+                <div className="text-foreground font-medium">{impressions.toLocaleString()}</div>
               </div>
               <div className="bg-muted p-2 rounded border border-white/5">
                 <span className="text-muted-foreground">Current CTR:</span>
-                <div className="text-white font-medium">{(ctr * 100).toFixed(2)}%</div>
+                <div className="text-foreground font-medium">{(ctr * 100).toFixed(2)}%</div>
               </div>
             </div>
           </div>
@@ -456,7 +456,7 @@ function CtrGapAnalysis({ query, impressions, ctr, position }: CtrGapAnalysisPro
                 <div className="space-y-1 text-xs">
                   {(serpData.tasks[0].result[0].items as SerpItem[]).slice(0, 10).map((item: SerpItem, idx: number) => (
                     <div key={idx} className="flex items-center gap-2 text-muted-foreground">
-                      <span className="text-white font-mono">#{idx + 1}</span>
+                      <span className="text-foreground font-mono">#{idx + 1}</span>
                       <Badge variant="outline" className="text-[10px]">{item.type}</Badge>
                       {item.title && (
                         <span className="truncate flex-1">{item.title}</span>
@@ -473,7 +473,7 @@ function CtrGapAnalysis({ query, impressions, ctr, position }: CtrGapAnalysisPro
             <summary className="cursor-pointer text-amber-300 font-medium hover:text-amber-200">
               🔍 View Full API Response
             </summary>
-            <pre className="mt-2 text-[10px] text-white bg-muted p-3 rounded border border-white/5 overflow-x-auto max-h-64">
+            <pre className="mt-2 text-[10px] text-foreground bg-muted p-3 rounded border border-white/5 overflow-x-auto max-h-64">
               {JSON.stringify(serpData, null, 2)}
             </pre>
           </details>

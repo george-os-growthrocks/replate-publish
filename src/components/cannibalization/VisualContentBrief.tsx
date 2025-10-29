@@ -9,14 +9,14 @@ interface VisualContentBriefProps {
 
 export function VisualContentBrief({ content }: VisualContentBriefProps) {
   return (
-    <div className="prose prose-invert max-w-none">
+    <div className="prose prose-slate dark:prose-invert prose-headings:text-foreground max-w-none">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeRaw]}
         components={{
           // Headings with beautiful styling
           h1: ({ children }) => (
-            <h1 className="text-3xl font-bold text-white mb-6 mt-8 pb-3 border-b-2 border-gradient-to-r from-purple-500 to-pink-500">
+            <h1 className="text-3xl font-bold text-foreground mb-6 mt-8 pb-3 border-b-2 border-gradient-to-r from-purple-500 to-pink-500">
               {children}
             </h1>
           ),
@@ -27,26 +27,26 @@ export function VisualContentBrief({ content }: VisualContentBriefProps) {
             
             return (
               <h2 className={`text-2xl font-bold mb-4 mt-8 flex items-center gap-2 ${
-                hasEmoji ? 'text-purple-400' : 'text-blue-400'
+                hasEmoji ? 'text-purple-600 dark:text-purple-400' : 'text-blue-600 dark:text-blue-400'
               }`}>
                 {children}
               </h2>
             );
           },
           h3: ({ children }) => (
-            <h3 className="text-xl font-semibold text-green-400 mb-3 mt-6">
+            <h3 className="text-xl font-semibold text-green-600 dark:text-green-400 mb-3 mt-6">
               {children}
             </h3>
           ),
           h4: ({ children }) => (
-            <h4 className="text-lg font-semibold text-amber-400 mb-2 mt-4">
+            <h4 className="text-lg font-semibold text-amber-600 dark:text-amber-400 mb-2 mt-4">
               {children}
             </h4>
           ),
           
           // Paragraphs
           p: ({ children }) => (
-            <p className="text-slate-300 leading-relaxed mb-4">
+            <p className="text-foreground/80 leading-relaxed mb-4">
               {children}
             </p>
           ),
@@ -57,7 +57,7 @@ export function VisualContentBrief({ content }: VisualContentBriefProps) {
               href={href}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-400 hover:text-blue-300 underline decoration-blue-500/30 hover:decoration-blue-400 transition-colors inline-flex items-center gap-1 font-medium"
+              className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 underline decoration-blue-500/30 hover:decoration-blue-400 transition-colors inline-flex items-center gap-1 font-medium"
             >
               {children}
               <ExternalLink className="h-3 w-3 inline" />
@@ -71,7 +71,7 @@ export function VisualContentBrief({ content }: VisualContentBriefProps) {
             </ul>
           ),
           ol: ({ children }) => (
-            <ol className="list-decimal list-inside space-y-2 mb-4 ml-2 text-slate-300">
+            <ol className="list-decimal list-inside space-y-2 mb-4 ml-2 text-foreground/80">
               {children}
             </ol>
           ),
@@ -90,7 +90,7 @@ export function VisualContentBrief({ content }: VisualContentBriefProps) {
                   ) : (
                     <Square className="h-5 w-5 text-slate-600 flex-shrink-0 mt-0.5" />
                   )}
-                  <span className={isChecked ? 'text-slate-400 line-through' : 'text-slate-300'}>
+                  <span className={isChecked ? 'text-muted-foreground line-through' : 'text-foreground/80'}>
                     {cleanText}
                   </span>
                 </li>
@@ -99,8 +99,8 @@ export function VisualContentBrief({ content }: VisualContentBriefProps) {
             
             // Regular list item
             return (
-              <li className="flex items-start gap-2 text-slate-300">
-                <span className="text-purple-400 mt-1">•</span>
+              <li className="flex items-start gap-2 text-foreground/80">
+                <span className="text-purple-600 dark:text-purple-400 mt-1">•</span>
                 <span>{children}</span>
               </li>
             );
@@ -108,14 +108,14 @@ export function VisualContentBrief({ content }: VisualContentBriefProps) {
           
           // Strong/Bold text
           strong: ({ children }) => (
-            <strong className="font-bold text-white">
+            <strong className="font-bold text-foreground">
               {children}
             </strong>
           ),
           
           // Emphasis/Italic
           em: ({ children }) => (
-            <em className="italic text-blue-300">
+            <em className="italic text-blue-600 dark:text-blue-300">
               {children}
             </em>
           ),
@@ -124,13 +124,13 @@ export function VisualContentBrief({ content }: VisualContentBriefProps) {
           code: ({ inline, children }: any) => {
             if (inline) {
               return (
-                <code className="px-2 py-1 rounded bg-slate-800 text-pink-400 font-mono text-sm border border-slate-700">
+                <code className="px-2 py-1 rounded bg-muted text-pink-600 dark:text-pink-400 font-mono text-sm border border-border">
                   {children}
                 </code>
               );
             }
             return (
-              <code className="block px-4 py-3 rounded-lg bg-slate-900 text-green-400 font-mono text-sm overflow-x-auto border border-slate-700 mb-4">
+              <code className="block px-4 py-3 rounded-lg bg-muted text-green-600 dark:text-green-400 font-mono text-sm overflow-x-auto border border-border mb-4">
                 {children}
               </code>
             );
@@ -139,7 +139,7 @@ export function VisualContentBrief({ content }: VisualContentBriefProps) {
           // Blockquotes
           blockquote: ({ children }) => (
             <blockquote className="border-l-4 border-purple-500 pl-4 py-2 my-4 bg-purple-500/5 rounded-r-lg">
-              <div className="text-purple-200">
+              <div className="text-purple-700 dark:text-purple-200">
                 {children}
               </div>
             </blockquote>
@@ -164,12 +164,12 @@ export function VisualContentBrief({ content }: VisualContentBriefProps) {
             </thead>
           ),
           th: ({ children }) => (
-            <th className="px-4 py-3 text-left font-semibold text-purple-300 border-b border-purple-500/30">
+            <th className="px-4 py-3 text-left font-semibold text-purple-700 dark:text-purple-300 border-b border-purple-500/30">
               {children}
             </th>
           ),
           td: ({ children }) => (
-            <td className="px-4 py-3 text-slate-300 border-b border-slate-800">
+            <td className="px-4 py-3 text-foreground/80 border-b border-border">
               {children}
             </td>
           ),

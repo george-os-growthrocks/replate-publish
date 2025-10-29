@@ -32,7 +32,7 @@ export default function AboutPage() {
 
             {/* Story */}
             <div className="max-w-4xl mx-auto mb-20">
-              <div className="prose prose-lg dark:prose-invert mx-auto">
+              <div className="prose prose-lg dark:prose-invert prose-headings:text-foreground mx-auto">
                 <h2 className="text-3xl font-bold mb-6 text-foreground">Our Story</h2>
                 <p className="text-muted-foreground mb-4">
                   AnotherSEOGuru was born from frustration with expensive, complex SEO tools that only enterprise companies could afford. We believe every business deserves access to powerful SEO insights and AI-driven content generation.

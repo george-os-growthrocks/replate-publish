@@ -33,7 +33,7 @@ export default function FreeToolkitPost() {
                 <Badge>SEO Tools</Badge>
                 <Badge variant="secondary">Free Resources</Badge>
               </div>
-              <h1 className="text-4xl md:text-5xl font-bold mb-4">
+              <h1 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
                 The Ultimate Free SEO Toolkit for 2026 (No Sign-Up, No Fluff)
               </h1>
               <div className="flex items-center gap-6 text-sm text-muted-foreground">
@@ -52,7 +52,7 @@ export default function FreeToolkitPost() {
 
           {/* Content */}
           <div className="py-12 px-4">
-            <div className="container mx-auto max-w-3xl prose prose-slate dark:prose-invert prose-headings:font-bold prose-a:text-primary prose-a:no-underline hover:prose-a:underline">
+            <div className="container mx-auto max-w-3xl prose prose-slate dark:prose-invert prose-headings:text-foreground prose-headings:font-bold prose-a:text-primary prose-a:no-underline hover:prose-a:underline">
               <p className="lead">
                 If you're stitching together a practical SEO stack without burning budget, this playbook gives you the highest-leverage tools to ship now and actually use. My criteria are ruthless: does it help you publish better pages, ship faster, and make better decisions this week?
               </p>

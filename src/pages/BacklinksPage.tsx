@@ -15,6 +15,17 @@ export default function BacklinksPage() {
   const [url, setUrl] = useState("");
   const [searchUrl, setSearchUrl] = useState("");
   const [activeTab, setActiveTab] = useState("live");
+  const [debugLogs, setDebugLogs] = useState<DebugLog[]>([]);
+
+  const addDebugLog = (level: DebugLog['level'], message: string) => {
+    const log: DebugLog = {
+      timestamp: new Date().toLocaleTimeString(),
+      level,
+      message
+    };
+    console.log(`[${level.toUpperCase()}] ${message}`);
+    setDebugLogs(prev => [...prev, log]);
+  };
 
   const { data: backlinksData, isLoading: backlinksLoading, error: backlinksError } = useBacklinksLive(
     { target: searchUrl, mode: "as_is", limit: 100 },
@@ -39,6 +50,7 @@ export default function BacklinksPage() {
       toast.error("Please enter a domain or URL");
       return;
     }
+    addDebugLog('info', `🔍 Starting backlink analysis for: ${url.trim()}`);
     setSearchUrl(url.trim());
   };
 
@@ -651,6 +663,13 @@ export default function BacklinksPage() {
           </div>
         </Card>
       )}
+
+      {/* Debug Panel */}
+      <FeatureDebugPanel
+        logs={debugLogs}
+        featureName="Backlinks"
+        onClear={() => setDebugLogs([])}
+      />
     </div>
   );
 }

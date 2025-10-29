@@ -1,112 +1,81 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { z } from "https://deno.land/x/zod@v3.23.8/mod.ts";
+import {
+  DataForSEOClient,
+  validateRequest,
+  successResponse,
+  errorResponse,
+  handleCORS,
+} from "../_shared/dataforseo.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
-async function dfsFetch(path: string, body: any, login: string, password: string) {
-  const auth = btoa(`${login}:${password}`);
-  const res = await fetch(`https://api.dataforseo.com/v3/${path}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Basic ${auth}`,
-    },
-    body: JSON.stringify([body]),
-  });
-  
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`DataForSEO API error: ${text}`);
-  }
-  
-  return await res.json();
-}
-
-serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
-
-  try {
-    const dfsLogin = Deno.env.get("DATAFORSEO_LOGIN");
-    const dfsPassword = Deno.env.get("DATAFORSEO_PASSWORD");
-
-    if (!dfsLogin || !dfsPassword) {
-      throw new Error("DataForSEO credentials not configured");
-    }
-
-    const { 
-      type, // "live", "history", or "intersection"
-      target, // for live and history
-      targets, // array for intersection
-      mode = "as_is", // for live
-      limit = 1000,
-      filters = [],
-      date_from, // for history
-      date_to, // for history
-      group_by = "month" // for history
-    } = await req.json();
-
-    let data;
-
-    switch (type) {
-      case "live":
-        if (!target) {
-          throw new Error("target is required for live backlinks");
-        }
-        data = await dfsFetch(
-          "backlinks/backlinks/live",
-          { target, mode, limit, filters },
-          dfsLogin,
-          dfsPassword
-        );
-        break;
-
-      case "history":
-        if (!target) {
-          throw new Error("target is required for backlink history");
-        }
-        data = await dfsFetch(
-          "backlinks/history/live",
-          { target, date_from, date_to, group_by },
-          dfsLogin,
-          dfsPassword
-        );
-        break;
-
-      case "intersection":
-        if (!targets || !Array.isArray(targets)) {
-          throw new Error("targets array is required for intersection");
-        }
-        data = await dfsFetch(
-          "backlinks/page_intersection/live",
-          { targets, limit },
-          dfsLogin,
-          dfsPassword
-        );
-        break;
-
-      default:
-        throw new Error("type must be 'live', 'history', or 'intersection'");
-    }
-
-    return new Response(JSON.stringify(data), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  } catch (error: any) {
-    console.error("DataForSEO Backlinks error:", error);
-    return new Response(
-      JSON.stringify({ 
-        error: error.message,
-        details: "Failed to fetch backlink data from DataForSEO"
-      }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
-    );
-  }
+// Request validation schema
+const RequestSchema = z.object({
+  target: z.string().min(1).max(255),
+  mode: z.enum(["as_is", "one_per_domain", "one_per_anchor"]).default("as_is"),
+  limit: z.number().int().min(1).max(1000).default(100),
+  offset: z.number().int().min(0).default(0),
+  filters: z.array(z.any()).optional(),
+  order_by: z.array(z.string()).optional(),
+  backlinks_status_type: z.enum(["all", "live", "lost"]).default("live"),
+  include_subdomains: z.boolean().default(true),
 });
 
+serve(async (req) => {
+  // Handle CORS preflight
+  const corsResponse = handleCORS(req);
+  if (corsResponse) return corsResponse;
+
+  try {
+    // Validate request
+    const params = await validateRequest(req, RequestSchema) as z.infer<typeof RequestSchema>;
+    
+    // Initialize DataForSEO client
+    const client = new DataForSEOClient();
+    
+    // Build request payload
+    const payload: any = {
+      target: params.target,
+      mode: params.mode,
+      limit: params.limit,
+      offset: params.offset,
+      backlinks_status_type: params.backlinks_status_type,
+      include_subdomains: params.include_subdomains,
+    };
+
+    if (params.filters) {
+      payload.filters = params.filters;
+    }
+
+    if (params.order_by) {
+      payload.order_by = params.order_by;
+    }
+    
+    // Make API call
+    const response = await client.post(
+      "backlinks/backlinks/live",
+      payload
+    );
+    
+    const result: any = client.extractResult(response);
+    
+    // Enrich with analysis
+    if (result?.items) {
+      const enrichedResult = {
+        ...result,
+        summary: {
+          total_backlinks: result.items.length,
+          total_referring_domains: new Set(result.items.map((item: any) => item.domain_from)).size,
+          dofollow_count: result.items.filter((item: any) => item.dofollow).length,
+          nofollow_count: result.items.filter((item: any) => !item.dofollow).length,
+          avg_rank: result.items.reduce((sum: number, item: any) => sum + (item.rank || 0), 0) / result.items.length,
+        },
+      };
+      
+      return successResponse(enrichedResult);
+    }
+    
+    return successResponse(result);
+  } catch (error) {
+    return errorResponse(error);
+  }
+});

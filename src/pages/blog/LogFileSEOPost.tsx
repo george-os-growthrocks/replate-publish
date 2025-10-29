@@ -45,7 +45,7 @@ export default function LogFileSEOPost() {
           </header>
 
           <div className="py-12 px-4">
-            <div className="container mx-auto max-w-3xl prose prose-slate dark:prose-invert prose-headings:font-bold prose-a:text-primary prose-a:no-underline hover:prose-a:underline">
+            <div className="container mx-auto max-w-3xl prose prose-slate dark:prose-invert prose-headings:text-foreground prose-headings:font-bold prose-a:text-primary prose-a:no-underline hover:prose-a:underline">
               
               <p className="lead">
                 Your access logs contain the truth about what Google actually crawls. This guide shows you how to extract actionable insights without a $5,000/month enterprise crawler.

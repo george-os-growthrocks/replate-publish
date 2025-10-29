@@ -63,6 +63,11 @@ inate search rankings and scale your content like a pro.
                 </Link>
               </li>
               <li>
+                <Link to="/free-tools" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Free Tools
+                </Link>
+              </li>
+              <li>
                 <Link to="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Pricing
                 </Link>

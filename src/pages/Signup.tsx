@@ -107,7 +107,7 @@ const Signup = () => {
           {/* Left Side - Benefits */}
           <div className="hidden md:block space-y-6">
             <div>
-              <h1 className="text-4xl font-bold mb-4">
+              <h1 className="text-4xl font-bold mb-4 text-foreground">
                 Start Your SEO Journey
                 <span className="block bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                   Free Trial Included

@@ -114,6 +114,25 @@ serve(async (req) => {
     const related = relatedData?.tasks?.[0]?.result?.[0]?.items || [];
     const autocomplete = autocompleteData?.tasks?.[0]?.result?.[0]?.items || [];
 
+    // Extract monthly_searches and trend data from keyword_suggestions endpoint
+    // According to docs, keyword_suggestions includes monthly metrics and trend array
+    const suggestionsWithTrends = matching.map((item: any) => {
+      // Check for monthly_searches in various possible locations
+      const monthlySearches = 
+        item.monthly_searches ||
+        item.keyword_info?.monthly_searches ||
+        item.keyword_data?.monthly_searches ||
+        [];
+      
+      return {
+        ...item,
+        monthly_searches: monthlySearches, // Add extracted trend data
+        has_trend_data: monthlySearches.length > 0
+      };
+    });
+
+    console.log(`📊 Extracted monthly trends from ${suggestionsWithTrends.filter((s: any) => s.has_trend_data).length} suggestions`);
+
     // Filter questions from matching + related
     const questionRegex = /^(what|how|why|when|where|who|which|can|will|should|is|are|do|does|has|have)/i;
     const allKeywords = [...matching, ...related];
@@ -126,7 +145,7 @@ serve(async (req) => {
     const suggestions = autocomplete.map((item: { keyword?: string }) => item.keyword || '').filter(Boolean);
 
     // Deduct credits (3 API calls = 3 credits)
-    // @ts-ignore - RPC function exists at runtime
+    // @ts-expect-error - RPC function exists at runtime
     await supabase.rpc('deduct_credits', {
       p_user_id: user.id,
       p_amount: 3,
@@ -142,7 +161,7 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({
-        matching: matching.slice(0, limitValue),
+        matching: suggestionsWithTrends.slice(0, limitValue), // Use enhanced matching with trend data
         related: related.slice(0, limitValue),
         questions: questions.slice(0, 50),
         suggestions: suggestions.slice(0, 20),

@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
 import { useCredits } from "@/hooks/useCreditManager";
+import { FeatureDebugPanel, DebugLog } from "@/components/debug/FeatureDebugPanel";
 
 // Debug logging utility
 async function addDebugLog(action: string, details: any) {
@@ -31,9 +32,19 @@ async function addDebugLog(action: string, details: any) {
 export default function CompetitorAnalysisPage() {
   const [targetDomain, setTargetDomain] = useState("");
   const [searchDomain, setSearchDomain] = useState("");
-  const [showDebug, setShowDebug] = useState(false);
+  const [debugLogs, setDebugLogs] = useState<DebugLog[]>([]);
   const [debugInfo, setDebugInfo] = useState<any>(null);
   const { checkCredits, consumeCredits } = useCredits();
+
+  const addDebugLog = (level: DebugLog['level'], message: string) => {
+    const log: DebugLog = {
+      timestamp: new Date().toLocaleTimeString(),
+      level,
+      message
+    };
+    console.log(`[${level.toUpperCase()}] ${message}`);
+    setDebugLogs(prev => [...prev, log]);
+  };
 
   const { data: competitorData, isLoading, error } = useDomainCompetitors(
     {
@@ -48,15 +59,10 @@ export default function CompetitorAnalysisPage() {
   // Log data changes and consume credits on success
   useEffect(() => {
     if (competitorData) {
-      addDebugLog('Competitor Data Received', {
-        domain: searchDomain,
-        status_code: competitorData?.status_code,
-        status_message: competitorData?.status_message,
-        tasks_count: competitorData?.tasks_count,
-        tasks_error: competitorData?.tasks_error,
-        has_tasks: !!competitorData?.tasks,
-        full_response: competitorData
-      });
+      const competitorsCount = competitorData?.tasks?.[0]?.result?.[0]?.items?.length || 0;
+      addDebugLog('success', `✅ Received competitor data: ${competitorsCount} competitors`);
+      addDebugLog('info', `Total count: ${competitorData?.tasks?.[0]?.result?.[0]?.total_count || 0}`);
+      
       setDebugInfo({
         timestamp: new Date().toISOString(),
         searchDomain,
@@ -75,7 +81,7 @@ export default function CompetitorAnalysisPage() {
         credits: 5,
         metadata: {
           domain: searchDomain,
-          competitors_found: competitorData?.tasks?.[0]?.result?.length || 0
+          competitors_found: competitorsCount
         }
       });
     }
@@ -83,11 +89,7 @@ export default function CompetitorAnalysisPage() {
 
   useEffect(() => {
     if (error) {
-      addDebugLog('Competitor Analysis Error', {
-        domain: searchDomain,
-        error: error.message,
-        error_stack: error.stack
-      });
+      addDebugLog('error', `❌ Competitor Analysis Error: ${error.message}`);
       setDebugInfo({
         timestamp: new Date().toISOString(),
         searchDomain,
@@ -118,16 +120,7 @@ export default function CompetitorAnalysisPage() {
     }
 
     const cleanDomain = targetDomain.trim().replace(/^https?:\/\//, '').replace(/\/$/, '');
-    addDebugLog('Starting Competitor Analysis', {
-      originalInput: targetDomain,
-      cleanedDomain: cleanDomain,
-      params: {
-        target: cleanDomain,
-        location_code: 2840,
-        language_code: "en",
-        limit: 100
-      }
-    });
+    addDebugLog('info', `🔍 Starting competitor analysis for: ${cleanDomain}`);
     setSearchDomain(cleanDomain);
   };
 
@@ -144,58 +137,7 @@ export default function CompetitorAnalysisPage() {
             Discover domains ranking for similar keywords
           </p>
         </div>
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={() => setShowDebug(!showDebug)}
-          className="gap-2"
-        >
-          <Bug className="h-4 w-4" />
-          {showDebug ? 'Hide Debug' : 'Show Debug'}
-        </Button>
       </div>
-
-      {/* Debug Panel */}
-      {showDebug && debugInfo && (
-        <Card className="p-4 bg-muted/50 border-yellow-500/50">
-          <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
-            <Bug className="h-4 w-4" />
-            Debug Information
-          </h3>
-          <div className="space-y-2 text-xs font-mono">
-            <div>
-              <span className="text-muted-foreground">Timestamp:</span>{' '}
-              <span className="text-foreground">{debugInfo.timestamp}</span>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Search Domain:</span>{' '}
-              <span className="text-foreground">{debugInfo.searchDomain}</span>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Parameters:</span>
-              <pre className="mt-1 p-2 bg-background rounded text-xs overflow-x-auto">
-                {JSON.stringify(debugInfo.params, null, 2)}
-              </pre>
-            </div>
-            {debugInfo.response && (
-              <div>
-                <span className="text-muted-foreground">API Response:</span>
-                <pre className="mt-1 p-2 bg-background rounded text-xs overflow-x-auto max-h-96">
-                  {JSON.stringify(debugInfo.response, null, 2)}
-                </pre>
-              </div>
-            )}
-            {debugInfo.error && (
-              <div>
-                <span className="text-red-400">Error:</span>
-                <pre className="mt-1 p-2 bg-background rounded text-xs overflow-x-auto text-red-300">
-                  {JSON.stringify(debugInfo.error, null, 2)}
-                </pre>
-              </div>
-            )}
-          </div>
-        </Card>
-      )}
 
       {/* Search Input */}
       <Card className="p-6">

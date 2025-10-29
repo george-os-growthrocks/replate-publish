@@ -11,6 +11,7 @@ import { useGscData } from "@/hooks/useGscData";
 import { clusterKeywords, KeywordCluster } from "@/lib/ngram-similarity";
 import { groupByQuery } from "@/lib/cannibalization";
 import { calculateKeywordDifficulty, analyzeCtr } from "@/lib/seo-algorithms";
+import { FeatureDebugPanel, DebugLog } from "@/components/debug/FeatureDebugPanel";
 
 export default function KeywordClusteringPage() {
   const { propertyUrl, dateRange, country, device } = useFilters();
@@ -24,6 +25,17 @@ export default function KeywordClusteringPage() {
   const [similarityThreshold, setSimilarityThreshold] = useState(0.5);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedIntent, setSelectedIntent] = useState<string>("all");
+  const [debugLogs, setDebugLogs] = useState<DebugLog[]>([]);
+
+  const addDebugLog = (level: DebugLog['level'], message: string) => {
+    const log: DebugLog = {
+      timestamp: new Date().toLocaleTimeString(),
+      level,
+      message
+    };
+    console.log(`[${level.toUpperCase()}] ${message}`);
+    setDebugLogs(prev => [...prev, log]);
+  };
 
   const queries = useMemo(() => {
     if (!rows) return [];
@@ -455,6 +467,13 @@ export default function KeywordClusteringPage() {
           Sorted by Priority Score
         </div>
       )}
+
+      {/* Debug Panel */}
+      <FeatureDebugPanel
+        logs={debugLogs}
+        featureName="Keyword Clustering"
+        onClear={() => setDebugLogs([])}
+      />
     </div>
   );
 }

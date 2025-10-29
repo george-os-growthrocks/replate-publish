@@ -1,5 +1,5 @@
-// Ahrefs-style Keyword Explorer Types
-// Based on DataForSEO v3 API specifications
+// Keyword Explorer Types
+// Advanced SEO intelligence API specifications
 
 export interface KeywordOverview {
   keyword: string;

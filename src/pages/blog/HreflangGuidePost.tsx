@@ -38,7 +38,7 @@ export default function HreflangGuidePost() {
           </header>
 
           <div className="py-12 px-4">
-            <div className="container mx-auto max-w-3xl prose prose-slate dark:prose-invert prose-headings:font-bold">
+            <div className="container mx-auto max-w-3xl prose prose-slate dark:prose-invert prose-headings:text-foreground prose-headings:font-bold">
               <p className="lead">
                 Choose the wrong URL structure and you'll fight Google for years. This framework helps you pick the right strategy and implement hreflang tags that actually work.
               </p>

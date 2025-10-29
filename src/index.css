@@ -167,6 +167,22 @@
     @apply bg-background text-foreground;
     font-feature-settings: "tnum" 1;
   }
+  
+  /* Fix prose headings in light mode */
+  .prose h1,
+  .prose h2,
+  .prose h3,
+  .prose h4,
+  .prose h5,
+  .prose h6 {
+    color: hsl(var(--foreground));
+  }
+  
+  .prose p,
+  .prose li,
+  .prose span:not(.badge, .code, .highlight) {
+    color: hsl(var(--foreground) / 0.9);
+  }
 }
 
 @layer utilities {

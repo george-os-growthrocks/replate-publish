@@ -20,7 +20,7 @@ export default function TermsPage() {
               <h1 className="text-5xl font-bold mb-6 text-foreground">Terms of Service</h1>
               <p className="text-muted-foreground mb-8">Last updated: October 27, 2024</p>
 
-              <div className="prose prose-lg dark:prose-invert max-w-none space-y-8">
+              <div className="prose prose-lg dark:prose-invert prose-headings:text-foreground max-w-none space-y-8">
                 <section>
                   <h2 className="text-2xl font-bold mb-4 text-foreground">1. Acceptance of Terms</h2>
                   <p className="text-muted-foreground">

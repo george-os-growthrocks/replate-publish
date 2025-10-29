@@ -19,9 +19,36 @@ export interface OnboardingState {
   selectedProperty: string | null;
   completedAnalysis: boolean;
   skippedTeam: boolean;
+  // New profile data
+  profileData?: {
+    name: string;
+    notificationEmail: string;
+    phone: string;
+    googleEmail: string;
+  };
+  professionalData?: {
+    position: string;
+    country: string;
+    companySize: string;
+    monthlyTraffic: string;
+  };
+  companyData?: {
+    companyName: string;
+    website: string;
+    linkedin: string;
+    twitter: string;
+  };
+  industryData?: {
+    businessType: string;
+    responses: Record<string, any>;
+  };
+  subscriptionData?: {
+    selectedPlan: string;
+    trialActivated: boolean;
+  };
 }
 
-const TOTAL_STEPS = 5;
+const TOTAL_STEPS = 7;
 
 export function OnboardingWizard() {
   const navigate = useNavigate();

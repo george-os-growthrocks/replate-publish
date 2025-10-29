@@ -9,15 +9,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Globe, Loader2 } from "lucide-react";
+import { Search, Globe, Loader2, Bug } from "lucide-react";
 import { KeywordOverviewPanel } from "@/components/keyword-explorer/KeywordOverviewPanel";
 import { KeywordIdeasTabs } from "@/components/keyword-explorer/KeywordIdeasTabs";
 import { SerpOverviewTable } from "@/components/keyword-explorer/SerpOverviewTable";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { KeywordExplorerState } from "@/types/keyword-explorer";
+import { FeatureDebugPanel, DebugLog } from "@/components/debug/FeatureDebugPanel";
+import { useState } from "react";
 
 export default function KeywordExplorerPage() {
+  const [debugLogs, setDebugLogs] = useState<DebugLog[]>([]);
+  const [showDebug, setShowDebug] = useState(false);
   const [state, setState] = useState<KeywordExplorerState>({
     seedKeyword: "",
     locationCode: 2840, // US default
@@ -39,59 +43,98 @@ export default function KeywordExplorerPage() {
     trafficLoading: false,
   });
 
+  const addDebugLog = (level: DebugLog['level'], message: string) => {
+    const log: DebugLog = {
+      timestamp: new Date().toLocaleTimeString(),
+      level,
+      message
+    };
+    console.log(`[${level.toUpperCase()}] ${message}`);
+    setDebugLogs(prev => [...prev, log]);
+  };
+
   const fetchOverview = async () => {
     setState(prev => ({ ...prev, overviewLoading: true }));
+    addDebugLog('info', `🔍 Fetching overview for: "${state.seedKeyword}"`);
+    addDebugLog('info', `Location: ${state.locationCode}, Language: ${state.languageCode}`);
     
     try {
-      // TODO: Replace with actual edge function call
-      // const { data, error } = await supabase.functions.invoke("keyword-overview-bundle", {
-      //   body: {
-      //     keyword: state.seedKeyword,
-      //     location_code: state.locationCode,
-      //     language_code: state.languageCode
-      //   }
-      // });
+      // Get session token for auth
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        addDebugLog('error', '❌ No auth session - please login');
+        toast.error('Please sign in again');
+        setState(prev => ({ ...prev, overviewLoading: false }));
+        return;
+      }
 
-      // Temporary: Use existing functions
-      const { data, error } = await supabase.functions.invoke("dataforseo-labs-keyword-ideas", {
+      // Use keyword-overview-bundle which includes historical search volume (monthly_searches)
+      const { data, error } = await supabase.functions.invoke("keyword-overview-bundle", {
         body: {
-          keywords: [state.seedKeyword],
+          keyword: state.seedKeyword,
           location_code: state.locationCode,
-          language_code: state.languageCode,
-          limit: 1
+          language_code: state.languageCode
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        addDebugLog('error', `❌ Supabase function error: ${error.message}`);
+        throw error;
+      }
 
-      const items = data?.tasks?.[0]?.result?.[0]?.items || [];
-      if (items.length > 0) {
-        const item = items[0];
+      if (data?.error) {
+        addDebugLog('error', `❌ API error: ${data.error}`);
+        throw new Error(data.error);
+      }
+
+      addDebugLog('info', `📦 Full API response received: ${JSON.stringify(Object.keys(data || {}))}`);
+
+      const overview = data?.overview;
+      if (overview) {
+        addDebugLog('info', `📊 Overview object keys: ${JSON.stringify(Object.keys(overview))}`);
+        addDebugLog('info', `📊 monthly_searches type: ${typeof overview.monthly_searches}`);
+        addDebugLog('info', `📊 monthly_searches is array: ${Array.isArray(overview.monthly_searches)}`);
+        addDebugLog('info', `📊 monthly_searches length: ${overview.monthly_searches?.length || 0}`);
+        
+        if (overview.monthly_searches && overview.monthly_searches.length > 0) {
+          addDebugLog('success', `✅ Found ${overview.monthly_searches.length} months of trend data`);
+          addDebugLog('info', `Sample: ${JSON.stringify(overview.monthly_searches[0])}`);
+        } else {
+          addDebugLog('warn', `⚠️ No monthly_searches data! Value: ${JSON.stringify(overview.monthly_searches)}`);
+        }
+
         setState(prev => ({
           ...prev,
           overview: {
-            keyword: state.seedKeyword,
-            location_code: state.locationCode,
-            language_code: state.languageCode,
-            search_volume: item.keyword_info?.search_volume || 0,
-            keyword_difficulty: item.keyword_properties?.keyword_difficulty || 0,
-            cpc: item.keyword_info?.cpc || 0,
-            competition: item.keyword_info?.competition || 0,
-            monthly_searches: item.keyword_info?.monthly_searches || [],
-            search_intent_info: item.search_intent_info,
-            impressions_info: item.impressions_info,
-            serp_info: item.serp_info,
+            keyword: overview.keyword || state.seedKeyword,
+            location_code: overview.location_code || state.locationCode,
+            language_code: overview.language_code || state.languageCode,
+            search_volume: overview.search_volume || 0,
+            keyword_difficulty: overview.keyword_difficulty || 0,
+            cpc: overview.cpc || 0,
+            competition: overview.competition || 0,
+            monthly_searches: overview.monthly_searches || [],
+            search_intent_info: overview.search_intent_info || null,
+            impressions_info: overview.impressions_info || null,
+            serp_info: overview.serp_info || null,
           },
           overviewLoading: false
         }));
-        toast.success("Overview loaded");
+        
+        const trendCount = overview.monthly_searches?.length || 0;
+        toast.success(trendCount > 0 ? `Overview loaded with ${trendCount} months of trend data` : "Overview loaded");
       } else {
+        addDebugLog('error', `❌ No overview in response! Full data: ${JSON.stringify(data)}`);
         toast.warning("No data found for this keyword");
         setState(prev => ({ ...prev, overviewLoading: false }));
       }
     } catch (error) {
       console.error("Error fetching overview:", error);
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      addDebugLog('error', `❌ Failed to fetch overview: ${errorMessage}`);
       toast.error(`Failed to fetch overview: ${errorMessage}`);
       setState(prev => ({ ...prev, overviewLoading: false }));
     }
@@ -180,18 +223,18 @@ export default function KeywordExplorerPage() {
   };
 
   const handleKeywordClick = (keyword: string) => {
+    // Just update the seed keyword in the input, don't auto-search
+    // User can click Analyze if they want to search
     setState(prev => ({ ...prev, seedKeyword: keyword }));
-    // Auto-search on click
-    setTimeout(() => handleSearch(), 100);
   };
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">Keywords Explorer</h1>
+        <h1 className="text-3xl font-bold text-foreground">Keywords Explorer</h1>
         <p className="text-muted-foreground">
-          Ahrefs-style keyword research powered by DataForSEO v3
+          Advanced keyword research and SEO intelligence platform
         </p>
       </div>
 
@@ -259,6 +302,15 @@ export default function KeywordExplorerPage() {
               <><Search className="h-4 w-4 mr-2" />Search</>
             )}
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowDebug(!showDebug)}
+            className="gap-2"
+          >
+            <Bug className="h-4 w-4" />
+            {showDebug ? 'Hide' : 'Show'} Debug
+          </Button>
         </div>
       </Card>
 
@@ -295,6 +347,7 @@ export default function KeywordExplorerPage() {
         <SerpOverviewTable
           serpItems={state.serpItems}
           loading={state.serpLoading}
+          keywordTrendData={state.overview?.monthly_searches}
         />
       )}
 
@@ -302,9 +355,9 @@ export default function KeywordExplorerPage() {
       {!state.overview && !state.overviewLoading && (
         <Card className="p-8 text-center">
           <div className="max-w-2xl mx-auto space-y-4">
-            <h3 className="text-xl font-bold">🎯 Ahrefs-Style Keywords Explorer</h3>
+            <h3 className="text-xl font-bold">🎯 Advanced Keywords Explorer</h3>
             <p className="text-muted-foreground">
-              Enter a keyword above to start exploring. This page uses DataForSEO v3 API to provide:
+              Enter a keyword above to start exploring. This page provides:
             </p>
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3">
@@ -325,6 +378,15 @@ export default function KeywordExplorerPage() {
             </p>
           </div>
         </Card>
+      )}
+
+      {/* Debug Panel */}
+      {showDebug && (
+        <FeatureDebugPanel
+          logs={debugLogs}
+          featureName="Keyword Explorer"
+          onClear={() => setDebugLogs([])}
+        />
       )}
     </div>
   );

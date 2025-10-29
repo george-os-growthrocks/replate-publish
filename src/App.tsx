@@ -89,6 +89,8 @@ import SocialMediaSEO from "./pages/SocialMediaSEO";
 import SERPPreviewPage from "./pages/SERPPreviewPage";
 import AnalyticsDashboard from "./pages/AnalyticsDashboard";
 import GAReportingDashboard from "./pages/GAReportingDashboard";
+import CompetitiveIntelligence from "./pages/CompetitiveIntelligence";
+import SEOInsightsDashboard from "./pages/SEOInsightsDashboard";
 
 const queryClient = new QueryClient();
 
@@ -206,7 +208,9 @@ const App = () => (
                   <Route path="/keyword-clustering" element={<DashboardLayout><KeywordClusteringPage /></DashboardLayout>} />
                   <Route path="/content-gap" element={<DashboardLayout><ContentGapPage /></DashboardLayout>} />
                   <Route path="/ranking-tracker" element={<DashboardLayout><RankingTrackerPage /></DashboardLayout>} />
+                  <Route path="/competitive-intelligence" element={<DashboardLayout><CompetitiveIntelligence /></DashboardLayout>} />
                   <Route path="/seo-intelligence" element={<DashboardLayout><SEOIntelligencePage /></DashboardLayout>} />
+                  <Route path="/seo-insights" element={<DashboardLayout><SEOInsightsDashboard /></DashboardLayout>} />
                   <Route path="/llm-citations" element={<DashboardLayout><LLMCitationPage /></DashboardLayout>} />
                   <Route path="/alerts" element={<DashboardLayout><AlertsPage /></DashboardLayout>} />
                   <Route path="/answer-the-public" element={<DashboardLayout><AnswerThePublicPage /></DashboardLayout>} />

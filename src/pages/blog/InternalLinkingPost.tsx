@@ -35,7 +35,7 @@ export default function InternalLinkingPost() {
           </header>
 
           <div className="py-12 px-4">
-            <div className="container mx-auto max-w-3xl prose prose-slate dark:prose-invert prose-headings:font-bold">
+            <div className="container mx-auto max-w-3xl prose prose-slate dark:prose-invert prose-headings:text-foreground prose-headings:font-bold">
               <p className="lead">
                 Internal links are the most underused ranking factor. This guide shows you how to scale internal linking using <Link to="/free-tools/keyword-clustering">keyword clusters</Link> and GSC data—without manually updating hundreds of pages.
               </p>

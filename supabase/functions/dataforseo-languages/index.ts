@@ -1,70 +1,46 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { z } from "https://deno.land/x/zod@v3.23.8/mod.ts";
+import {
+  DataForSEOClient,
+  validateRequest,
+  successResponse,
+  errorResponse,
+  handleCORS,
+} from "../_shared/dataforseo.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
-async function dfsFetch(path: string, body: any, login: string, password: string) {
-  const auth = btoa(`${login}:${password}`);
-  const res = await fetch(`https://api.dataforseo.com/v3/${path}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Basic ${auth}`,
-    },
-    body: JSON.stringify([body])
-  });
-  if (!res.ok) {
-    const errorText = await res.text();
-    console.error(`DataForSEO API Error (${path}):`, res.status, errorText);
-    throw new Error(`DataForSEO API Error: ${errorText}`);
-  }
-  return res.json();
-}
-
-serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
-
-  try {
-    const dfsLogin = Deno.env.get("DATAFORSEO_LOGIN");
-    const dfsPassword = Deno.env.get("DATAFORSEO_PASSWORD");
-
-    if (!dfsLogin || !dfsPassword) {
-      throw new Error("DataForSEO credentials not configured");
-    }
-
-    const { 
-      api = "serp", // serp, keywords_data, business_data, etc.
-      se = "google", // search engine
-      filters = null // filter languages by name, code, etc.
-    } = await req.json();
-
-    const payload = {
-      ...(filters && { filters })
-    };
-
-    const path = `${api}/${se}/languages`;
-
-    const data = await dfsFetch(
-      path,
-      payload,
-      dfsLogin,
-      dfsPassword
-    );
-
-    return new Response(JSON.stringify(data), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
-  } catch (error: any) {
-    console.error("Error in dataforseo-languages function:", error.message);
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
-  }
+const RequestSchema = z.object({
+  search: z.string().optional(),
+  limit: z.number().int().min(1).max(1000).default(100),
 });
 
+serve(async (req) => {
+  const corsResponse = handleCORS(req);
+  if (corsResponse) return corsResponse;
+
+  try {
+    const params = await validateRequest(req, RequestSchema) as z.infer<typeof RequestSchema>;
+    const client = new DataForSEOClient();
+    
+    const response = await client.post("serp/google/languages", {});
+    let result = client.extractResult(response);
+    
+    if (params.search && Array.isArray(result)) {
+      const searchLower = params.search.toLowerCase();
+      result = result.filter((lang: any) => 
+        lang.language_name?.toLowerCase().includes(searchLower) ||
+        lang.language_code?.toLowerCase().includes(searchLower)
+      );
+    }
+    
+    if (Array.isArray(result) && result.length > params.limit) {
+      result = result.slice(0, params.limit);
+    }
+    
+    return successResponse({
+      total: Array.isArray(result) ? result.length : 0,
+      languages: result,
+    });
+  } catch (error) {
+    return errorResponse(error);
+  }
+});

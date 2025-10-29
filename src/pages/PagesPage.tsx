@@ -56,7 +56,7 @@ function PageMetrics({ pageUrl }: PageMetricsProps) {
         <div className="p-4 rounded-lg bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20">
           <div className="flex items-center gap-2 mb-3">
             <Gauge className="h-4 w-4 text-indigo-400" />
-            <h4 className="text-sm font-semibold text-white">On-Page SEO</h4>
+            <h4 className="text-sm font-semibold text-foreground">On-Page SEO</h4>
           </div>
           <div className="grid grid-cols-4 gap-3">
             <div className="bg-slate-950/50 p-3 rounded border border-white/5">
@@ -137,7 +137,7 @@ function PageMetrics({ pageUrl }: PageMetricsProps) {
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <Award className="h-4 w-4 text-purple-400" />
-                  <h4 className="text-sm font-semibold text-white">Content Quality Score</h4>
+                  <h4 className="text-sm font-semibold text-foreground">Content Quality Score</h4>
                 </div>
                 <div className={`text-3xl font-bold ${scoreColor}`}>
                   {qualityAnalysis.overallScore}/100
@@ -195,7 +195,7 @@ function PageMetrics({ pageUrl }: PageMetricsProps) {
         <div className="p-4 rounded-lg bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20">
           <div className="flex items-center gap-2 mb-3">
             <Link2 className="h-4 w-4 text-emerald-400" />
-            <h4 className="text-sm font-semibold text-white">Backlinks</h4>
+            <h4 className="text-sm font-semibold text-foreground">Backlinks</h4>
           </div>
           <div className="grid grid-cols-4 gap-3">
             <div className="bg-slate-950/50 p-3 rounded border border-white/5">

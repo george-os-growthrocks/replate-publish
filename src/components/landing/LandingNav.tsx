@@ -56,12 +56,7 @@ export function LandingNav() {
             >
               Features
             </Link>
-            <Link 
-              to="/free-tools" 
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Free Tools
-            </Link>
+            <FreeToolsDropdown />
             <Link 
               to="/pricing" 
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
@@ -69,10 +64,22 @@ export function LandingNav() {
               Pricing
             </Link>
             <Link 
+              to="/glossary" 
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Glossary
+            </Link>
+            <Link 
               to="/blog" 
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
               Blog
+            </Link>
+            <Link 
+              to="/about" 
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              About
             </Link>
             <Link 
               to="/contact" 
@@ -165,11 +172,25 @@ export function LandingNav() {
                 Pricing
               </Link>
               <Link 
+                to="/glossary" 
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-2"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Glossary
+              </Link>
+              <Link 
                 to="/blog" 
                 className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-2"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Blog
+              </Link>
+              <Link 
+                to="/about" 
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-2"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                About
               </Link>
               <Link 
                 to="/contact" 

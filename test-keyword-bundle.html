@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Keyword Overview Bundle</title>
+    <style>
+        body {
+            font-family: monospace;
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #0f172a;
+            color: #e2e8f0;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        pre {
+            background: #1e293b;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            border: 1px solid #334155;
+        }
+        .success { color: #10b981; }
+        .error { color: #ef4444; }
+        .warning { color: #f59e0b; }
+        input {
+            padding: 10px;
+            font-size: 16px;
+            width: 300px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: white;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Test keyword-overview-bundle Function</h1>
+    <p style="color: #f59e0b; margin-bottom: 20px;">
+        ⚠️ <strong>Note:</strong> You must be logged into the app first! Open http://localhost:8080, login, then come back to test.
+    </p>
+    
+    <div style="margin: 20px 0;">
+        <input type="text" id="keyword" placeholder="Enter keyword (e.g., 'seo tools')" value="seo tools">
+        <button onclick="testFunction()">Test Function</button>
+        <button onclick="checkAuth()" style="background: #10b981; margin-left: 10px;">Check Auth Status</button>
+    </div>
+
+    <div id="status"></div>
+    <div id="result"></div>
+
+    <script>
+        const SUPABASE_URL = 'https://siwzszmukfbzicjjkxro.supabase.co'
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNpd3pzem11a2Ziemljampra3JvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzM4MjAwMzYsImV4cCI6MjA0OTM5NjAzNn0.SqUsj4Zap2ooXWWs3lJkOsEJC4kxQjz33XkuDp5TpIk'
+
+        // Get auth token from localStorage if available
+        function getAuthToken() {
+            // Try to find Supabase auth token in localStorage
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.includes('supabase') && key.includes('auth')) {
+                    try {
+                        const authData = JSON.parse(localStorage.getItem(key) || '{}');
+                        const session = authData?.currentSession || authData?.session;
+                        if (session?.access_token) {
+                            console.log('✅ Found auth token in localStorage');
+                            return session.access_token;
+                        }
+                    } catch (e) {
+                        console.error('Error parsing auth data:', e);
+                    }
+                }
+            }
+            console.warn('⚠️ No auth token found, using anon key (will likely get 401)');
+            return SUPABASE_KEY;
+        }
+
+        window.checkAuth = function() {
+            const token = getAuthToken();
+            const statusDiv = document.getElementById('status');
+            if (token === SUPABASE_KEY) {
+                statusDiv.innerHTML = '<p class="error">❌ Not logged in! Go to http://localhost:8080 and login first.</p>';
+            } else {
+                statusDiv.innerHTML = '<p class="success">✅ Auth token found! You should be able to test the function.</p>';
+            }
+        }
+
+        window.testFunction = async function() {
+            const keyword = document.getElementById('keyword').value
+            const statusDiv = document.getElementById('status')
+            const resultDiv = document.getElementById('result')
+            
+            statusDiv.innerHTML = '<p class="warning">⏳ Calling keyword-overview-bundle...</p>'
+            resultDiv.innerHTML = ''
+            
+            console.log('Testing keyword:', keyword)
+            
+            try {
+                const startTime = Date.now()
+                const token = getAuthToken()
+                
+                // Use fetch API directly with proper auth
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/keyword-overview-bundle`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                        'apikey': SUPABASE_KEY
+                    },
+                    body: JSON.stringify({
+                        keyword: keyword,
+                        location_code: 2840,
+                        language_code: 'en'
+                    })
+                })
+                
+                const duration = Date.now() - startTime
+                
+                if (!response.ok) {
+                    const errorText = await response.text()
+                    statusDiv.innerHTML = `<p class="error">❌ HTTP Error ${response.status}: ${errorText}</p>`
+                    resultDiv.innerHTML = `<pre>${errorText}</pre>`
+                    return
+                }
+                
+                const result = await response.json()
+                const data = result
+                
+                console.log('Response:', { data, duration })
+                
+                if (data?.error) {
+                    statusDiv.innerHTML = `<p class="error">❌ API Error: ${data.error}</p>`
+                    resultDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`
+                    return
+                }
+                
+                const overview = data?.overview
+                
+                if (!overview) {
+                    statusDiv.innerHTML = `<p class="error">❌ No overview data in response</p>`
+                    resultDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`
+                    return
+                }
+                
+                const monthlySearches = overview.monthly_searches || []
+                
+                statusDiv.innerHTML = `
+                    <p class="success">✅ Success! (${duration}ms)</p>
+                    <p><strong>Keyword:</strong> ${overview.keyword}</p>
+                    <p><strong>Search Volume:</strong> ${overview.search_volume?.toLocaleString()}</p>
+                    <p><strong>Keyword Difficulty:</strong> ${overview.keyword_difficulty}</p>
+                    <p><strong>CPC:</strong> $${overview.cpc}</p>
+                    <p><strong>Monthly Searches Data:</strong> ${monthlySearches.length} months ${monthlySearches.length === 0 ? '<span class="error">⚠️ NO TREND DATA!</span>' : '<span class="success">✅</span>'}</p>
+                    ${overview._debug ? `<p><strong>Debug Info:</strong> ${JSON.stringify(overview._debug)}</p>` : ''}
+                `
+                
+                resultDiv.innerHTML = `
+                    <h3>📊 Full Response:</h3>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `
+            } catch (err) {
+                statusDiv.innerHTML = `<p class="error">❌ Exception: ${err.message}</p>`
+                resultDiv.innerHTML = `<pre>${err.stack}</pre>`
+                console.error('Test error:', err)
+            }
+        }
+        
+        // Auto-test on load
+        window.addEventListener('load', () => {
+            console.log('Page loaded, ready to test')
+        })
+    </script>
+</body>
+</html>
+

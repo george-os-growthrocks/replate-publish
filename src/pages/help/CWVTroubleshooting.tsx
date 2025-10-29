@@ -27,12 +27,12 @@ export default function CWVTroubleshooting() {
               </Link>
 
               <Badge className="mb-4">Technical SEO</Badge>
-              <h1 className="text-4xl font-bold mb-4">Core Web Vitals Troubleshooting</h1>
+              <h1 className="text-4xl font-bold mb-4 text-foreground">Core Web Vitals Troubleshooting</h1>
               <p className="text-lg text-muted-foreground mb-8">
                 Last updated: October 28, 2025
               </p>
 
-              <div className="prose prose-slate dark:prose-invert max-w-none">
+              <div className="prose prose-slate dark:prose-invert prose-headings:text-foreground max-w-none">
                 <p className="lead">
                   Core Web Vitals are user-experience metrics that Google uses as ranking factors. This guide helps you diagnose and fix the three main metrics: LCP, INP, and CLS.
                 </p>

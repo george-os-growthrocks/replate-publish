@@ -40,6 +40,7 @@ import { ExportButton } from '@/components/ExportButton';
 import { formatDateForFilename } from '@/lib/export-utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { FeatureDebugPanel, DebugLog } from '@/components/debug/FeatureDebugPanel';
 
 interface TrackedKeyword {
   keyword: string;
@@ -64,16 +65,19 @@ export default function RankingTrackerPage() {
   const [isAdding, setIsAdding] = useState(false);
   const [isLoadingTracked, setIsLoadingTracked] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [debugLogs, setDebugLogs] = useState<string[]>([]);
+  const [debugLogs, setDebugLogs] = useState<DebugLog[]>([]);
+  const [historicalData, setHistoricalData] = useState<Record<string, any[]>>({});
 
   // Debug logging functions
-  const addDebugLog = (level: string, message: string) => {
-    const logMessage = `[${level.toUpperCase()}] ${message}`;
-    console.log(logMessage);
-    setDebugLogs(prev => [...prev, logMessage]);
+  const addDebugLog = (level: DebugLog['level'], message: string) => {
+    const log: DebugLog = {
+      timestamp: new Date().toLocaleTimeString(),
+      level,
+      message
+    };
+    console.log(`[${level.toUpperCase()}] ${message}`);
+    setDebugLogs(prev => [...prev, log]);
   };
-
-  const getDebugLogs = () => debugLogs;
 
   // Debug: Log selectedProperty on mount and changes
   useEffect(() => {
@@ -143,9 +147,13 @@ export default function RankingTrackerPage() {
         const keywords = data.data.map((item: {keyword: string}) => item.keyword);
         addDebugLog('success', `✅ Loaded ${keywords.length} tracked keywords`);
         setTrackedKeywords(keywords);
+        
+        // Load historical data for all tracked keywords
+        await loadHistoricalData(keywords);
       } else {
         addDebugLog('info', 'ℹ️ No tracked keywords found');
         setTrackedKeywords([]);
+        setHistoricalData({});
       }
     } catch (error) {
       addDebugLog('error', `❌ Error: ${error instanceof Error ? error.message : String(error)}`);
@@ -165,7 +173,6 @@ export default function RankingTrackerPage() {
     if (!selectedProperty) {
       addDebugLog('error', `No property selected. selectedProperty: ${selectedProperty}`);
       toast.error('Please select a property from the dropdown above');
-      setDebugLogs(getDebugLogs());
       return;
     }
 
@@ -174,7 +181,6 @@ export default function RankingTrackerPage() {
     if (trackedKeywords.includes(newKeyword.toLowerCase())) {
       addDebugLog('warn', 'Keyword already tracked');
       toast.error('Keyword already tracked');
-      setDebugLogs(getDebugLogs());
       return;
     }
 
@@ -187,7 +193,6 @@ export default function RankingTrackerPage() {
       if (!session) {
         addDebugLog('error', 'No active session for add operation');
         toast.error('Please sign in again to add keywords');
-        setDebugLogs(getDebugLogs());
         return;
       }
 
@@ -224,13 +229,12 @@ export default function RankingTrackerPage() {
 
       addDebugLog('success', `✅ Keyword "${newKeyword}" added successfully`);
       await loadTrackedKeywords(); // Reload list
+      const keywordToClear = newKeyword;
       setNewKeyword('');
-      toast.success(`Now tracking "${newKeyword}"`);
-      setDebugLogs(getDebugLogs());
+      toast.success(`Now tracking "${keywordToClear}"`);
     } catch (error) {
       addDebugLog('error', `Failed to add keyword: ${error instanceof Error ? error.message : String(error)}`);
       toast.error(error instanceof Error ? error.message : 'Failed to add keyword');
-      setDebugLogs(getDebugLogs());
     } finally {
       setIsAdding(false);
     }
@@ -266,6 +270,68 @@ export default function RankingTrackerPage() {
     } catch (error) {
       console.error('Error removing keyword:', error);
       toast.error('Failed to remove keyword');
+    }
+  };
+
+  // Load historical ranking data from database
+  const loadHistoricalData = async (keywords: string[]) => {
+    if (!selectedProperty || keywords.length === 0) {
+      setHistoricalData({});
+      return;
+    }
+
+    try {
+      addDebugLog('info', `📊 Loading historical data for ${keywords.length} keywords...`);
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        addDebugLog('warn', 'No session for historical data load');
+        return;
+      }
+
+      // Fetch historical data for all keywords in parallel
+      const historyPromises = keywords.map(async (keyword) => {
+        try {
+          const { data, error } = await supabase.functions.invoke('track-keyword', {
+            body: {
+              action: 'get_history',
+              keyword: keyword.toLowerCase(),
+              property: selectedProperty
+            },
+            headers: {
+              Authorization: `Bearer ${session.access_token}`
+            }
+          });
+
+          if (error) {
+            addDebugLog('warn', `Failed to load history for "${keyword}": ${error.message}`);
+            return { keyword, history: [] };
+          }
+
+          if (data?.data) {
+            addDebugLog('info', `✅ Loaded ${data.data.length} historical records for "${keyword}"`);
+            return { keyword, history: data.data };
+          }
+
+          return { keyword, history: [] };
+        } catch (error) {
+          addDebugLog('warn', `Error loading history for "${keyword}": ${error instanceof Error ? error.message : String(error)}`);
+          return { keyword, history: [] };
+        }
+      });
+
+      const results = await Promise.all(historyPromises);
+      const historyMap: Record<string, any[]> = {};
+      
+      results.forEach(({ keyword, history }) => {
+        historyMap[keyword.toLowerCase()] = history;
+      });
+
+      setHistoricalData(historyMap);
+      addDebugLog('success', `✅ Historical data loaded for all keywords`);
+    } catch (error) {
+      addDebugLog('error', `Failed to load historical data: ${error instanceof Error ? error.message : String(error)}`);
+      setHistoricalData({});
     }
   };
 
@@ -313,11 +379,9 @@ export default function RankingTrackerPage() {
       
       // Reload to show updated data
       await loadTrackedKeywords();
-      setDebugLogs(getDebugLogs());
     } catch (error) {
       addDebugLog('error', `Sync failed: ${error instanceof Error ? error.message : String(error)}`);
       toast.error('Failed to sync keywords');
-      setDebugLogs(getDebugLogs());
     } finally {
       setIsSyncing(false);
     }
@@ -351,23 +415,38 @@ export default function RankingTrackerPage() {
         };
       }
 
-      // Calculate trend (simplified - in production, compare with historical data)
       const currentPosition = queryData.avgPosition || 0;
-      const previousPosition = currentPosition + (Math.random() > 0.5 ? -2 : 2); // Mock previous
+      
+      // Get real historical data from database
+      const keywordHistory = historicalData[trackedKw.toLowerCase()] || [];
+      
+      // Process history for chart (last 90 days)
+      const history = keywordHistory
+        .slice(-90) // Last 90 records
+        .map((record: any) => ({
+          date: new Date(record.checked_at || record.created_at).toISOString().split('T')[0],
+          position: Number(record.position) || 0,
+          clicks: Number(record.clicks) || 0,
+          impressions: Number(record.impressions) || 0
+        }))
+        .sort((a, b) => a.date.localeCompare(b.date));
+
+      // Calculate previous position from history (last non-current entry)
+      const previousRecord = keywordHistory.length > 1 
+        ? keywordHistory[keywordHistory.length - 2] 
+        : null;
+      const previousPosition = previousRecord 
+        ? Number(previousRecord.position) || currentPosition 
+        : currentPosition;
+      
+      // Calculate trend
       const change = previousPosition - currentPosition;
       const trend = change > 1 ? 'up' : change < -1 ? 'down' : 'stable';
 
-      // Generate mock history (in production, fetch from database)
-      const history = Array.from({ length: 30 }, (_, i) => {
-        const date = new Date();
-        date.setDate(date.getDate() - (29 - i));
-        return {
-          date: date.toISOString().split('T')[0],
-          position: currentPosition + (Math.random() - 0.5) * 10,
-          clicks: Math.floor((queryData.totalClicks || 0) / 30),
-          impressions: Math.floor((queryData.totalImpressions || 0) / 30)
-        };
-      });
+      // Get first tracked date from history
+      const firstTracked = keywordHistory.length > 0
+        ? new Date(keywordHistory[0].checked_at || keywordHistory[0].created_at)
+        : new Date();
 
       return {
         keyword: trackedKw,
@@ -378,8 +457,13 @@ export default function RankingTrackerPage() {
         clicks: queryData.totalClicks || 0,
         impressions: queryData.totalImpressions || 0,
         ctr: queryData.avgCtr || 0,
-        firstTracked: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 days ago
-        history
+        firstTracked,
+        history: history.length > 0 ? history : [{
+          date: new Date().toISOString().split('T')[0],
+          position: currentPosition,
+          clicks: queryData.totalClicks || 0,
+          impressions: queryData.totalImpressions || 0
+        }]
       };
     }); // Show all tracked keywords, even those without GSC data yet
     
@@ -387,7 +471,7 @@ export default function RankingTrackerPage() {
     console.log('📋 metrics:', metrics);
     
     return metrics;
-  }, [gscData, trackedKeywords]);
+  }, [gscData, trackedKeywords, historicalData]);
 
   // Stats calculations
   const stats = useMemo(() => {
@@ -730,6 +814,13 @@ export default function RankingTrackerPage() {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Debug Panel */}
+      <FeatureDebugPanel
+        logs={debugLogs}
+        featureName="Rank Tracker"
+        onClear={() => setDebugLogs([])}
+      />
     </div>
   );
 }

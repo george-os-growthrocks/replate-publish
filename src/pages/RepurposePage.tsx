@@ -31,6 +31,7 @@ import { SERPPreview } from "@/components/repurpose/SERPPreview";
 import { PreviewPane, GeneratedContent } from "@/components/repurpose/PreviewPane";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useNavigate } from "react-router-dom";
+import { FeatureDebugPanel, DebugLog } from "@/components/debug/FeatureDebugPanel";
 
 type StepType = "input" | "review" | "intelligence" | "generate" | "results";
 
@@ -49,14 +50,17 @@ export default function RepurposePage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationProgress, setGenerationProgress] = useState<string>("");
   const [activeStep, setActiveStep] = useState<StepType>("input");
-  const [debugLogs, setDebugLogs] = useState<string[]>([]);
-  const [showDebugPanel, setShowDebugPanel] = useState(false);
+  const [debugLogs, setDebugLogs] = useState<DebugLog[]>([]);
   const { toast } = useToast();
 
-  function addDebugLog(message: string) {
-    const timestamp = new Date().toLocaleTimeString();
-    setDebugLogs(prev => [...prev, `[${timestamp}] ${message}`]);
-    console.log(`[DEBUG] ${message}`);
+  function addDebugLog(message: string, level: DebugLog['level'] = "info") {
+    const log: DebugLog = {
+      timestamp: new Date().toLocaleTimeString(),
+      level,
+      message
+    };
+    setDebugLogs(prev => [...prev, log]);
+    console.log(`[${level.toUpperCase()}] ${message}`);
   }
 
   useEffect(() => {
@@ -919,77 +923,12 @@ export default function RepurposePage() {
         </section>
       </div>
 
-      {/* Floating Debug Button */}
-      <button
-        onClick={() => setShowDebugPanel(!showDebugPanel)}
-        className="fixed bottom-4 right-4 z-50 px-4 py-2 bg-primary text-primary-foreground rounded-full shadow-lg hover:shadow-xl transition-all flex items-center gap-2 font-semibold"
-      >
-        🐛 Debug Logs ({debugLogs.length})
-      </button>
-
       {/* Debug Panel */}
-      {showDebugPanel && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <Card className="w-full max-w-4xl max-h-[80vh] flex flex-col bg-slate-950 border-2 border-primary/30">
-            <div className="p-4 border-b border-border flex items-center justify-between bg-slate-900">
-              <div>
-                <h2 className="text-xl font-bold text-foreground">Debug Logs</h2>
-                <p className="text-sm text-muted-foreground">{debugLogs.length} log entries</p>
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    navigator.clipboard.writeText(debugLogs.join('\n'));
-                    toast({ title: "Copied!", description: "Debug logs copied to clipboard" });
-                  }}
-                >
-                  Copy All
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setDebugLogs([])}
-                >
-                  Clear
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setShowDebugPanel(false)}
-                >
-                  Close
-                </Button>
-              </div>
-            </div>
-            <div className="flex-1 overflow-y-auto p-4 bg-slate-950">
-              <div className="font-mono text-sm space-y-1">
-                {debugLogs.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-8">No logs yet. Try generating content.</p>
-                ) : (
-                  debugLogs.map((log, index) => (
-                    <div
-                      key={index}
-                      className={`px-3 py-2 rounded ${
-                        log.includes('❌') || log.includes('💥') || log.includes('🔴')
-                          ? 'bg-red-500/10 text-red-400 border-l-4 border-red-500'
-                          : log.includes('✅')
-                          ? 'bg-green-500/10 text-green-400 border-l-4 border-green-500'
-                          : log.includes('⚠️')
-                          ? 'bg-yellow-500/10 text-yellow-400 border-l-4 border-yellow-500'
-                          : 'bg-slate-900 text-slate-300 border-l-4 border-slate-700'
-                      }`}
-                    >
-                      {log}
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          </Card>
-        </div>
-      )}
+      <FeatureDebugPanel
+        logs={debugLogs}
+        featureName="Content Repurpose"
+        onClear={() => setDebugLogs([])}
+      />
     </div>
   );
 }

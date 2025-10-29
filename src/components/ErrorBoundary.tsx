@@ -52,7 +52,7 @@ class ErrorBoundary extends Component<Props, State> {
                 <AlertTriangle className="h-6 w-6 text-red-400" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-white">Something went wrong</h1>
+                <h1 className="text-2xl font-bold text-foreground">Something went wrong</h1>
                 <p className="text-sm text-muted-foreground mt-1">
                   Don't worry, your data is safe. We're working on fixing this.
                 </p>
@@ -81,7 +81,7 @@ class ErrorBoundary extends Component<Props, State> {
 
             {process.env.NODE_ENV === 'development' && this.state.errorInfo && (
               <details className="mt-6 p-4 rounded-lg bg-slate-900/50 border border-white/5">
-                <summary className="cursor-pointer text-sm font-medium text-muted-foreground hover:text-white transition-colors">
+                <summary className="cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
                   Stack Trace (Development Only)
                 </summary>
                 <pre className="mt-3 text-xs text-muted-foreground overflow-x-auto">

@@ -27,12 +27,12 @@ export default function KeywordClusteringGuide() {
               </Link>
 
               <Badge className="mb-4">Keyword Intelligence</Badge>
-              <h1 className="text-4xl font-bold mb-4">How Keyword Clustering Works</h1>
+              <h1 className="text-4xl font-bold mb-4 text-foreground">How Keyword Clustering Works</h1>
               <p className="text-lg text-muted-foreground mb-8">
                 Last updated: October 28, 2025
               </p>
 
-              <div className="prose prose-slate dark:prose-invert max-w-none">
+              <div className="prose prose-slate dark:prose-invert prose-headings:text-foreground max-w-none">
                 <h2>What is Keyword Clustering?</h2>
                 <p>
                   Keyword clustering is the process of grouping related keywords together based on semantic similarity and search intent. Instead of creating separate pages for "best running shoes," "top running shoes," and "running shoes reviews," you cluster them together and target them with a single, comprehensive page.

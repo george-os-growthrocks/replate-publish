@@ -53,7 +53,7 @@ function SerpCompetitors({ query }: SerpCompetitorsProps) {
     <div className="mt-4 p-4 rounded-lg bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20">
       <div className="flex items-center gap-2 mb-3">
         <Target className="h-4 w-4 text-amber-400" />
-        <h4 className="text-sm font-semibold text-white">SERP Competitors</h4>
+        <h4 className="text-sm font-semibold text-foreground">SERP Competitors</h4>
         <Badge variant="outline" className="ml-auto text-xs">
           Top {Math.min(competitors.length, 10)}
         </Badge>
@@ -582,7 +582,7 @@ export default function CannibalizationPage() {
                         <Sparkles className="h-6 w-6 text-purple-400" />
                       </div>
                       <div>
-                        <h3 className="text-xl font-bold text-white">AI Content Brief</h3>
+                        <h3 className="text-xl font-bold text-foreground">AI Content Brief</h3>
                         <p className="text-sm text-purple-300">AI-Generated Action Plan</p>
                       </div>
                     </div>

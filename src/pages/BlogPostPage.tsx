@@ -151,7 +151,7 @@ export default function BlogPostPage() {
 
           {/* Content */}
           <article className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto prose prose-lg dark:prose-invert">
+            <div className="max-w-4xl mx-auto prose prose-lg dark:prose-invert prose-headings:text-foreground">
               
               {/* Introduction */}
               <h2 className="text-3xl font-bold mt-12 mb-6 text-foreground">🚀 We're Live—With Eyes Wide Open</h2>

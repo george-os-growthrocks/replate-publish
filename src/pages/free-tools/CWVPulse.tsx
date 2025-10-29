@@ -135,7 +135,7 @@ export default function CWVPulse() {
                 <Sparkles className="w-3 h-3 mr-1" />
                 Core Web Vitals
               </Badge>
-              <h1 className="text-4xl md:text-5xl font-bold mb-4">
+              <h1 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
                 CWV Pulse: Core Web Vitals Checker
               </h1>
               <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">

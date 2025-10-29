@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -15,6 +16,7 @@ import {
   BarChart3,
   Search,
   Globe,
+  Lightbulb,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -26,15 +28,18 @@ interface SidebarProps {
 }
 
 export function Sidebar({ userEmail, onSignOut, collapsed = false, onToggle }: SidebarProps) {
-  const [activeItem, setActiveItem] = useState("dashboard");
+  const navigate = useNavigate();
+  const location = useLocation();
+  const currentPath = location.pathname;
 
   const menuItems = [
-    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { id: "analytics", label: "Analytics", icon: TrendingUp },
-    { id: "queries", label: "Search Queries", icon: Search },
-    { id: "pages", label: "Top Pages", icon: FileText },
-    { id: "properties", label: "Properties", icon: Globe },
-    { id: "insights", label: "AI Insights", icon: Sparkles },
+    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
+    { id: "analytics", label: "Analytics", icon: TrendingUp, path: "/analytics-dashboard" },
+    { id: "queries", label: "Search Queries", icon: Search, path: "/queries" },
+    { id: "pages", label: "Top Pages", icon: FileText, path: "/pages" },
+    { id: "seo-insights", label: "SEO Insights", icon: Lightbulb, path: "/seo-insights", badge: "NEW" },
+    { id: "keyword-research", label: "Keyword Research", icon: Search, path: "/keyword-research" },
+    { id: "properties", label: "Properties", icon: Globe, path: "/projects" },
   ];
 
   const bottomItems = [
@@ -55,7 +60,7 @@ export function Sidebar({ userEmail, onSignOut, collapsed = false, onToggle }: S
         {!collapsed && (
           <div className="flex items-center gap-2">
             <div className="h-8 w-8 rounded-lg gradient-primary flex items-center justify-center">
-              <span className="text-white font-bold text-sm">SC</span>
+              <span className="text-primary-foreground font-bold text-sm">SC</span>
             </div>
             <div className="flex flex-col">
               <span className="text-sm font-bold">Search Console</span>
@@ -101,15 +106,27 @@ export function Sidebar({ userEmail, onSignOut, collapsed = false, onToggle }: S
         {menuItems.map((item) => (
           <Button
             key={item.id}
-            variant={activeItem === item.id ? "default" : "ghost"}
+            variant={currentPath === item.path ? "default" : "ghost"}
             className={cn(
-              "w-full justify-start",
+              "w-full justify-start relative",
               collapsed && "justify-center px-2"
             )}
-            onClick={() => setActiveItem(item.id)}
+            onClick={() => navigate(item.path)}
           >
             <item.icon className={cn("h-4 w-4", !collapsed && "mr-2")} />
-            {!collapsed && <span>{item.label}</span>}
+            {!collapsed && (
+              <span className="flex items-center gap-2">
+                {item.label}
+                {item.badge && (
+                  <span className="text-[10px] px-1.5 py-0.5 bg-primary/20 text-primary rounded-full font-semibold">
+                    {item.badge}
+                  </span>
+                )}
+              </span>
+            )}
+            {collapsed && item.badge && (
+              <span className="absolute -top-1 -right-1 h-2 w-2 bg-primary rounded-full" />
+            )}
           </Button>
         ))}
       </nav>
@@ -145,4 +162,3 @@ export function Sidebar({ userEmail, onSignOut, collapsed = false, onToggle }: S
     </aside>
   );
 }
-

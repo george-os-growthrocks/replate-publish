@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { 
   TrendingUp, 
   Target, 
@@ -8,10 +9,22 @@ import {
   Globe,
   BarChart3,
   Sparkles,
-  ExternalLink
+  ExternalLink,
+  Bug,
+  Zap,
+  Brain,
+  TrendingDown
 } from "lucide-react";
 import { KeywordOverview, calculateCPS } from "@/types/keyword-explorer";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { useState } from "react";
+import React from "react";
+import { FeatureDebugPanel, DebugLog } from "@/components/debug/FeatureDebugPanel";
+import { 
+  calculateKeywordValue, 
+  analyzeSearchIntent,
+  calculateTrafficPotential 
+} from "@/lib/seo-calculations";
 
 interface KeywordOverviewPanelProps {
   overview: KeywordOverview | null;
@@ -28,6 +41,65 @@ export function KeywordOverviewPanel({
   topResult,
   loading
 }: KeywordOverviewPanelProps) {
+  // ALL HOOKS MUST BE AT THE TOP - before any early returns
+  const [showDebug, setShowDebug] = useState(false);
+  const [debugLogs, setDebugLogs] = useState<DebugLog[]>([]);
+
+  const addDebugLog = (level: DebugLog['level'], message: string) => {
+    const log: DebugLog = {
+      timestamp: new Date().toLocaleTimeString(),
+      level,
+      message
+    };
+    console.log(`[${level.toUpperCase()}] ${message}`);
+    setDebugLogs(prev => [...prev, log]);
+  };
+
+  // Log overview data when it changes
+  React.useEffect(() => {
+    if (overview) {
+      addDebugLog('info', `📊 Overview data received for: "${overview.keyword}"`);
+      addDebugLog('info', `Search Volume: ${overview.search_volume}`);
+      addDebugLog('info', `Monthly Searches Array Length: ${overview.monthly_searches?.length || 0}`);
+      
+      if (overview.monthly_searches && overview.monthly_searches.length > 0) {
+        addDebugLog('success', `✅ Found ${overview.monthly_searches.length} months of trend data`);
+        addDebugLog('info', `First month: ${JSON.stringify(overview.monthly_searches[0])}`);
+        addDebugLog('info', `Last month: ${JSON.stringify(overview.monthly_searches[overview.monthly_searches.length - 1])}`);
+      } else {
+        addDebugLog('warn', '⚠️ No monthly_searches data in overview');
+        addDebugLog('info', `Full overview structure: ${JSON.stringify(Object.keys(overview))}`);
+      }
+    }
+  }, [overview]);
+
+  // Prepare 12-month trend data (before early returns)
+  const trendData = overview?.monthly_searches
+    ?.slice(-12)
+    ?.map((item) => {
+      return {
+        month: `${item.year}-${String(item.month).padStart(2, '0')}`,
+        volume: item.search_volume
+      };
+    }) || [];
+
+  // Log trend data preparation
+  React.useEffect(() => {
+    if (overview) {
+      addDebugLog('info', `📈 Trend data preparation: ${trendData.length} months`);
+      if (trendData.length === 0) {
+        addDebugLog('warn', `⚠️ No trend data! monthly_searches array: ${overview.monthly_searches ? 'exists but empty' : 'missing'}`);
+        if (overview.monthly_searches) {
+          addDebugLog('info', `Raw monthly_searches: ${JSON.stringify(overview.monthly_searches)}`);
+        }
+      } else {
+        addDebugLog('success', `✅ Trend data ready: ${trendData.length} months`);
+        addDebugLog('info', `Sample data point: ${JSON.stringify(trendData[0])}`);
+      }
+    }
+  }, [overview?.monthly_searches]);
+
+  // Early returns AFTER all hooks
   if (loading) {
     return (
       <Card>
@@ -59,12 +131,48 @@ export function KeywordOverviewPanel({
   // Calculate clicks per month
   const monthlyClicks = (overview.impressions_info?.daily_clicks_average || 0) * 30;
 
+  // ========== NEW: Calculate Advanced SEO Metrics ==========
+  const keywordValue = React.useMemo(() => 
+    calculateKeywordValue(overview.search_volume, overview.cpc, overview.keyword_difficulty),
+    [overview.search_volume, overview.cpc, overview.keyword_difficulty]
+  );
+
+  const searchIntent = React.useMemo(() => 
+    analyzeSearchIntent(overview.keyword, overview.cpc),
+    [overview.keyword, overview.cpc]
+  );
+
+  const enhancedTraffic = React.useMemo(() => 
+    calculateTrafficPotential(1, overview.search_volume, [], { device: 'desktop' }),
+    [overview.search_volume]
+  );
+
   // Difficulty color
   const getDifficultyColor = (kd: number) => {
     if (kd < 30) return "text-emerald-500";
     if (kd < 50) return "text-amber-500";
     if (kd < 70) return "text-orange-500";
     return "text-red-500";
+  };
+
+  // Priority color
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'high': return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+      case 'medium': return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+      case 'low': return 'bg-red-500/10 text-red-400 border-red-500/20';
+      default: return 'bg-gray-500/10 text-gray-400 border-gray-500/20';
+    }
+  };
+
+  // Buying stage icon
+  const getBuyingStageInfo = (stage: string) => {
+    switch (stage) {
+      case 'awareness': return { icon: '🔍', label: 'Awareness', color: 'text-blue-400' };
+      case 'consideration': return { icon: '🤔', label: 'Consideration', color: 'text-purple-400' };
+      case 'decision': return { icon: '💰', label: 'Decision', color: 'text-emerald-400' };
+      default: return { icon: '❓', label: 'Unknown', color: 'text-gray-400' };
+    }
   };
 
   // Intent badge color
@@ -83,13 +191,6 @@ export function KeywordOverviewPanel({
     }
   };
 
-  // Prepare 12-month trend data
-  const trendData = overview.monthly_searches
-    ?.slice(-12)
-    ?.map((item) => ({
-      month: `${item.year}-${String(item.month).padStart(2, '0')}`,
-      volume: item.search_volume
-    })) || [];
 
   return (
     <div className="space-y-4">
@@ -189,8 +290,17 @@ export function KeywordOverviewPanel({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* 12-month trend */}
         <Card className="col-span-2">
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-sm font-medium">12-Month Trend</CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowDebug(!showDebug)}
+              className="h-7 gap-1"
+            >
+              <Bug className="h-3 w-3" />
+              Debug
+            </Button>
           </CardHeader>
           <CardContent>
             {trendData.length > 0 ? (
@@ -271,6 +381,182 @@ export function KeywordOverviewPanel({
         </Card>
       </div>
 
+      {/* ========== NEW: Advanced SEO Intelligence Cards ========== */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Keyword Value & ROI Card */}
+        <Card className="bg-gradient-to-br from-emerald-500/10 to-blue-500/10 border-emerald-500/20">
+          <CardHeader>
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Zap className="h-4 w-4 text-emerald-400" />
+              Keyword Value & ROI
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">Monthly Value (at #1)</p>
+              <p className="text-2xl font-bold text-emerald-400">
+                ${keywordValue.monthlyValue.toLocaleString()}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">Opportunity Score</p>
+              <div className="flex items-center gap-2">
+                <p className="text-xl font-bold">
+                  {keywordValue.opportunityScore.toFixed(1)}
+                </p>
+                <Badge className={getPriorityColor(keywordValue.priority)}>
+                  {keywordValue.priority.toUpperCase()}
+                </Badge>
+              </div>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">Est. Clicks at #1</p>
+              <p className="font-medium">{keywordValue.estimatedClicks.toLocaleString()}/month</p>
+            </div>
+            <div className="pt-2 border-t border-border/50">
+              <p className="text-xs text-emerald-400">
+                💡 {keywordValue.priority === 'high' 
+                  ? 'High-value target! Great ROI potential.' 
+                  : keywordValue.priority === 'medium'
+                  ? 'Moderate opportunity. Worth targeting.'
+                  : 'Lower priority. Focus on higher-value keywords first.'}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Enhanced Search Intent Card */}
+        <Card className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 border-purple-500/20">
+          <CardHeader>
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Brain className="h-4 w-4 text-purple-400" />
+              Search Intent Analysis
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">Primary Intent</p>
+              <div className="flex items-center gap-2">
+                <Badge className={getIntentColor(searchIntent.primary)}>
+                  {searchIntent.primary}
+                </Badge>
+                <span className="text-xs text-muted-foreground">
+                  {searchIntent.confidence}% confidence
+                </span>
+              </div>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">Buying Stage</p>
+              <div className="flex items-center gap-2">
+                <span className="text-lg">{getBuyingStageInfo(searchIntent.buyingStage).icon}</span>
+                <span className={`font-medium ${getBuyingStageInfo(searchIntent.buyingStage).color}`}>
+                  {getBuyingStageInfo(searchIntent.buyingStage).label}
+                </span>
+              </div>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">Commercial Score</p>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 bg-muted rounded-full h-2">
+                  <div 
+                    className="bg-purple-500 rounded-full h-2 transition-all"
+                    style={{ width: `${searchIntent.commercialScore}%` }}
+                  />
+                </div>
+                <span className="text-sm font-medium">{searchIntent.commercialScore}%</span>
+              </div>
+            </div>
+            <div className="pt-2 border-t border-border/50">
+              <p className="text-xs text-purple-400">
+                💡 {searchIntent.recommendation}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Enhanced Traffic Potential Card */}
+        <Card className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border-blue-500/20">
+          <CardHeader>
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-blue-400" />
+              Traffic Potential (Enhanced)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">Industry CTR at #1</p>
+              <p className="text-2xl font-bold text-blue-400">
+                {(enhancedTraffic.ctr * 100).toFixed(1)}%
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                (Desktop - AWR 2024 data)
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">Estimated Traffic</p>
+              <p className="text-xl font-bold">
+                {enhancedTraffic.estimatedClicks.toLocaleString()}
+              </p>
+              <p className="text-xs text-muted-foreground">clicks/month at position 1</p>
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-center text-xs">
+              <div>
+                <p className="text-muted-foreground">Pos #2</p>
+                <p className="font-medium">
+                  {Math.round(overview.search_volume * 0.158).toLocaleString()}
+                </p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Pos #3</p>
+                <p className="font-medium">
+                  {Math.round(overview.search_volume * 0.103).toLocaleString()}
+                </p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Pos #5</p>
+                <p className="font-medium">
+                  {Math.round(overview.search_volume * 0.058).toLocaleString()}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Debug Panel */}
+      {showDebug && (
+        <Card className="col-span-full">
+          <CardHeader>
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Bug className="h-4 w-4" />
+              Debug Information
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <p className="text-xs font-semibold mb-2">Raw Overview Data:</p>
+                <pre className="text-xs bg-muted p-3 rounded border border-border overflow-x-auto max-h-64">
+                  {JSON.stringify(overview, null, 2)}
+                </pre>
+              </div>
+              <div>
+                <p className="text-xs font-semibold mb-2">Monthly Searches Array:</p>
+                <pre className="text-xs bg-muted p-3 rounded border border-border overflow-x-auto max-h-64">
+                  {JSON.stringify(overview.monthly_searches || 'null', null, 2)}
+                </pre>
+              </div>
+              <div>
+                <p className="text-xs font-semibold mb-2">Prepared Trend Data:</p>
+                <pre className="text-xs bg-muted p-3 rounded border border-border overflow-x-auto max-h-64">
+                  {JSON.stringify(trendData, null, 2)}
+                </pre>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Parent Topic & Top Result */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Parent Topic */}
@@ -319,6 +605,13 @@ export function KeywordOverviewPanel({
           </Card>
         )}
       </div>
+
+      {/* Debug Logs Panel */}
+      <FeatureDebugPanel
+        logs={debugLogs}
+        featureName="Keyword Overview"
+        onClear={() => setDebugLogs([])}
+      />
     </div>
   );
 }

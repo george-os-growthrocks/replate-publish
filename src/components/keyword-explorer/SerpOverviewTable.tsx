@@ -29,9 +29,10 @@ import { LineChart, Line, ResponsiveContainer } from 'recharts';
 interface SerpOverviewTableProps {
   serpItems: SerpItem[];
   loading: boolean;
+  keywordTrendData?: Array<{ month: number; year: number; search_volume: number }>;
 }
 
-export function SerpOverviewTable({ serpItems, loading }: SerpOverviewTableProps) {
+export function SerpOverviewTable({ serpItems, loading, keywordTrendData }: SerpOverviewTableProps) {
   if (loading) {
     return (
       <Card>
@@ -187,7 +188,9 @@ export function SerpOverviewTable({ serpItems, loading }: SerpOverviewTableProps
                   estimatedTraffic: traffic
                 }) : 0);
 
-                const sparklineData = generateSparklineData();
+                // Use keyword trend data if available (for keyword search volume trend)
+                // Note: This is the keyword's search volume trend, not the domain's traffic trend
+                const sparklineData = generateSparklineData(keywordTrendData);
 
                 return (
                   <TableRow key={idx} className="hover:bg-muted/50">

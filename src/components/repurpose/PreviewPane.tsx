@@ -1069,7 +1069,7 @@ export function PreviewPane({ generatedContent, isGenerating }: PreviewPaneProps
                         </div>
                       </div>
                       <div>
-                        <h3 className="text-xl font-bold text-white">{platform?.name || item.platform}</h3>
+                        <h3 className="text-xl font-bold text-foreground">{platform?.name || item.platform}</h3>
                         <p className="text-white/90 text-sm font-medium">{item.content.length} characters</p>
                       </div>
                     </div>

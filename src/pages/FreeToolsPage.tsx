@@ -42,7 +42,7 @@ export default function FreeToolsPage() {
                 <Sparkles className="w-3 h-3 mr-1" />
                 15+ Free Tools
               </Badge>
-              <h1 className="text-4xl md:text-6xl font-bold mb-6">
+              <h1 className="text-4xl md:text-6xl font-bold mb-6 text-foreground">
                 Professional SEO Tools
                 <span className="block bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                   100% Free Forever

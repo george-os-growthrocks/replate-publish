@@ -11,6 +11,7 @@ import { optimizeForSerpFeature } from "@/lib/seo-algorithms";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { useCredits } from "@/hooks/useCreditManager";
+import { FeatureDebugPanel, DebugLog } from "@/components/debug/FeatureDebugPanel";
 
 export default function SerpAnalysisPage() {
   const [keyword, setKeyword] = useState("");
@@ -18,6 +19,17 @@ export default function SerpAnalysisPage() {
   const [locationCode, setLocationCode] = useState(2300); // Greece default
   const [languageCode, setLanguageCode] = useState("el"); // Greek default
   const { checkCredits, consumeCredits } = useCredits();
+  const [debugLogs, setDebugLogs] = useState<DebugLog[]>([]);
+
+  const addDebugLog = (level: DebugLog['level'], message: string) => {
+    const log: DebugLog = {
+      timestamp: new Date().toLocaleTimeString(),
+      level,
+      message
+    };
+    console.log(`[${level.toUpperCase()}] ${message}`);
+    setDebugLogs(prev => [...prev, log]);
+  };
 
   const { data: serpData, isLoading, error } = useSerpAdvanced(
     { keyword: searchKeyword, location_code: locationCode, language_code: languageCode, device: "desktop" },
@@ -33,22 +45,27 @@ export default function SerpAnalysisPage() {
     // Check credits before SERP analysis
     const hasCredits = await checkCredits('serp_analysis');
     if (!hasCredits) {
+      addDebugLog('warn', '⚠️ Insufficient credits for SERP analysis');
       return;
     }
 
+    addDebugLog('info', `🔍 Starting SERP analysis for keyword: "${keyword.trim()}"`);
+    addDebugLog('info', `Location: ${locationCode}, Language: ${languageCode}`);
     setSearchKeyword(keyword.trim());
   };
 
   // Consume credits after successful SERP analysis
   useEffect(() => {
     if (serpData && searchKeyword) {
+      addDebugLog('success', `✅ SERP data received for "${searchKeyword}"`);
+      const resultCount = serpData?.tasks?.[0]?.result?.[0]?.items_count || 0;
+      addDebugLog('info', `Found ${resultCount} SERP items`);
       consumeCredits({
         feature: 'serp_analysis',
         credits: 3,
         metadata: {
           keyword: searchKeyword,
-          location: locationCode,
-          results_count: serpItems?.length || 0
+          location: locationCode
         }
       });
     }
@@ -431,7 +448,7 @@ export default function SerpAnalysisPage() {
                   <div className="bg-slate-950/50 p-4 rounded-lg border border-emerald-500/20">
                     <div className="flex items-center gap-2 mb-2">
                       <Star className="h-4 w-4 text-amber-400" />
-                      <span className="font-semibold text-white">Featured Snippet Strategy</span>
+                      <span className="font-semibold text-foreground">Featured Snippet Strategy</span>
                       <Badge variant="outline" className="text-amber-300 border-amber-500/30 ml-auto">
                         {fsOptimization.estimatedImpact}
                       </Badge>
@@ -458,7 +475,7 @@ export default function SerpAnalysisPage() {
                   <div className="bg-slate-950/50 p-4 rounded-lg border border-blue-500/20">
                     <div className="flex items-center gap-2 mb-2">
                       <Lightbulb className="h-4 w-4 text-blue-400" />
-                      <span className="font-semibold text-white">People Also Ask Strategy</span>
+                      <span className="font-semibold text-foreground">People Also Ask Strategy</span>
                       <Badge variant="outline" className="text-blue-300 border-blue-500/30 ml-auto">
                         {paaOptimization.estimatedImpact}
                       </Badge>
@@ -485,7 +502,7 @@ export default function SerpAnalysisPage() {
                   <div className="bg-slate-950/50 p-4 rounded-lg border border-emerald-500/20">
                     <div className="flex items-center gap-2 mb-2">
                       <Target className="h-4 w-4 text-emerald-400" />
-                      <span className="font-semibold text-white">Local Pack Strategy</span>
+                      <span className="font-semibold text-foreground">Local Pack Strategy</span>
                       <Badge variant="outline" className="text-emerald-300 border-emerald-500/30 ml-auto">
                         {localOptimization.estimatedImpact}
                       </Badge>
@@ -506,7 +523,7 @@ export default function SerpAnalysisPage() {
                 <div className="bg-slate-950/50 p-4 rounded-lg border border-amber-500/20">
                   <div className="flex items-center gap-2 mb-2">
                     <AlertCircle className="h-4 w-4 text-amber-400" />
-                    <span className="font-semibold text-white">Target Featured Snippet</span>
+                    <span className="font-semibold text-foreground">Target Featured Snippet</span>
                     <Badge variant="outline" className="text-amber-300 border-amber-500/30 ml-auto">
                       High Impact
                     </Badge>
@@ -644,6 +661,13 @@ export default function SerpAnalysisPage() {
           </div>
         </Card>
       )}
+
+      {/* Debug Panel */}
+      <FeatureDebugPanel
+        logs={debugLogs}
+        featureName="SERP Analysis"
+        onClear={() => setDebugLogs([])}
+      />
     </div>
   );
 }

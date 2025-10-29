@@ -7,19 +7,23 @@ import { Gauge, Search, Loader2, CheckCircle2, AlertCircle, XCircle, Zap, FileCo
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { FeatureDebugPanel, DebugLog } from "@/components/debug/FeatureDebugPanel";
 
 export default function OnPageSeoPage() {
   const [url, setUrl] = useState("");
   const [searchUrl, setSearchUrl] = useState("");
   const [firecrawlData, setFirecrawlData] = useState<any>(null);
   const [isLoadingFirecrawl, setIsLoadingFirecrawl] = useState(false);
-  const [debugLog, setDebugLog] = useState<Array<{time: string, message: string, type: string}>>([]);
-  const [showDebug, setShowDebug] = useState(true);
+  const [debugLogs, setDebugLogs] = useState<DebugLog[]>([]);
 
-  const addDebugLog = (message: string, type: string = "info") => {
-    const time = new Date().toLocaleTimeString();
-    setDebugLog(prev => [...prev, { time, message, type }]);
+  const addDebugLog = (message: string, type: DebugLog['level'] = "info") => {
+    const log: DebugLog = {
+      timestamp: new Date().toLocaleTimeString(),
+      level: type,
+      message
+    };
     console.log(`[${type.toUpperCase()}] ${message}`);
+    setDebugLogs(prev => [...prev, log]);
   };
 
   // Fetch data when URL is set
@@ -559,6 +563,13 @@ export default function OnPageSeoPage() {
           </div>
         </Card>
       )}
+
+      {/* Debug Panel */}
+      <FeatureDebugPanel
+        logs={debugLogs}
+        featureName="OnPage SEO"
+        onClear={() => setDebugLogs([])}
+      />
     </div>
   );
 }

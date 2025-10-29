@@ -87,9 +87,9 @@ export function DashboardMetricsCards() {
 
   const apiIntegrations = [
     { name: 'Google Search Console', connected: true },
-    { name: 'DataForSEO', connected: true },
+    { name: 'SEO Intelligence', connected: true },
     { name: 'Google Analytics', connected: false },
-    { name: 'Ahrefs', connected: false },
+    { name: 'Advanced Analytics', connected: false },
   ];
 
   const connectedAPIs = apiIntegrations.filter(api => api.connected).length;

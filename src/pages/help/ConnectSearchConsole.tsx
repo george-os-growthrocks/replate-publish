@@ -27,12 +27,12 @@ export default function ConnectSearchConsole() {
               </Link>
 
               <Badge className="mb-4">Getting Started</Badge>
-              <h1 className="text-4xl font-bold mb-4">Connect Google Search Console</h1>
+              <h1 className="text-4xl font-bold mb-4 text-foreground">Connect Google Search Console</h1>
               <p className="text-lg text-muted-foreground mb-8">
                 Last updated: October 28, 2025
               </p>
 
-              <div className="prose prose-slate dark:prose-invert max-w-none">
+              <div className="prose prose-slate dark:prose-invert prose-headings:text-foreground max-w-none">
                 <h2>What You'll Need</h2>
                 <ul>
                   <li>A Google account with Search Console access</li>

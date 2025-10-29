@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -32,9 +32,22 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Search, TrendingUp, Lightbulb, Target, Loader2, DollarSign, BarChart3, Clock, Award, Zap, Globe, ExternalLink } from "lucide-react";
+import {
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { calculateKeywordDifficulty, analyzeCtr } from "@/lib/seo-algorithms";
+import { FeatureDebugPanel, DebugLog } from "@/components/debug/FeatureDebugPanel";
+import { AIOverview } from "@/components/serp/AIOverview";
 
 interface KeywordResult {
   keyword?: string;
@@ -93,8 +106,219 @@ export default function KeywordResearchPage() {
   const [debugInfo, setDebugInfo] = useState<any>(null);
   const [selectedKeyword, setSelectedKeyword] = useState<KeywordResult | null>(null);
   const [showSerpDialog, setShowSerpDialog] = useState(false);
+  const [aiOverviewData, setAiOverviewData] = useState<{content: string; sources: Array<{title: string; url: string; favicon?: string}>} | null>(null);
+  const [isLoadingAiOverview, setIsLoadingAiOverview] = useState(false);
   const [locationCode, setLocationCode] = useState(2300); // Greece default
   const [languageCode, setLanguageCode] = useState("el"); // Greek default
+  const [debugLogs, setDebugLogs] = useState<DebugLog[]>([]);
+  const [monthlyTrendData, setMonthlyTrendData] = useState<any[]>([]);
+  const [isLoadingTrend, setIsLoadingTrend] = useState(false);
+
+  const addDebugLog = (level: DebugLog['level'], message: string) => {
+    const log: DebugLog = {
+      timestamp: new Date().toLocaleTimeString(),
+      level,
+      message
+    };
+    console.log(`[${level.toUpperCase()}] ${message}`);
+    setDebugLogs(prev => [...prev, log]);
+  };
+
+      // Load monthly search trend data
+  const loadMonthlyTrend = async (targetKeyword?: string) => {
+    // Use provided keyword or get from selectedKeyword
+    const keyword = targetKeyword || selectedKeyword?.keyword_data?.keyword || selectedKeyword?.keyword;
+    if (!keyword) {
+      addDebugLog('error', '❌ No keyword provided for trend data');
+      toast.error('Please select a keyword first');
+      return;
+    }
+
+    setIsLoadingTrend(true);
+    addDebugLog('info', `📊 Loading monthly trend data for: "${keyword}"`);
+    
+    try {
+      // Get session token for auth
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        addDebugLog('error', '❌ No auth session - please login');
+        toast.error('Please sign in again');
+        setIsLoadingTrend(false);
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('keyword-overview-bundle', {
+        body: {
+          keyword: keyword,
+          location_code: locationCode,
+          language_code: languageCode,
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
+
+      if (error) {
+        addDebugLog('error', `❌ API error: ${error.message}`);
+        throw error;
+      }
+
+      if (data?.error) {
+        addDebugLog('error', `❌ API error: ${data.error}`);
+        throw new Error(data.error);
+      }
+
+      console.log('🔵 Full API response:', JSON.stringify(data, null, 2));
+      addDebugLog('info', `📊 Full response keys: ${data ? Object.keys(data).join(', ') : 'null'}`);
+      
+      const overview = data?.overview;
+      if (!overview) {
+        addDebugLog('error', '❌ No overview in response');
+        console.error('❌ Response structure:', data);
+        toast.error('Invalid response from API');
+        setMonthlyTrendData([]);
+        return;
+      }
+
+      addDebugLog('info', `📊 Overview keys: ${Object.keys(overview).join(', ')}`);
+      addDebugLog('info', `📊 monthly_searches type: ${typeof overview.monthly_searches}`);
+      addDebugLog('info', `📊 monthly_searches length: ${Array.isArray(overview.monthly_searches) ? overview.monthly_searches.length : 'NOT AN ARRAY'}`);
+      
+      const monthlySearches = overview.monthly_searches || [];
+      
+      console.log('🔵 Monthly searches raw:', monthlySearches);
+      
+      if (monthlySearches.length === 0) {
+        addDebugLog('warn', '⚠️ No monthly search data returned');
+        addDebugLog('info', `📊 Debug info: ${JSON.stringify(overview._debug || {})}`);
+        
+        // Check if there's data in other places
+        if (overview.clickstream_keyword_info?.monthly_searches) {
+          addDebugLog('info', '📊 Found monthly_searches in clickstream_keyword_info');
+          const clickstreamData = overview.clickstream_keyword_info.monthly_searches;
+          if (Array.isArray(clickstreamData) && clickstreamData.length > 0) {
+            monthlySearches.push(...clickstreamData);
+          }
+        }
+        
+        if (monthlySearches.length === 0) {
+          toast.warning('No trend data available for this keyword');
+          setMonthlyTrendData([]);
+          return;
+        }
+      }
+
+      // Transform data for chart (last 12 months)
+      const chartData = monthlySearches
+        .slice(-12) // Last 12 months
+        .map((item: any) => ({
+          month: item.month,
+          year: item.year,
+          monthLabel: `${item.year}-${String(item.month).padStart(2, '0')}`,
+          search_volume: item.search_volume || 0,
+        }))
+        .sort((a: any, b: any) => {
+          if (a.year !== b.year) return a.year - b.year;
+          return a.month - b.month;
+        });
+
+      console.log('🔵 Chart data prepared:', chartData);
+      setMonthlyTrendData(chartData);
+      addDebugLog('success', `✅ Loaded ${chartData.length} months of trend data`);
+      toast.success(`Loaded ${chartData.length} months of trend data`);
+    } catch (error: any) {
+      console.error('💥 Monthly Trend Error:', error);
+      addDebugLog('error', `❌ Failed to load trend data: ${error.message}`);
+      toast.error(`Failed to load trend data: ${error.message}`);
+      setMonthlyTrendData([]);
+    } finally {
+      setIsLoadingTrend(false);
+    }
+  };
+
+  // Load SERP with AI Overview when keyword is selected
+  const loadSerpWithAiOverview = async (targetKeyword?: string) => {
+    const keyword = targetKeyword || selectedKeyword?.keyword_data?.keyword || selectedKeyword?.keyword;
+    if (!keyword) return;
+
+    setIsLoadingAiOverview(true);
+    addDebugLog('info', `🤖 Loading SERP with AI Overview for: "${keyword}"`);
+
+    try {
+      // Get session token for auth
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        addDebugLog('error', '❌ No auth session - please login');
+        setIsLoadingAiOverview(false);
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('dataforseo-serp', {
+        body: {
+          keyword: keyword,
+          location_code: locationCode,
+          language_code: languageCode,
+          device: 'desktop',
+          enable_ai_overview: true
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
+
+      if (error) {
+        addDebugLog('error', `❌ SERP API error: ${error.message}`);
+        setIsLoadingAiOverview(false);
+        return;
+      }
+
+      // Extract AI Overview from SERP response
+      const serpResult = data?.tasks?.[0]?.result?.[0];
+      const aiOverviewItems = serpResult?.items?.filter((item: any) => 
+        item.type === 'ai_overview' || item.type === 'ai_mode'
+      ) || [];
+
+      if (aiOverviewItems.length > 0) {
+        const aiItem = aiOverviewItems[0];
+        setAiOverviewData({
+          content: aiItem.text || aiItem.content || aiItem.answer || 'AI Overview detected but content not available',
+          sources: (aiItem.sources || []).map((src: any) => ({
+            title: src.title || src.name || src.domain || 'Unknown',
+            url: src.url || src.link || '#',
+            favicon: src.favicon || `https://www.google.com/s2/favicons?domain=${src.domain || src.url}`
+          }))
+        });
+        addDebugLog('success', `✅ AI Overview found with ${aiItem.sources?.length || 0} sources`);
+      } else {
+        addDebugLog('info', `ℹ️ No AI Overview detected for this keyword`);
+        setAiOverviewData(null);
+      }
+    } catch (error: any) {
+      console.error('💥 AI Overview Error:', error);
+      addDebugLog('error', `❌ Failed to load AI Overview: ${error.message}`);
+      setAiOverviewData(null);
+    } finally {
+      setIsLoadingAiOverview(false);
+    }
+  };
+
+  // Auto-load trend AND AI Overview when keyword is selected AND dialog is open
+  useEffect(() => {
+    if (selectedKeyword && showSerpDialog) {
+      const keyword = selectedKeyword?.keyword_data?.keyword || selectedKeyword?.keyword;
+      if (keyword) {
+        // Always reload both to ensure fresh data
+        addDebugLog('info', `📌 Keyword selected in dialog: "${keyword}" - loading trend data and AI Overview`);
+        loadMonthlyTrend(keyword);
+        loadSerpWithAiOverview(keyword);
+      }
+    } else if (!showSerpDialog) {
+      // Reset when dialog closes
+      setMonthlyTrendData([]);
+      setAiOverviewData(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedKeyword, showSerpDialog]);
 
   const fetchKeywordIdeas = async () => {
     if (!seedKeyword.trim()) {
@@ -103,6 +327,7 @@ export default function KeywordResearchPage() {
     }
 
     setIsLoading(true);
+    addDebugLog('info', `🔍 Fetching keyword ideas for: "${seedKeyword}"`);
     try {
       console.log("🔍 Keyword Ideas Request:", {
         keywords: [seedKeyword],
@@ -128,7 +353,7 @@ export default function KeywordResearchPage() {
       }
 
       if (data?.error) {
-        console.error("❌ DataForSEO Error:", data.error);
+        console.error("❌ API Error:", data.error);
         throw new Error(data.error);
       }
 
@@ -157,12 +382,15 @@ export default function KeywordResearchPage() {
       setResults(prev => ({ ...prev, ideas: items }));
       
       if (items.length === 0) {
+        addDebugLog('warn', '⚠️ No keyword ideas found');
         toast.warning("No keywords found. Check console for details.");
       } else {
+        addDebugLog('success', `✅ Found ${items.length} keyword ideas`);
         toast.success(`Found ${items.length} keyword ideas`);
       }
     } catch (error: any) {
       console.error("💥 Keyword Ideas Error:", error);
+      addDebugLog('error', `❌ Failed to fetch keyword ideas: ${error.message}`);
       toast.error(`Failed to fetch keyword ideas: ${error.message}`);
     } finally {
       setIsLoading(false);
@@ -201,7 +429,7 @@ export default function KeywordResearchPage() {
       }
 
       if (data?.error) {
-        console.error("❌ DataForSEO Error:", data.error);
+        console.error("❌ API Error:", data.error);
         throw new Error(data.error);
       }
 
@@ -274,7 +502,7 @@ export default function KeywordResearchPage() {
       }
 
       if (data?.error) {
-        console.error("❌ DataForSEO Error:", data.error);
+        console.error("❌ API Error:", data.error);
         throw new Error(data.error);
       }
 
@@ -345,7 +573,7 @@ export default function KeywordResearchPage() {
       }
 
       if (data?.error) {
-        console.error("❌ DataForSEO Error:", data.error);
+        console.error("❌ API Error:", data.error);
         throw new Error(data.error);
       }
 
@@ -417,7 +645,7 @@ export default function KeywordResearchPage() {
       );
     }
 
-    // Helper function to extract keyword data from various possible DataForSEO response structures
+    // Helper function to extract keyword data from various possible API response structures
     const extractKeywordData = (kw: any, idx: number) => {
       // Extract keyword (check multiple paths)
       const keyword = 
@@ -568,17 +796,25 @@ export default function KeywordResearchPage() {
               <TableRow key={idx} className={priorityScore > 70 ? 'bg-emerald-500/5' : priorityScore > 50 ? 'bg-amber-500/5' : ''}>
                 <TableCell className="font-medium max-w-md">
                   <button 
-                    onClick={() => {
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log('🔵 Keyword clicked:', keyword);
+                      console.log('🔵 Keyword data:', kw);
                       setSelectedKeyword(kw);
                       setShowSerpDialog(true);
+                      setMonthlyTrendData([]);
+                      setAiOverviewData(null);
+                      console.log('🔵 Dialog state set to true');
                     }}
-                    className="flex items-center gap-2 hover:text-primary transition-colors cursor-pointer text-left w-full"
+                    className="flex items-center gap-2 hover:text-primary transition-colors cursor-pointer text-left w-full p-2 -m-2"
                   >
                     {priorityScore > 70 && <Zap className="h-3 w-3 text-emerald-400" />}
                     <div className="truncate" title={keyword || "-"}>
                       {keyword || "-"}
                     </div>
-                    <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <ExternalLink className="h-3 w-3 opacity-50 group-hover:opacity-100 transition-opacity" />
                   </button>
                 </TableCell>
                 <TableCell className="text-right">
@@ -974,19 +1210,27 @@ export default function KeywordResearchPage() {
       )}
 
       {/* SERP Preview Dialog */}
-      <Dialog open={showSerpDialog} onOpenChange={setShowSerpDialog}>
+      <Dialog open={showSerpDialog} onOpenChange={(open) => {
+        console.log('🔵 Dialog open changed to:', open, 'selectedKeyword:', selectedKeyword);
+        setShowSerpDialog(open);
+        if (!open) {
+          setSelectedKeyword(null);
+          setMonthlyTrendData([]);
+          setAiOverviewData(null);
+        }
+      }}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Search className="h-5 w-5" />
-              SERP Analysis: {selectedKeyword?.keyword_data?.keyword || selectedKeyword?.keyword || "-"}
+              SERP Analysis: {selectedKeyword?.keyword_data?.keyword || selectedKeyword?.keyword || selectedKeyword?.key || "-"}
             </DialogTitle>
             <DialogDescription>
               Detailed SERP data and keyword metrics
             </DialogDescription>
           </DialogHeader>
 
-          {selectedKeyword && (
+          {selectedKeyword ? (
             <div className="space-y-4">
               {/* Keyword Overview */}
               <Card className="p-4 bg-gradient-to-r from-blue-500/10 to-purple-500/10 border-blue-500/20">
@@ -1057,26 +1301,92 @@ export default function KeywordResearchPage() {
                 </div>
               )}
 
-              {/* Monthly Searches Trend */}
-              {(selectedKeyword.keyword_data?.keyword_info?.monthly_searches || 
-                selectedKeyword.keyword_info?.monthly_searches) && (
-                <div>
-                  <h4 className="text-sm font-semibold mb-2">Monthly Search Trend (Last 12 Months)</h4>
-                  <div className="grid grid-cols-6 gap-2">
-                    {(selectedKeyword.keyword_data?.keyword_info?.monthly_searches || 
-                      selectedKeyword.keyword_info?.monthly_searches || []).map((month: any, idx: number) => (
-                      <div key={idx} className="bg-muted p-2 rounded border border-border">
-                        <div className="text-[10px] text-muted-foreground">
-                          {month.year}/{month.month}
-                        </div>
-                        <div className="text-sm font-bold">
-                          {month.search_volume?.toLocaleString() || "0"}
-                        </div>
-                      </div>
-                    ))}
+              {/* AI Overview */}
+              {isLoadingAiOverview ? (
+                <Card className="p-6">
+                  <div className="flex items-center justify-center h-32">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                    <span className="ml-2 text-sm text-muted-foreground">Loading AI Overview...</span>
                   </div>
+                </Card>
+              ) : aiOverviewData ? (
+                <div>
+                  <h4 className="text-sm font-semibold mb-4">AI Overview</h4>
+                  <AIOverview 
+                    content={aiOverviewData.content}
+                    sources={aiOverviewData.sources}
+                  />
                 </div>
-              )}
+              ) : null}
+
+              {/* Monthly Searches Trend */}
+              <div>
+                <h4 className="text-sm font-semibold mb-4">Monthly Search Trend (Last 12 Months)</h4>
+                {isLoadingTrend ? (
+                  <div className="flex items-center justify-center h-64">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  </div>
+                ) : monthlyTrendData.length > 0 ? (
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={monthlyTrendData}>
+                        <defs>
+                          <linearGradient id="colorSearchVolume" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                        <XAxis 
+                          dataKey="monthLabel" 
+                          stroke="#64748b"
+                          tick={{ fontSize: 12 }}
+                        />
+                        <YAxis 
+                          stroke="#64748b"
+                          tick={{ fontSize: 12 }}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: '#0f172a',
+                            border: '1px solid #334155',
+                            borderRadius: '8px'
+                          }}
+                          formatter={(value: number) => [value.toLocaleString(), 'Searches']}
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="search_volume"
+                          stroke="#3b82f6"
+                          fillOpacity={1}
+                          fill="url(#colorSearchVolume)"
+                          strokeWidth={2}
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-20" />
+                    <p>No trend data available for this keyword</p>
+                    <p className="text-xs mt-2">Click "Load Trend Data" to fetch historical data</p>
+                    <Button
+                      onClick={loadMonthlyTrend}
+                      size="sm"
+                      variant="outline"
+                      className="mt-4"
+                      disabled={isLoadingTrend}
+                    >
+                      {isLoadingTrend ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      ) : (
+                        <TrendingUp className="h-4 w-4 mr-2" />
+                      )}
+                      Load Trend Data
+                    </Button>
+                  </div>
+                )}
+              </div>
 
               {/* Backlinks Info */}
               {(selectedKeyword.keyword_data?.avg_backlinks_info || 
@@ -1134,10 +1444,23 @@ export default function KeywordResearchPage() {
                   </Button>
                 </div>
               )}
+              </div>
+              );
+            })()
+          ) : (
+            <div className="p-8 text-center text-muted-foreground">
+              <p>No keyword selected</p>
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Debug Panel */}
+      <FeatureDebugPanel
+        logs={debugLogs}
+        featureName="Keyword Research"
+        onClear={() => setDebugLogs([])}
+      />
     </div>
   );
 }

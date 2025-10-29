@@ -169,6 +169,155 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               </Button>
             </div>
 
+            {/* PREMIUM FEATURES */}
+            {!sidebarCollapsed && (
+              <div className="px-3 py-2 mb-2">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Premium Features
+                  </h3>
+                  <span className="px-1.5 py-0.5 text-[9px] font-bold bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-md">
+                    PRO
+                  </span>
+                </div>
+              </div>
+            )}
+            <div className="space-y-1">
+              {/* SEO Insights - NEW */}
+              <Button
+                variant="ghost"
+                className={cn(
+                  "w-full justify-start rounded-xl text-sm transition-colors relative group",
+                  location.pathname === "/seo-insights"
+                    ? "bg-gradient-to-r from-primary/20 to-secondary/20 text-primary border border-primary/30"
+                    : "text-muted-foreground hover:bg-gradient-to-r hover:from-primary/5 hover:to-secondary/5 hover:text-foreground",
+                  sidebarCollapsed && "justify-center px-2"
+                )}
+                onClick={() => navigate("/seo-insights")}
+              >
+                <Sparkles className={cn(
+                  "h-[18px] w-[18px]", 
+                  !sidebarCollapsed && "mr-3",
+                  location.pathname === "/seo-insights" ? "text-primary animate-pulse" : ""
+                )} />
+                {!sidebarCollapsed && (
+                  <span className="flex items-center gap-2 flex-1">
+                    <span className="font-medium">SEO Insights</span>
+                    <span className="ml-auto px-1.5 py-0.5 text-[9px] font-bold bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-md animate-pulse">
+                      NEW
+                    </span>
+                  </span>
+                )}
+                {sidebarCollapsed && (
+                  <span className="absolute -top-1 -right-1 h-2 w-2 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full animate-pulse" />
+                )}
+              </Button>
+
+              {/* Intelligence Hub - HOT */}
+              <Button
+                variant="ghost"
+                className={cn(
+                  "w-full justify-start rounded-xl text-sm transition-colors relative group",
+                  location.pathname === "/competitive-intelligence"
+                    ? "bg-gradient-to-r from-orange-500/20 to-red-500/20 text-orange-400 border border-orange-500/30"
+                    : "text-muted-foreground hover:bg-gradient-to-r hover:from-orange-500/5 hover:to-red-500/5 hover:text-foreground",
+                  sidebarCollapsed && "justify-center px-2"
+                )}
+                onClick={() => navigate("/competitive-intelligence")}
+              >
+                <Brain className={cn("h-[18px] w-[18px]", !sidebarCollapsed && "mr-3")} />
+                {!sidebarCollapsed && (
+                  <span className="flex items-center gap-2 flex-1">
+                    <span className="font-medium">Intelligence Hub</span>
+                    <span className="ml-auto px-1.5 py-0.5 text-[9px] font-bold bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-md">
+                      HOT
+                    </span>
+                  </span>
+                )}
+                {sidebarCollapsed && (
+                  <span className="absolute -top-1 -right-1 h-2 w-2 bg-gradient-to-r from-orange-500 to-red-500 rounded-full" />
+                )}
+              </Button>
+
+              {/* Keyword Research - PRO */}
+              <Button
+                variant="ghost"
+                className={cn(
+                  "w-full justify-start rounded-xl text-sm transition-colors relative group",
+                  location.pathname === "/keyword-research"
+                    ? "bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-blue-400 border border-blue-500/30"
+                    : "text-muted-foreground hover:bg-gradient-to-r hover:from-blue-500/5 hover:to-cyan-500/5 hover:text-foreground",
+                  sidebarCollapsed && "justify-center px-2"
+                )}
+                onClick={() => navigate("/keyword-research")}
+              >
+                <Key className={cn("h-[18px] w-[18px]", !sidebarCollapsed && "mr-3")} />
+                {!sidebarCollapsed && (
+                  <span className="flex items-center gap-2 flex-1">
+                    <span className="font-medium">Keyword Research</span>
+                    <span className="ml-auto px-1.5 py-0.5 text-[9px] font-bold bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-md">
+                      PRO
+                    </span>
+                  </span>
+                )}
+                {sidebarCollapsed && (
+                  <span className="absolute -top-1 -right-1 h-2 w-2 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full" />
+                )}
+              </Button>
+
+              {/* AI Repurpose - AI */}
+              <Button
+                variant="ghost"
+                className={cn(
+                  "w-full justify-start rounded-xl text-sm transition-colors relative group",
+                  location.pathname === "/repurpose"
+                    ? "bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-400 border border-purple-500/30"
+                    : "text-muted-foreground hover:bg-gradient-to-r hover:from-purple-500/5 hover:to-pink-500/5 hover:text-foreground",
+                  sidebarCollapsed && "justify-center px-2"
+                )}
+                onClick={() => navigate("/repurpose")}
+              >
+                <Sparkles className={cn("h-[18px] w-[18px]", !sidebarCollapsed && "mr-3")} />
+                {!sidebarCollapsed && (
+                  <span className="flex items-center gap-2 flex-1">
+                    <span className="font-medium">AI Repurpose</span>
+                    <span className="ml-auto px-1.5 py-0.5 text-[9px] font-bold bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-md">
+                      AI
+                    </span>
+                  </span>
+                )}
+                {sidebarCollapsed && (
+                  <span className="absolute -top-1 -right-1 h-2 w-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full" />
+                )}
+              </Button>
+
+              {/* LLM Citations - BETA */}
+              <Button
+                variant="ghost"
+                className={cn(
+                  "w-full justify-start rounded-xl text-sm transition-colors relative group",
+                  location.pathname === "/llm-citations"
+                    ? "bg-gradient-to-r from-violet-500/20 to-indigo-500/20 text-violet-400 border border-violet-500/30"
+                    : "text-muted-foreground hover:bg-gradient-to-r hover:from-violet-500/5 hover:to-indigo-500/5 hover:text-foreground",
+                  sidebarCollapsed && "justify-center px-2"
+                )}
+                onClick={() => navigate("/llm-citations")}
+              >
+                <Activity className={cn("h-[18px] w-[18px]", !sidebarCollapsed && "mr-3")} />
+                {!sidebarCollapsed && (
+                  <span className="flex items-center gap-2 flex-1">
+                    <span className="font-medium">LLM Citations</span>
+                    <span className="ml-auto px-1.5 py-0.5 text-[9px] font-bold bg-gradient-to-r from-violet-500 to-indigo-500 text-white rounded-md">
+                      BETA
+                    </span>
+                  </span>
+                )}
+                {sidebarCollapsed && (
+                  <span className="absolute -top-1 -right-1 h-2 w-2 bg-gradient-to-r from-violet-500 to-indigo-500 rounded-full" />
+                )}
+              </Button>
+            </div>
+
             {/* Search Console */}
             {!sidebarCollapsed && (
               <h3 className="px-3 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
@@ -205,10 +354,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               </h3>
             )}
             <div className="space-y-1">
-              <Button variant="ghost" className={cn("w-full justify-start rounded-xl text-sm transition-colors", location.pathname === "/keyword-research" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground", sidebarCollapsed && "justify-center px-2")} onClick={() => navigate("/keyword-research")}>
-                <Key className={cn("h-[18px] w-[18px]", !sidebarCollapsed && "mr-3")} />
-                {!sidebarCollapsed && <span>Research</span>}
-              </Button>
               <Button variant="ghost" className={cn("w-full justify-start rounded-xl text-sm transition-colors", location.pathname === "/keyword-clustering" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground", sidebarCollapsed && "justify-center px-2")} onClick={() => navigate("/keyword-clustering")}>
                 <Layers className={cn("h-[18px] w-[18px]", !sidebarCollapsed && "mr-3")} />
                 {!sidebarCollapsed && <span>Clustering</span>}
@@ -314,10 +459,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               </h3>
             )}
             <div className="space-y-1">
-              <Button variant="ghost" className={cn("w-full justify-start rounded-xl text-sm transition-colors", location.pathname === "/repurpose" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground", sidebarCollapsed && "justify-center px-2")} onClick={() => navigate("/repurpose")}>
-                <Sparkles className={cn("h-[18px] w-[18px]", !sidebarCollapsed && "mr-3")} />
-                {!sidebarCollapsed && <span>Content Repurpose</span>}
-              </Button>
               <Button variant="ghost" className={cn("w-full justify-start rounded-xl text-sm transition-colors", location.pathname === "/seo-intelligence" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground", sidebarCollapsed && "justify-center px-2")} onClick={() => navigate("/seo-intelligence")}>
                 <Brain className={cn("h-[18px] w-[18px]", !sidebarCollapsed && "mr-3")} />
                 {!sidebarCollapsed && <span>Intelligence</span>}
@@ -326,13 +467,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <BarChart3 className={cn("h-[18px] w-[18px]", !sidebarCollapsed && "mr-3")} />
                 {!sidebarCollapsed && <span>GA4 Analytics</span>}
               </Button>
+              <Button variant="ghost" className={cn("w-full justify-start rounded-xl text-sm transition-colors", location.pathname === "/ga-reporting" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground", sidebarCollapsed && "justify-center px-2")} onClick={() => navigate("/ga-reporting")}>
+                <BarChart3 className={cn("h-[18px] w-[18px]", !sidebarCollapsed && "mr-3")} />
+                {!sidebarCollapsed && <span>GA Reporting (UA)</span>}
+              </Button>
               <Button variant="ghost" className={cn("w-full justify-start rounded-xl text-sm transition-colors", location.pathname === "/answer-the-public" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground", sidebarCollapsed && "justify-center px-2")} onClick={() => navigate("/answer-the-public")}>
                 <HelpCircle className={cn("h-[18px] w-[18px]", !sidebarCollapsed && "mr-3")} />
                 {!sidebarCollapsed && <span>Answer The Public</span>}
-              </Button>
-              <Button variant="ghost" className={cn("w-full justify-start rounded-xl text-sm transition-colors", location.pathname === "/llm-citations" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground", sidebarCollapsed && "justify-center px-2")} onClick={() => navigate("/llm-citations")}>
-                <Activity className={cn("h-[18px] w-[18px]", !sidebarCollapsed && "mr-3")} />
-                {!sidebarCollapsed && <span>LLM Citations</span>}
               </Button>
               <Button variant="ghost" className={cn("w-full justify-start rounded-xl text-sm transition-colors", location.pathname === "/alerts" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground", sidebarCollapsed && "justify-center px-2")} onClick={() => navigate("/alerts")}>
                 <Bell className={cn("h-[18px] w-[18px]", !sidebarCollapsed && "mr-3")} />
@@ -393,8 +534,16 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                   </svg>
                 </Button>
-                <div className="flex-1 text-sm font-semibold">
-                  AnotherSEOGuru
+                <div className="flex-1">
+                  <span className="text-sm font-semibold tracking-wide bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                    AnotherSEOGuru
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 pr-2">
+                  <ThemeToggle />
+                  <NotificationCenter />
+                  <CreditCounter />
+                  <UserProfileDropdown userEmail={userEmail} userPlan="Free" />
                 </div>
               </div>
 
@@ -423,10 +572,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     <SelectItem value="TABLET">Tablet</SelectItem>
                   </SelectContent>
                 </Select>
-                <ThemeToggle />
-                <NotificationCenter />
-                <CreditCounter />
-                <UserProfileDropdown userEmail={userEmail} userPlan="Free" />
               </div>
               
               {/* Country Filter (if active) */}
@@ -494,4 +639,3 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     </div>
   );
 }
-

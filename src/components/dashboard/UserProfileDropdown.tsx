@@ -25,6 +25,8 @@ import {
   Shield,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useCredits } from "@/hooks/useSubscription";
+import { useProjects } from "@/hooks/useProjects";
 
 interface UserProfileDropdownProps {
   userEmail: string;
@@ -34,6 +36,8 @@ interface UserProfileDropdownProps {
 export function UserProfileDropdown({ userEmail, userPlan = "Free" }: UserProfileDropdownProps) {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
+  const { data: credits } = useCredits();
+  const { data: projects } = useProjects();
 
   const handleSignOut = async () => {
     try {
@@ -106,15 +110,15 @@ export function UserProfileDropdown({ userEmail, userPlan = "Free" }: UserProfil
             {/* Quick Stats */}
             <div className="grid grid-cols-3 gap-2 pt-2 border-t">
               <div className="text-center">
-                <div className="text-lg font-bold text-primary">2.5k</div>
+                <div className="text-lg font-bold text-primary">{credits?.available_credits?.toLocaleString?.() || 0}</div>
                 <div className="text-xs text-muted-foreground">Credits</div>
               </div>
               <div className="text-center">
-                <div className="text-lg font-bold text-emerald-500">8</div>
+                <div className="text-lg font-bold text-emerald-500">{projects?.length || 0}</div>
                 <div className="text-xs text-muted-foreground">Projects</div>
               </div>
               <div className="text-center">
-                <div className="text-lg font-bold text-amber-500">12</div>
+                <div className="text-lg font-bold text-amber-500">0</div>
                 <div className="text-xs text-muted-foreground">Reports</div>
               </div>
             </div>

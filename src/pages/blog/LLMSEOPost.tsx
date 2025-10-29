@@ -53,7 +53,7 @@ export default function LLMSEOPost() {
 
           {/* Content */}
           <div className="py-12 px-4">
-            <div className="container mx-auto max-w-3xl prose prose-slate dark:prose-invert prose-headings:font-bold prose-a:text-primary prose-a:no-underline hover:prose-a:underline">
+            <div className="container mx-auto max-w-3xl prose prose-slate dark:prose-invert prose-headings:text-foreground prose-headings:font-bold prose-a:text-primary prose-a:no-underline hover:prose-a:underline">
               <p className="lead">
                 The search landscape now includes answer engines that summarize the web and link to sources. If you want durable visibility, optimize not just for blue links but for citation-worthiness.
               </p>
