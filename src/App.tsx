@@ -44,6 +44,8 @@ import DevicesPage from "./pages/DevicesPage";
 import CannibalizationPage from "./pages/CannibalizationPage";
 import LinkOpportunitiesPage from "./pages/LinkOpportunitiesPage";
 import KeywordResearchPage from "./pages/KeywordResearchPage";
+import KeywordExplorerPage from "./pages/KeywordExplorerPage";
+import KeywordExplorerPageFull from "./pages/KeywordExplorerPageFull";
 import CompetitorAnalysisPage from "./pages/CompetitorAnalysisPage";
 import LocalSeoPage from "./pages/LocalSeoPage";
 import ShoppingPage from "./pages/ShoppingPage";
@@ -86,6 +88,7 @@ import Index from "./pages/Index";
 import SocialMediaSEO from "./pages/SocialMediaSEO";
 import SERPPreviewPage from "./pages/SERPPreviewPage";
 import AnalyticsDashboard from "./pages/AnalyticsDashboard";
+import GAReportingDashboard from "./pages/GAReportingDashboard";
 
 const queryClient = new QueryClient();
 
@@ -190,7 +193,7 @@ const App = () => (
             <Route path="/devices" element={<DashboardLayout><DevicesPage /></DashboardLayout>} />
                   <Route path="/cannibalization" element={<DashboardLayout><CannibalizationPage /></DashboardLayout>} />
                   <Route path="/link-opportunities" element={<DashboardLayout><LinkOpportunitiesPage /></DashboardLayout>} />
-                  <Route path="/keyword-research" element={<DashboardLayout><KeywordResearchPage /></DashboardLayout>} />
+                  <Route path="/keyword-research" element={<DashboardLayout><KeywordExplorerPageFull /></DashboardLayout>} />
                   <Route path="/competitor-analysis" element={<DashboardLayout><CompetitorAnalysisPage /></DashboardLayout>} />
                   <Route path="/local-seo" element={<DashboardLayout><LocalSeoPage /></DashboardLayout>} />
                   <Route path="/shopping" element={<DashboardLayout><ShoppingPage /></DashboardLayout>} />
@@ -209,6 +212,7 @@ const App = () => (
                   <Route path="/answer-the-public" element={<DashboardLayout><AnswerThePublicPage /></DashboardLayout>} />
                   <Route path="/social-media-seo" element={<DashboardLayout><SocialMediaSEO /></DashboardLayout>} />
                   <Route path="/analytics-dashboard" element={<DashboardLayout><AnalyticsDashboard /></DashboardLayout>} />
+                  <Route path="/ga-reporting" element={<DashboardLayout><GAReportingDashboard /></DashboardLayout>} />
                   <Route path="/projects" element={<DashboardLayout><ProjectsPage /></DashboardLayout>} />
                   <Route path="/credit-analytics" element={<DashboardLayout><CreditUsageAnalytics /></DashboardLayout>} />
                   <Route path="/settings" element={<DashboardLayout><SettingsPage /></DashboardLayout>} />
