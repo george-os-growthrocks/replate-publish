@@ -194,7 +194,7 @@ export function OnboardingWizard() {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="max-w-2xl p-0 gap-0 overflow-hidden">
+      <DialogContent className="max-w-2xl w-[calc(100vw-2rem)] sm:w-full p-0 gap-0 overflow-hidden m-auto">
         {/* Header */}
         <div className="p-6 border-b">
           <div className="flex items-center justify-between mb-4">

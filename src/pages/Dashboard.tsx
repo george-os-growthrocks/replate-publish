@@ -5,6 +5,7 @@ import { RecentActivityFeed } from "@/components/dashboard/RecentActivityFeed";
 import { DashboardMetricsCards } from "@/components/dashboard/DashboardMetricsCards";
 import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
 import { DashboardRightSidebar } from "@/components/dashboard/DashboardRightSidebar";
+import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TrendingUp, Sparkles, Clock } from "lucide-react";
@@ -21,6 +22,9 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6">
+      {/* Onboarding Wizard */}
+      <OnboardingWizard />
+      
       {/* Hero Section */}
       {userEmail && <DashboardHero userEmail={userEmail} />}
       

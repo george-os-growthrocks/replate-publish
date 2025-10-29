@@ -276,6 +276,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <Shield className={cn("h-[18px] w-[18px]", !sidebarCollapsed && "mr-3")} />
                 {!sidebarCollapsed && <span>Site Audit</span>}
               </Button>
+              <Button variant="ghost" className={cn("w-full justify-start rounded-xl text-sm transition-colors", location.pathname === "/free-tools/cwv-pulse" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground", sidebarCollapsed && "justify-center px-2")} onClick={() => navigate("/free-tools/cwv-pulse")}>
+                <Gauge className={cn("h-[18px] w-[18px]", !sidebarCollapsed && "mr-3")} />
+                {!sidebarCollapsed && <span>PageSpeed Insights</span>}
+              </Button>
               <Button variant="ghost" className={cn("w-full justify-start rounded-xl text-sm transition-colors", location.pathname === "/onpage-seo" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground", sidebarCollapsed && "justify-center px-2")} onClick={() => navigate("/onpage-seo")}>
                 <FileSearch className={cn("h-[18px] w-[18px]", !sidebarCollapsed && "mr-3")} />
                 {!sidebarCollapsed && <span>OnPage Analysis</span>}
@@ -407,7 +411,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <div className="flex-1 min-w-[200px]">
                   <DateRangePicker value={dateRange} onChange={setDateRange} />
                 </div>
-                <Select value={device} onValueChange={(v: string) => setDevice(v)}>
+                <Select value={device} onValueChange={(v) => setDevice(v as "ALL" | "DESKTOP" | "MOBILE" | "TABLET")}>
                   <SelectTrigger className="h-9 w-[110px] rounded-xl hover:bg-muted text-xs flex-shrink-0">
                     <Monitor className="h-3.5 w-3.5 mr-1.5 opacity-80" />
                     <SelectValue />
@@ -447,7 +451,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 selectedProperty={propertyUrl}
               />
               <DateRangePicker value={dateRange} onChange={setDateRange} />
-              <Select value={device} onValueChange={(v: any) => setDevice(v)}>
+              <Select value={device} onValueChange={(v) => setDevice(v as "ALL" | "DESKTOP" | "MOBILE" | "TABLET")}>
                 <SelectTrigger className="h-9 w-[130px] rounded-xl hover:bg-muted text-xs">
                   <Monitor className="h-3.5 w-3.5 mr-1.5 opacity-80" />
                   <SelectValue />

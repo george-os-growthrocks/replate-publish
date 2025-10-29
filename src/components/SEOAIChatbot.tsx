@@ -459,7 +459,7 @@ export function SEOAIChatbot() {
 
       {/* Chat Window */}
       {isOpen && (
-        <Card className={`fixed ${isFullscreen ? 'inset-2 sm:inset-4' : 'bottom-6 right-6 w-[calc(100vw-3rem)] h-[calc(100vh-3rem)] sm:w-[420px] sm:h-[650px]'} flex flex-col shadow-[0_0_50px_hsl(262_83%_58%/0.4)] z-[9999] border-primary/30 overflow-hidden transition-all duration-300 bg-background`}>
+        <Card className={`fixed ${isFullscreen ? 'inset-0 sm:inset-4' : 'inset-x-0 bottom-0 mx-auto w-full h-[100dvh] sm:inset-auto sm:bottom-6 sm:right-6 sm:left-auto sm:w-[420px] sm:h-[650px] sm:rounded-2xl'} flex flex-col shadow-[0_0_50px_hsl(262_83%_58%/0.4)] z-[9999] border-primary/30 overflow-hidden transition-all duration-300 bg-background rounded-none sm:rounded-2xl`}>
           {/* Header */}
           <div className="flex items-center justify-between p-3 sm:p-4 border-b bg-gradient-to-r from-primary via-primary to-secondary text-primary-foreground">
             <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -620,7 +620,7 @@ export function SEOAIChatbot() {
 
       {/* Debug Dialog */}
       <Dialog open={showDebugDialog} onOpenChange={setShowDebugDialog}>
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl w-[calc(100vw-2rem)] sm:w-full max-h-[80vh] overflow-y-auto m-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Bug className="w-5 h-5 text-primary" />
