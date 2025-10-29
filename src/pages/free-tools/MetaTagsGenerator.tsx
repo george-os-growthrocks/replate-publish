@@ -12,6 +12,7 @@ import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { RelatedToolsSection } from "@/components/free-tools/RelatedToolsSection";
 import { getRelatedTools } from "@/lib/free-tools-data";
+import { SoftwareApplicationJsonLd, FAQPageJsonLd, BreadcrumbListJsonLd, ToolSEOSection } from "@/components/seo";
 
 export default function MetaTagsGenerator() {
   const [title, setTitle] = useState("");
@@ -64,6 +65,31 @@ export default function MetaTagsGenerator() {
   const titleLength = title.length;
   const descLength = description.length;
 
+  const toolFAQs = [
+    {
+      question: "What are meta tags and why are they important for SEO?",
+      answer: "Meta tags are HTML elements that provide information about a web page to search engines and social media platforms. They include the title tag (appears in SERP), meta description (snippet text), Open Graph tags (for social sharing), and Twitter Cards. Well-optimized meta tags improve click-through rates, social engagement, and overall SEO performance."
+    },
+    {
+      question: "How long should my title tag and meta description be?",
+      answer: "Title tags should be 50-60 characters to avoid truncation in search results. Meta descriptions should be 150-160 characters for optimal display. This tool provides real-time character counts and validation to help you create perfectly-sized meta tags."
+    },
+    {
+      question: "Do I need to use Open Graph and Twitter Card tags?",
+      answer: "While not required for basic SEO, Open Graph and Twitter Card tags significantly improve how your content appears when shared on social media. They control the title, description, and image shown on platforms like Facebook, LinkedIn, and Twitter, leading to higher engagement rates."
+    },
+    {
+      question: "Can I use this tool without signing up?",
+      answer: "Yes! This meta tags generator is completely free and works without any account. Simply enter your page information and generate your tags instantly. Signing up for a free account gives you access to additional SEO tools and features."
+    }
+  ];
+
+  const breadcrumbs = [
+    { name: "Home", url: "https://anotherseoguru.com" },
+    { name: "Free Tools", url: "https://anotherseoguru.com/free-tools" },
+    { name: "Meta Tags Generator", url: "https://anotherseoguru.com/free-tools/meta-tags-generator" }
+  ];
+
   return (
     <>
       <Helmet>
@@ -75,7 +101,18 @@ export default function MetaTagsGenerator() {
         <link rel="canonical" href="https://anotherseoguru.com/free-tools/meta-tags-generator" />
         <meta property="og:title" content="Free Meta Tags Generator - Perfect SEO Tags in Seconds" />
         <meta property="og:description" content="Create optimized meta tags for better SEO and social sharing. Free tool with live preview." />
+        <meta property="og:url" content="https://anotherseoguru.com/free-tools/meta-tags-generator" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Free Meta Tags Generator - AnotherSEOGuru" />
+        <meta name="twitter:description" content="Generate perfect meta tags for SEO instantly. Free tool with live SERP preview." />
       </Helmet>
+      <SoftwareApplicationJsonLd
+        name="Meta Tags Generator"
+        description="Free tool to generate optimized meta tags, title tags, meta descriptions, Open Graph tags, and Twitter Cards for better SEO and social media sharing."
+        applicationCategory="WebApplication"
+      />
+      <FAQPageJsonLd faqs={toolFAQs} pageUrl="https://anotherseoguru.com/free-tools/meta-tags-generator" />
+      <BreadcrumbListJsonLd items={breadcrumbs} />
 
       <div className="min-h-screen bg-background">
         <LandingNav />
@@ -404,24 +441,47 @@ export default function MetaTagsGenerator() {
                 </CardContent>
               </Card>
 
-              {/* CTA */}
-              <Card className="bg-gradient-to-br from-primary/10 to-secondary/10 border-primary/20">
-                <CardContent className="pt-6 text-center">
-                  <h3 className="text-2xl font-bold mb-3 text-foreground">
-                    Need Advanced SEO Tools?
-                  </h3>
-                  <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
-                    Get automatic meta tag optimization, A/B testing, and real-time performance tracking with AnotherSEOGuru.
-                  </p>
-                  <Button asChild size="lg" className="gradient-primary">
-                    <Link to="/auth">
-                      Start Free 7-Day Trial
-                      <ArrowRight className="w-5 h-5 ml-2" />
-                    </Link>
-                  </Button>
-                </CardContent>
-              </Card>
             </div>
+          </div>
+
+          {/* SEO Content Section */}
+          <div className="max-w-6xl mx-auto px-4">
+            <ToolSEOSection
+              toolName="Meta Tags Generator"
+              category="On-Page SEO"
+              description="Generate optimized meta tags, title tags, meta descriptions, Open Graph tags, and Twitter Cards to improve your SEO performance and social media engagement."
+              useCases={[
+                "Optimize existing pages with better meta tags for higher CTR",
+                "Create meta tags for new blog posts or product pages",
+                "Generate Open Graph tags for improved social media sharing",
+                "Ensure title tags and descriptions meet Google's recommended lengths",
+                "Bulk generate meta tags for multiple pages"
+              ]}
+              benefits={[
+                "Improve click-through rates from search results",
+                "Enhance social media sharing appearance",
+                "Better SEO rankings with optimized title tags",
+                "Professional meta tag validation and recommendations",
+                "Export-ready code for easy implementation"
+              ]}
+              relatedTools={[
+                {
+                  name: "Heading Analyzer",
+                  href: "/free-tools/heading-analyzer",
+                  description: "Analyze your H1-H6 tags for SEO best practices"
+                },
+                {
+                  name: "Schema Generator",
+                  href: "/free-tools/schema-generator",
+                  description: "Create JSON-LD structured data markup"
+                },
+                {
+                  name: "PAA Extractor",
+                  href: "/free-tools/paa-extractor",
+                  description: "Extract People Also Ask questions for content"
+                }
+              ]}
+            />
           </div>
         </main>
 

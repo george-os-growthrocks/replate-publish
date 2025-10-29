@@ -28,7 +28,18 @@ export default function FreeToolsPage() {
           name="description" 
           content="Access 15+ free SEO tools: title simulator, schema generator, PAA extractor, CWV checker, hreflang builder, and more. No sign-up required." 
         />
+        <meta 
+          name="keywords" 
+          content="free SEO tools, meta tags generator, schema generator, PAA extractor, heading analyzer, robots.txt generator, CWV checker, hreflang builder" 
+        />
         <link rel="canonical" href="https://anotherseoguru.com/free-tools" />
+        <meta property="og:title" content="Free SEO Tools - No Sign-Up Required | AnotherSEOGuru" />
+        <meta property="og:description" content="Access 15+ free SEO tools: title simulator, schema generator, PAA extractor, CWV checker, and more. No sign-up required." />
+        <meta property="og:url" content="https://anotherseoguru.com/free-tools" />
+        <meta property="og:type" content="website" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Free SEO Tools - AnotherSEOGuru" />
+        <meta name="twitter:description" content="15+ professional SEO tools available for free. No sign-up required." />
       </Helmet>
 
       <div className="min-h-screen bg-background">

@@ -91,6 +91,11 @@ import AnalyticsDashboard from "./pages/AnalyticsDashboard";
 import GAReportingDashboard from "./pages/GAReportingDashboard";
 import CompetitiveIntelligence from "./pages/CompetitiveIntelligence";
 import SEOInsightsDashboard from "./pages/SEOInsightsDashboard";
+import CaseStudiesPage from "./pages/CaseStudiesPage";
+import EcommerceRankingsCaseStudy from "./pages/case-studies/EcommerceRankings";
+import SaaSContentStrategyCaseStudy from "./pages/case-studies/SaaSContentStrategy";
+import TechnicalSEOAuditCaseStudy from "./pages/case-studies/TechnicalSEOAudit";
+import FreeSEOTools2026Post from "./pages/blog/FreeSEOTools2026Post";
 
 const queryClient = new QueryClient();
 
@@ -165,11 +170,18 @@ const App = () => (
                        <Route path="/blog/log-file-seo-guide" element={<LogFileSEOPost />} />
                        <Route path="/blog/hreflang-guide" element={<HreflangGuidePost />} />
                        <Route path="/blog/internal-linking-scale" element={<InternalLinkingPost />} />
+                       <Route path="/blog/free-seo-tools-2026" element={<FreeSEOTools2026Post />} />
                        
                        {/* Help Articles */}
                        <Route path="/help/connect-search-console" element={<ConnectSearchConsole />} />
                        <Route path="/help/keyword-clustering-guide" element={<KeywordClusteringGuide />} />
                        <Route path="/help/cwv-troubleshooting" element={<CWVTroubleshooting />} />
+                       
+                       {/* Case Studies */}
+                       <Route path="/case-studies" element={<CaseStudiesPage />} />
+                       <Route path="/case-studies/ecommerce-organic-traffic-growth" element={<EcommerceRankingsCaseStudy />} />
+                       <Route path="/case-studies/saas-content-lead-generation" element={<SaaSContentStrategyCaseStudy />} />
+                       <Route path="/case-studies/technical-seo-audit-traffic-growth" element={<TechnicalSEOAuditCaseStudy />} />
                        
                        {/* Redirect Coming Soon to Contact */}
                        <Route path="/roadmap" element={<ContactPage />} />

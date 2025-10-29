@@ -4,8 +4,19 @@ import { Footer } from "@/components/landing/Footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ArrowRight, Calendar, Clock, User } from "lucide-react";
+import { BreadcrumbListJsonLd } from "@/components/seo";
 
 const blogPosts = [
+  {
+    slug: "free-seo-tools-2026",
+    title: "Free SEO Tools 2026: 10 Game-Changing Tools to Boost Your Rankings Instantly",
+    excerpt: "Discover the best free SEO tools for 2026 — AI Overview Checker, Keyword Clustering, Heading Analyzer, Schema Generator, and more.",
+    author: "SEO Team",
+    date: "October 29, 2025",
+    readTime: "9 min read",
+    category: "SEO Tools",
+    image: "/hero-image.jpg"
+  },
   {
     slug: "free-seo-toolkit-2026",
     title: "The Ultimate Free SEO Toolkit for 2026 (No Sign-Up, No Fluff)",
@@ -77,8 +88,25 @@ export default function BlogPage() {
           name="description" 
           content="Stay updated with the latest SEO trends, tips, and strategies. Learn from experts about keyword research, rank tracking, content optimization, and more." 
         />
+        <meta 
+          name="keywords" 
+          content="SEO blog, SEO tips, SEO strategy, keyword research, rank tracking, content optimization, technical SEO, AI SEO" 
+        />
         <link rel="canonical" href="https://anotherseoguru.com/blog" />
+        <meta property="og:title" content="SEO Blog - Expert Tips & Updates | AnotherSEOGuru" />
+        <meta property="og:description" content="Stay updated with the latest SEO trends, tips, and strategies. Expert insights on keyword research, rank tracking, and content optimization." />
+        <meta property="og:url" content="https://anotherseoguru.com/blog" />
+        <meta property="og:type" content="website" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="SEO Blog - AnotherSEOGuru" />
+        <meta name="twitter:description" content="Expert SEO insights, tips, and strategies to dominate search rankings." />
       </Helmet>
+      <BreadcrumbListJsonLd 
+        items={[
+          { name: "Home", url: "https://anotherseoguru.com" },
+          { name: "Blog", url: "https://anotherseoguru.com/blog" }
+        ]} 
+      />
       
       <div className="min-h-screen bg-background">
         <LandingNav />

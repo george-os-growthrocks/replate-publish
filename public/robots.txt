@@ -1,14 +1,56 @@
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
+# robots.txt for AnotherSEOGuru
 
 User-agent: *
 Allow: /
+Disallow: /dashboard/
+Disallow: /queries/
+Disallow: /pages/
+Disallow: /countries/
+Disallow: /devices/
+Disallow: /cannibalization/
+Disallow: /link-opportunities/
+Disallow: /keyword-research/
+Disallow: /competitor-analysis/
+Disallow: /local-seo/
+Disallow: /shopping/
+Disallow: /onpage-seo/
+Disallow: /backlinks/
+Disallow: /serp-analysis/
+Disallow: /serp-preview/
+Disallow: /site-audit/
+Disallow: /repurpose/
+Disallow: /keyword-clustering/
+Disallow: /content-gap/
+Disallow: /ranking-tracker/
+Disallow: /competitive-intelligence/
+Disallow: /seo-intelligence/
+Disallow: /seo-insights/
+Disallow: /llm-citations/
+Disallow: /alerts/
+Disallow: /answer-the-public/
+Disallow: /social-media-seo/
+Disallow: /analytics-dashboard/
+Disallow: /ga-reporting/
+Disallow: /projects/
+Disallow: /credit-analytics/
+Disallow: /settings/
+Disallow: /seo-report/
+Disallow: /auth/callback/
+Disallow: /checkout/
+
+# Allow public tools and marketing pages
+Allow: /free-tools/
+Allow: /blog/
+Allow: /help/
+Allow: /glossary/
+Allow: /pricing/
+Allow: /features/
+Allow: /about/
+Allow: /contact/
+
+# Sitemap location
+Sitemap: https://anotherseoguru.com/sitemap.xml
+
+# Crawl-delay for bots (optional, helps reduce server load)
+# User-agent: *
+# Crawl-delay: 1

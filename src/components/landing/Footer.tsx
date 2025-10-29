@@ -95,13 +95,18 @@ inate search rankings and scale your content like a pro.
             <h3 className="font-semibold text-foreground mb-4">Resources</h3>
             <ul className="space-y-3">
               <li>
-                <Link to="/glossary" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  SEO Glossary
+                <Link to="/blog" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Blog
                 </Link>
               </li>
               <li>
-                <Link to="/blog" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Blog
+                <Link to="/case-studies" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Case Studies
+                </Link>
+              </li>
+              <li>
+                <Link to="/glossary" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  SEO Glossary
                 </Link>
               </li>
               <li>

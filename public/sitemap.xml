@@ -7,7 +7,7 @@
   <!-- Homepage -->
   <url>
     <loc>https://anotherseoguru.com/</loc>
-    <lastmod>2025-10-27</lastmod>
+    <lastmod>2025-01-29</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
@@ -15,154 +15,282 @@
   <!-- Main Marketing Pages -->
   <url>
     <loc>https://anotherseoguru.com/features</loc>
-    <lastmod>2025-10-27</lastmod>
+    <lastmod>2025-01-29</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   
   <url>
     <loc>https://anotherseoguru.com/pricing</loc>
-    <lastmod>2025-10-27</lastmod>
+    <lastmod>2025-01-29</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   
   <url>
     <loc>https://anotherseoguru.com/about</loc>
-    <lastmod>2025-10-27</lastmod>
+    <lastmod>2025-01-29</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
     <loc>https://anotherseoguru.com/contact</loc>
-    <lastmod>2025-10-27</lastmod>
+    <lastmod>2025-01-29</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://anotherseoguru.com/free-tools</loc>
+    <lastmod>2025-01-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  
+  <!-- Free SEO Tools (High Priority) -->
+  <url>
+    <loc>https://anotherseoguru.com/free-tools/meta-tags-generator</loc>
+    <lastmod>2025-01-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://anotherseoguru.com/free-tools/heading-analyzer</loc>
+    <lastmod>2025-01-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://anotherseoguru.com/free-tools/robots-txt-generator</loc>
+    <lastmod>2025-01-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://anotherseoguru.com/free-tools/schema-generator</loc>
+    <lastmod>2025-01-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://anotherseoguru.com/free-tools/keyword-density-checker</loc>
+    <lastmod>2025-01-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://anotherseoguru.com/free-tools/paa-extractor</loc>
+    <lastmod>2025-01-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://anotherseoguru.com/free-tools/hreflang-builder</loc>
+    <lastmod>2025-01-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://anotherseoguru.com/free-tools/cwv-pulse</loc>
+    <lastmod>2025-01-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://anotherseoguru.com/free-tools/meta-description-generator</loc>
+    <lastmod>2025-01-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://anotherseoguru.com/free-tools/keyword-clustering</loc>
+    <lastmod>2025-01-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://anotherseoguru.com/free-tools/ai-overview-checker</loc>
+    <lastmod>2025-01-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://anotherseoguru.com/free-tools/chatgpt-seo-prompts</loc>
+    <lastmod>2025-01-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
   </url>
   
   <!-- Blog Section -->
   <url>
     <loc>https://anotherseoguru.com/blog</loc>
-    <lastmod>2025-10-27</lastmod>
+    <lastmod>2025-01-29</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   
   <url>
-    <loc>https://anotherseoguru.com/blog/announcing-anotherseoguru-launch</loc>
-    <lastmod>2025-10-27</lastmod>
+    <loc>https://anotherseoguru.com/blog/free-seo-tools-2026</loc>
+    <lastmod>2025-01-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <url>
+    <loc>https://anotherseoguru.com/blog/llm-seo-chatgpt-perplexity</loc>
+    <lastmod>2025-01-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <url>
+    <loc>https://anotherseoguru.com/blog/log-file-seo-guide</loc>
+    <lastmod>2025-01-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <url>
+    <loc>https://anotherseoguru.com/blog/hreflang-guide</loc>
+    <lastmod>2025-01-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <url>
+    <loc>https://anotherseoguru.com/blog/internal-linking-scale</loc>
+    <lastmod>2025-01-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <!-- Help Center -->
+  <url>
+    <loc>https://anotherseoguru.com/help</loc>
+    <lastmod>2025-01-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <!-- Case Studies -->
+  <url>
+    <loc>https://anotherseoguru.com/case-studies</loc>
+    <lastmod>2025-01-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://anotherseoguru.com/case-studies/ecommerce-organic-traffic-growth</loc>
+    <lastmod>2025-01-29</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://anotherseoguru.com/case-studies/saas-content-lead-generation</loc>
+    <lastmod>2025-01-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://anotherseoguru.com/case-studies/technical-seo-audit-traffic-growth</loc>
+    <lastmod>2025-01-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://anotherseoguru.com/help/connect-search-console</loc>
+    <lastmod>2025-01-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://anotherseoguru.com/help/keyword-clustering-guide</loc>
+    <lastmod>2025-01-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://anotherseoguru.com/help/cwv-troubleshooting</loc>
+    <lastmod>2025-01-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   
   <!-- Resources -->
   <url>
     <loc>https://anotherseoguru.com/glossary</loc>
-    <lastmod>2025-10-27</lastmod>
+    <lastmod>2025-01-29</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://anotherseoguru.com/changelog</loc>
+    <lastmod>2025-01-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
   </url>
   
   <!-- Legal Pages -->
   <url>
     <loc>https://anotherseoguru.com/privacy</loc>
-    <lastmod>2025-10-27</lastmod>
+    <lastmod>2025-01-29</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   
   <url>
     <loc>https://anotherseoguru.com/terms</loc>
-    <lastmod>2025-10-27</lastmod>
+    <lastmod>2025-01-29</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   
   <url>
     <loc>https://anotherseoguru.com/cookies</loc>
-    <lastmod>2025-10-27</lastmod>
+    <lastmod>2025-01-29</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   
   <url>
     <loc>https://anotherseoguru.com/gdpr</loc>
-    <lastmod>2025-10-27</lastmod>
+    <lastmod>2025-01-29</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   
   <url>
     <loc>https://anotherseoguru.com/security</loc>
-    <lastmod>2025-10-27</lastmod>
+    <lastmod>2025-01-29</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   
-  <!-- Auth & App -->
+  <!-- Auth & App Entry Points -->
   <url>
     <loc>https://anotherseoguru.com/auth</loc>
-    <lastmod>2025-10-27</lastmod>
+    <lastmod>2025-01-29</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
-  </url>
-  
-  <url>
-    <loc>https://anotherseoguru.com/dashboard</loc>
-    <lastmod>2025-10-27</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
-  </url>
-  
-  <!-- SEO Tool Pages (for public discovery) -->
-  <url>
-    <loc>https://anotherseoguru.com/queries</loc>
-    <lastmod>2025-10-27</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://anotherseoguru.com/keyword-research</loc>
-    <lastmod>2025-10-27</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://anotherseoguru.com/competitor-analysis</loc>
-    <lastmod>2025-10-27</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://anotherseoguru.com/backlinks</loc>
-    <lastmod>2025-10-27</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://anotherseoguru.com/site-audit</loc>
-    <lastmod>2025-10-27</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://anotherseoguru.com/ranking-tracker</loc>
-    <lastmod>2025-10-27</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://anotherseoguru.com/repurpose</loc>
-    <lastmod>2025-10-27</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
   </url>
 
 </urlset>

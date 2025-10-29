@@ -7,7 +7,7 @@ const faqs = [
   },
   {
     question: "Do I need to connect my Google Search Console?",
-    answer: "Connecting Google Search Console is optional but highly recommended. It enables advanced features like query analysis, page performance insights, and automated SEO recommendations. You can still use keyword research, rank tracking, and content generation without it."
+    answer: "Yes. AnotherSEOGuru relies on your live Google Search Console data to function. Connecting GSC is required for queries, pages, countries/devices reporting, insights, and recommendations. Without GSC, core features will not work."
   },
   {
     question: "What AI models power the content generation?",
