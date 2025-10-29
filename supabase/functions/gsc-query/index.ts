@@ -1,12 +1,16 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
+
+// Deno global type
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+declare const Deno: any;
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req) => {
+serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -83,7 +87,14 @@ serve(async (req) => {
       throw new Error('Missing required parameters');
     }
 
-    const requestBody: any = {
+    const requestBody: {
+      startDate: string;
+      endDate: string;
+      dimensions: string[];
+      rowLimit: number;
+      startRow: number;
+      dimensionFilterGroups?: unknown;
+    } = {
       startDate,
       endDate,
       dimensions: dimensions || ['date'],
@@ -118,7 +129,7 @@ serve(async (req) => {
     return new Response(JSON.stringify(data), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error in gsc-query function:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     const errorStack = error instanceof Error ? error.stack : undefined;

@@ -94,9 +94,9 @@ export function DashboardCharts() {
       
       const { data, error } = await supabase
         .from('seo_projects')
-        .select('name, created_at, updated_at')
+        .select('name, created_at')
         .eq('user_id', user.id)
-        .order('updated_at', { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(10);
       
       if (error || !data) return [];
@@ -104,8 +104,8 @@ export function DashboardCharts() {
       return data.map(project => ({
         name: project.name,
         created: new Date(project.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        updated: new Date(project.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        daysSinceUpdate: Math.floor((Date.now() - new Date(project.updated_at).getTime()) / (1000 * 60 * 60 * 24))
+        updated: new Date(project.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        daysSinceUpdate: Math.floor((Date.now() - new Date(project.created_at).getTime()) / (1000 * 60 * 60 * 24))
       }));
     }
   });

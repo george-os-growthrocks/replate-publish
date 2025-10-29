@@ -171,9 +171,24 @@ export default function AnalyticsDashboard() {
     }
   };
 
-  const connectGoogleAnalytics = () => {
-    // Redirect to OAuth settings
-    window.location.href = "/settings?tab=integrations";
+  const connectGoogleAnalytics = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          scopes: 'https://www.googleapis.com/auth/analytics.readonly',
+          redirectTo: `${window.location.origin}/analytics-dashboard`,
+        },
+      });
+
+      if (error) {
+        toast.error("Failed to connect to Google Analytics");
+        console.error(error);
+      }
+    } catch (error) {
+      console.error('GA4 OAuth error:', error);
+      toast.error("Failed to initiate Google connection");
+    }
   };
 
   if (needsAuth) {

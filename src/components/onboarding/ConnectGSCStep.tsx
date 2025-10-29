@@ -21,7 +21,7 @@ export function ConnectGSCStep({ state, onUpdate }: ConnectGSCStepProps) {
         provider: 'google',
         options: {
           scopes: 'https://www.googleapis.com/auth/webmasters.readonly',
-          redirectTo: `${window.location.origin}/dashboard`,
+          redirectTo: `${window.location.origin}/dashboard?onboardingStep=3&gsc=1`,
         },
       });
 

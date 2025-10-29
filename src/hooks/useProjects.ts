@@ -1,17 +1,19 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Json } from "@/integrations/supabase/types";
 
 export interface SEOProject {
   id: string;
   user_id: string;
   name: string;
-  domain: string;
-  gsc_property_url: string | null;
-  description: string | null;
-  is_active: boolean;
+  url: string;
+  project_type: string;
+  credit_budget: number;
+  monthly_keywords_tracked: number;
+  settings: Json;
+  team_member_ids: string[];
   created_at: string;
-  updated_at: string;
 }
 
 export function useProjects() {
@@ -37,7 +39,7 @@ export function useCreateProject() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (project: { name: string; domain: string; description?: string; gsc_property_url?: string }) => {
+    mutationFn: async (project: { name: string; url: string; project_type?: string; credit_budget?: number }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
@@ -46,9 +48,9 @@ export function useCreateProject() {
         .insert({
           user_id: user.id,
           name: project.name,
-          domain: project.domain,
-          description: project.description || null,
-          gsc_property_url: project.gsc_property_url || null,
+          url: project.url,
+          project_type: project.project_type || 'website',
+          credit_budget: project.credit_budget || 100,
         })
         .select()
         .single();
@@ -60,10 +62,10 @@ export function useCreateProject() {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       toast.success('Project created successfully!');
     },
-    onError: (error: any) => {
+    onError: (error: { message?: string }) => {
       console.error('Create project error:', error);
       if (error.message?.includes('unique')) {
-        toast.error('A project with this domain already exists');
+        toast.error('A project with this URL already exists');
       } else {
         toast.error('Failed to create project');
       }

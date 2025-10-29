@@ -57,8 +57,6 @@ const fallbackPlans: SubscriptionPlan[] = [
     stripe_price_id: null,
     price_monthly: 29,
     price_yearly: 290,
-    credits_included: 0,
-    credits_monthly: 500,
     features: ['All SEO Tools', 'Social Media SEO', 'SERP Preview', 'Email Support', 'Keyword Research', 'Rank Tracking', 'Site Audit', 'Backlink Analysis', 'Competitor Analysis', '7-Day Free Trial'] as unknown as Json,
     limits: { max_keywords: 500, max_reports: 50 },
     is_active: true,
@@ -69,7 +67,12 @@ const fallbackPlans: SubscriptionPlan[] = [
     stripe_price_id_yearly: 'price_starter_yearly',
     credits_per_month: 500,
     max_projects: 3,
-    max_team_members: 1
+    max_team_members: 1,
+    has_ai_tools: false,
+    has_api_access: false,
+    has_team_features: false,
+    has_white_label: false,
+    has_unlimited_credits: false
   },
   {
     id: 'professional-fallback',
@@ -78,8 +81,6 @@ const fallbackPlans: SubscriptionPlan[] = [
     stripe_price_id: null,
     price_monthly: 79,
     price_yearly: 790,
-    credits_included: 0,
-    credits_monthly: 1500,
     features: ['Everything in Starter', 'GA4 Analytics', 'Unlimited Keywords', 'Content Repurpose (200 generations)', 'Site Audit (5 sites)', 'Competitor Analysis (10 competitors)', 'Backlink Analysis', 'Local SEO Suite', 'Priority Support', 'White-Label Reports', 'Export Reports', '7-Day Free Trial'] as unknown as Json,
     limits: { max_keywords: 2000, max_reports: 500 },
     is_active: true,
@@ -90,7 +91,12 @@ const fallbackPlans: SubscriptionPlan[] = [
     stripe_price_id_yearly: 'price_pro_yearly',
     credits_per_month: 1500,
     max_projects: 10,
-    max_team_members: 5
+    max_team_members: 5,
+    has_ai_tools: true,
+    has_api_access: false,
+    has_team_features: false,
+    has_white_label: true,
+    has_unlimited_credits: false
   },
   {
     id: 'agency-fallback',
@@ -99,8 +105,6 @@ const fallbackPlans: SubscriptionPlan[] = [
     stripe_price_id: null,
     price_monthly: 149,
     price_yearly: 1490,
-    credits_included: 0,
-    credits_monthly: 3500,
     features: ['Everything in Professional', 'White-label Reports', 'Team Collaboration', 'API Access', 'Advanced Analytics', 'Custom Dashboards', 'Multi-location Tracking', 'Priority Phone Support', 'Dedicated Account Manager', 'Custom Integrations', '7-Day Free Trial'] as unknown as Json,
     limits: { max_keywords: 10000, max_reports: -1 },
     is_active: true,
@@ -111,7 +115,12 @@ const fallbackPlans: SubscriptionPlan[] = [
     stripe_price_id_yearly: 'price_agency_yearly',
     credits_per_month: 3500,
     max_projects: 50,
-    max_team_members: 20
+    max_team_members: 20,
+    has_ai_tools: true,
+    has_api_access: true,
+    has_team_features: true,
+    has_white_label: true,
+    has_unlimited_credits: true
   },
   {
     id: 'enterprise-fallback',
@@ -120,8 +129,6 @@ const fallbackPlans: SubscriptionPlan[] = [
     stripe_price_id: null,
     price_monthly: 299,
     price_yearly: 2990,
-    credits_included: 0,
-    credits_monthly: 10000,
     features: ['Everything in Agency', 'Custom Integration', 'SLA Guarantee', 'Custom Limits', 'Unlimited Projects', 'Unlimited Team Members', 'White-glove Support', 'Priority Development', 'Custom Training', 'Dedicated Success Manager', '7-Day Free Trial'] as unknown as Json,
     limits: { max_keywords: -1, max_reports: -1 },
     is_active: true,
@@ -132,7 +139,12 @@ const fallbackPlans: SubscriptionPlan[] = [
     stripe_price_id_yearly: 'price_enterprise_yearly',
     credits_per_month: 10000,
     max_projects: 100,
-    max_team_members: 50
+    max_team_members: 50,
+    has_ai_tools: true,
+    has_api_access: true,
+    has_team_features: true,
+    has_white_label: true,
+    has_unlimited_credits: true
   }
 ];
 

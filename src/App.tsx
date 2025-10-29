@@ -11,6 +11,7 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import { initGA, logPageView } from "@/lib/utils";
 import LandingPage from "./pages/LandingPage";
 import Auth from "./pages/Auth";
+import AuthCallback from "./pages/auth/callback";
 import Signup from "./pages/Signup";
 import Login from "./pages/Login";
 import Checkout from "./pages/Checkout";
@@ -175,6 +176,7 @@ const App = () => (
                        <Route path="/status" element={<ContactPage />} />
                        
                        <Route path="/auth" element={<Auth />} />
+                       <Route path="/auth/callback" element={<AuthCallback />} />
                      <Route path="/signup" element={<Signup />} />
                      <Route path="/login" element={<Login />} />
                      <Route path="/checkout" element={<Checkout />} />

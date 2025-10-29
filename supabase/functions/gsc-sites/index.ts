@@ -1,12 +1,16 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
+
+// Deno global type
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+declare const Deno: any;
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req) => {
+serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -75,11 +79,32 @@ serve(async (req) => {
       }
     }
 
-    // Last resort: try to get from session (rarely works)
+    // Last resort: try to get from session
     if (!provider_token) {
       const { data: session } = await supabaseClient.auth.getSession();
       provider_token = session?.session?.provider_token;
       console.log('🔑 Provider token from session:', provider_token ? 'Yes' : 'No');
+      
+      // If we found it in session, save it to database for future use
+      if (provider_token && session?.session) {
+        console.log('💾 Saving token to database for future use...');
+        try {
+          await supabaseClient.from('user_oauth_tokens').upsert({
+            user_id: user.id,
+            provider: 'google',
+            access_token: provider_token,
+            expires_at: new Date(Date.now() + 3600 * 1000).toISOString(), // 1 hour from now
+            scope: 'https://www.googleapis.com/auth/webmasters.readonly',
+            updated_at: new Date().toISOString(),
+          }, {
+            onConflict: 'user_id,provider'
+          });
+          console.log('✅ Token saved successfully');
+        } catch (saveError) {
+          console.warn('⚠️ Could not save token:', saveError);
+          // Continue anyway since we have the token
+        }
+      }
     }
 
     if (!provider_token) {

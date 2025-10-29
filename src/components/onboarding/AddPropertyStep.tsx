@@ -13,28 +13,48 @@ interface AddPropertyStepProps {
 export function AddPropertyStep({ state, onUpdate }: AddPropertyStepProps) {
   const [properties, setProperties] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadProperties();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadProperties = async () => {
+    setIsLoading(true);
+    setError(null);
+    
     try {
-      const { data, error } = await supabase.functions.invoke('gsc-sites');
+      console.log('Fetching GSC properties...');
+      const { data, error: invokeError } = await supabase.functions.invoke('gsc-sites');
       
-      if (error) throw error;
+      console.log('GSC response:', { data, error: invokeError });
       
-      if (data?.sites) {
+      if (invokeError) {
+        throw new Error(`Function error: ${invokeError.message}`);
+      }
+      
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+      
+      if (data?.sites && Array.isArray(data.sites)) {
         const siteUrls = data.sites.map((s: { siteUrl: string }) => s.siteUrl);
+        console.log('Found properties:', siteUrls);
         setProperties(siteUrls);
         
         // Auto-select first property
         if (siteUrls.length > 0 && !state.selectedProperty) {
           onUpdate({ selectedProperty: siteUrls[0] });
         }
+      } else {
+        console.warn('No sites found in response');
+        setProperties([]);
       }
-    } catch (error) {
-      console.error('Failed to load properties:', error);
+    } catch (err) {
+      console.error('Failed to load properties:', err);
+      const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+      setError(errorMsg);
     } finally {
       setIsLoading(false);
     }
@@ -102,6 +122,20 @@ export function AddPropertyStep({ state, onUpdate }: AddPropertyStepProps) {
           <p className="text-sm text-muted-foreground mb-4">
             We couldn't find any properties in your Google Search Console.
           </p>
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg">
+              <p className="text-xs text-red-800 dark:text-red-200 font-medium mb-1">Error Details:</p>
+              <p className="text-xs text-red-700 dark:text-red-300">{error}</p>
+            </div>
+          )}
+          <div className="space-y-2 text-left mb-4 p-4 bg-muted/50 rounded-lg text-xs">
+            <p className="font-semibold">Possible solutions:</p>
+            <ul className="space-y-1 list-disc list-inside text-muted-foreground">
+              <li>Make sure you have at least one property added in <a href="https://search.google.com/search-console" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Google Search Console</a></li>
+              <li>Sign out and sign back in to refresh your connection</li>
+              <li>Check that you authorized with the correct Google account</li>
+            </ul>
+          </div>
           <Button variant="outline" onClick={loadProperties}>
             Retry
           </Button>
