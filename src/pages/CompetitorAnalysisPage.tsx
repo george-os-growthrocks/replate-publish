@@ -4,47 +4,18 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Target, Search, Loader2, TrendingUp, ExternalLink, Bug, Zap } from "lucide-react";
+import { Target, Search, Loader2, TrendingUp, ExternalLink, Zap } from "lucide-react";
 import { useDomainCompetitors } from "@/hooks/useDataForSEO";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
 import { useCredits } from "@/hooks/useCreditManager";
-import { FeatureDebugPanel, DebugLog } from "@/components/debug/FeatureDebugPanel";
-
-// Debug logging utility
-async function addDebugLog(action: string, details: any) {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    await supabase.from('debug_logs').insert({
-      user_id: user?.id,
-      action,
-      details,
-      created_at: new Date().toISOString()
-    });
-    console.log(`[CompetitorAnalysis] ${action}:`, details);
-  } catch (err) {
-    console.error('Failed to add debug log:', err);
-  }
-}
 
 export default function CompetitorAnalysisPage() {
   const [targetDomain, setTargetDomain] = useState("");
   const [searchDomain, setSearchDomain] = useState("");
-  const [debugLogs, setDebugLogs] = useState<DebugLog[]>([]);
-  const [debugInfo, setDebugInfo] = useState<any>(null);
   const { checkCredits, consumeCredits } = useCredits();
-
-  const addDebugLog = (level: DebugLog['level'], message: string) => {
-    const log: DebugLog = {
-      timestamp: new Date().toLocaleTimeString(),
-      level,
-      message
-    };
-    console.log(`[${level.toUpperCase()}] ${message}`);
-    setDebugLogs(prev => [...prev, log]);
-  };
 
   const { data: competitorData, isLoading, error } = useDomainCompetitors(
     {
@@ -56,24 +27,10 @@ export default function CompetitorAnalysisPage() {
     !!searchDomain
   );
 
-  // Log data changes and consume credits on success
+  // Consume credits on success
   useEffect(() => {
     if (competitorData) {
       const competitorsCount = competitorData?.tasks?.[0]?.result?.[0]?.items?.length || 0;
-      addDebugLog('success', `✅ Received competitor data: ${competitorsCount} competitors`);
-      addDebugLog('info', `Total count: ${competitorData?.tasks?.[0]?.result?.[0]?.total_count || 0}`);
-      
-      setDebugInfo({
-        timestamp: new Date().toISOString(),
-        searchDomain,
-        params: {
-          target: searchDomain,
-          location_code: 2840,
-          language_code: "en",
-          limit: 100
-        },
-        response: competitorData
-      });
 
       // Consume credits after successful analysis
       consumeCredits({
@@ -87,25 +44,6 @@ export default function CompetitorAnalysisPage() {
     }
   }, [competitorData, searchDomain, consumeCredits]);
 
-  useEffect(() => {
-    if (error) {
-      addDebugLog('error', `❌ Competitor Analysis Error: ${error.message}`);
-      setDebugInfo({
-        timestamp: new Date().toISOString(),
-        searchDomain,
-        params: {
-          target: searchDomain,
-          location_code: 2840,
-          language_code: "en",
-          limit: 100
-        },
-        error: {
-          message: error.message,
-          stack: error.stack
-        }
-      });
-    }
-  }, [error, searchDomain]);
 
   const handleSearch = async () => {
     if (!targetDomain.trim()) {
@@ -120,7 +58,6 @@ export default function CompetitorAnalysisPage() {
     }
 
     const cleanDomain = targetDomain.trim().replace(/^https?:\/\//, '').replace(/\/$/, '');
-    addDebugLog('info', `🔍 Starting competitor analysis for: ${cleanDomain}`);
     setSearchDomain(cleanDomain);
   };
 

@@ -31,7 +31,6 @@ import { SERPPreview } from "@/components/repurpose/SERPPreview";
 import { PreviewPane, GeneratedContent } from "@/components/repurpose/PreviewPane";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useNavigate } from "react-router-dom";
-import { FeatureDebugPanel, DebugLog } from "@/components/debug/FeatureDebugPanel";
 
 type StepType = "input" | "review" | "intelligence" | "generate" | "results";
 
@@ -50,28 +49,14 @@ export default function RepurposePage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationProgress, setGenerationProgress] = useState<string>("");
   const [activeStep, setActiveStep] = useState<StepType>("input");
-  const [debugLogs, setDebugLogs] = useState<DebugLog[]>([]);
   const { toast } = useToast();
-
-  function addDebugLog(message: string, level: DebugLog['level'] = "info") {
-    const log: DebugLog = {
-      timestamp: new Date().toLocaleTimeString(),
-      level,
-      message
-    };
-    setDebugLogs(prev => [...prev, log]);
-    console.log(`[${level.toUpperCase()}] ${message}`);
-  }
 
   useEffect(() => {
     async function checkAuth() {
-      addDebugLog('🔐 Checking authentication...');
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
-        addDebugLog(`Session check result: ${session ? 'HAS SESSION' : 'NO SESSION'}`);
         
         if (error) {
-          addDebugLog(`❌ Session error: ${error.message}`);
           setIsAuthenticated(false);
           toast({
             title: "Authentication Error",
@@ -82,8 +67,6 @@ export default function RepurposePage() {
         }
         
         if (!session) {
-          addDebugLog('❌ NO ACTIVE SESSION - YOU ARE NOT SIGNED IN!');
-          addDebugLog('Action required: Go to /auth and sign in');
           setIsAuthenticated(false);
           toast({
             title: "Not Signed In",
@@ -94,12 +77,8 @@ export default function RepurposePage() {
           return;
         }
         
-        addDebugLog(`✅ Authenticated as: ${session.user.email}`);
-        addDebugLog(`User ID: ${session.user.id}`);
-        addDebugLog(`Token length: ${session.access_token.length} chars`);
         setIsAuthenticated(true);
       } catch (error) {
-        addDebugLog(`❌ Auth check failed: ${error instanceof Error ? error.message : String(error)}`);
         setIsAuthenticated(false);
       }
     }
@@ -116,11 +95,7 @@ export default function RepurposePage() {
   }
 
   async function handleGenerate() {
-    addDebugLog('🎯 Generate button clicked');
-    addDebugLog(`Authentication status: ${isAuthenticated ? 'AUTHENTICATED' : 'NOT AUTHENTICATED'}`);
-    
     if (isAuthenticated === false) {
-      addDebugLog('❌ Generation blocked - Not authenticated');
       toast({
         title: "Authentication Required",
         description: "Please sign in to generate content",
@@ -137,11 +112,6 @@ export default function RepurposePage() {
         variant: "destructive",
       });
       return;
-    }
-
-    // Log content length for debugging
-    if (content.length > 10000) {
-      addDebugLog(`ℹ️ Processing long content: ${content.length} chars`);
     }
 
     if (selectedPlatforms.length === 0) {
@@ -170,13 +140,7 @@ export default function RepurposePage() {
         }
       };
 
-      addDebugLog('🚀 Starting content generation...');
-      addDebugLog(`📦 Platforms: ${selectedPlatforms.join(', ')}`);
-      addDebugLog(`Content length: ${content.length} chars`);
-      addDebugLog(`Tone: ${tone}, Style: ${style}`);
-      
       setGenerationProgress(`Calling AI content generator...`);
-      addDebugLog('⏳ Invoking edge function: gemini-repurpose...');
       
       const invokeStartTime = Date.now();
       
@@ -196,85 +160,21 @@ export default function RepurposePage() {
       const duration = ((invokeEndTime - invokeStartTime) / 1000).toFixed(2);
       
       setGenerationProgress(`Received response in ${duration}s`);
-      addDebugLog(`📥 Response received in ${duration}s`);
-      addDebugLog(`Has error: ${!!result.error}`);
-      addDebugLog(`Has data: ${!!result.data}`);
-      
-      // Log the full response for debugging
-      if (result.data) {
-        addDebugLog(`Response data type: ${typeof result.data}`);
-        addDebugLog(`Response data keys: ${Object.keys(result.data).join(', ')}`);
-        if (result.data.error) {
-          addDebugLog(`🔴 Function returned error in data: ${result.data.error}`);
-        }
-      }
       
       const { data, error } = result;
       
       if (error) {
-        addDebugLog(`❌ Supabase function error: ${error.message || String(error)}`);
-        addDebugLog(`Error name: ${error.name || 'Unknown'}`);
-        
-        // Try to get the actual HTTP response body with error details
-        if (error.message?.includes('non-2xx')) {
-          addDebugLog(`⚠️ Edge function returned error - fetching details...`);
-          
-          try {
-            // Get the session token
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
-              // Make a direct fetch to get the full error response
-              const directResponse = await fetch(
-                'https://siwzszmukfbzicjjkxro.supabase.co/functions/v1/gemini-repurpose',
-                {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${session.access_token}`,
-                    'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNpd3pzenptdWtmYnppY2pqa3hybyIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzI4OTU0NzQ3LCJleHAiOjIwNDQ1MzA3NDd9.GZQxDyYnhv--n82B1IXeEfGiNqnhY2TIx76qRYSC4BA'
-                  },
-                  body: JSON.stringify(requestPayload)
-                }
-              );
-              
-              const responseText = await directResponse.text();
-              addDebugLog(`📄 HTTP Status: ${directResponse.status}`);
-              addDebugLog(`📄 Response body: ${responseText.substring(0, 500)}`);
-              
-              try {
-                const errorJson = JSON.parse(responseText);
-                if (errorJson.error) {
-                  addDebugLog(`🔴 ACTUAL ERROR: ${errorJson.error}`);
-                }
-                if (errorJson.details) {
-                  addDebugLog(`📋 Error details: ${errorJson.details}`);
-                }
-              } catch (e) {
-                addDebugLog(`Could not parse error response as JSON`);
-              }
-            }
-          } catch (fetchError) {
-            addDebugLog(`Could not fetch detailed error: ${fetchError}`);
-          }
-          
-          addDebugLog(`💡 Also check Supabase logs: https://supabase.com/dashboard/project/siwzszmukfbzicjjkxro/functions`);
-        }
-        
         throw error;
       }
 
       if (data?.error) {
-        addDebugLog(`❌ Function returned error: ${data.error}`);
         throw new Error(data.error);
       }
 
       if (!data || !data.generatedContent) {
-        addDebugLog(`❌ No generated content in response`);
-        addDebugLog(`Response data: ${JSON.stringify(data)}`);
         throw new Error('No content was generated. Please try again.');
       }
 
-      addDebugLog(`✅ Generated content for ${data.generatedContent.length} platform(s)`);
       setGenerationProgress('Content generated successfully!');
 
       setGeneratedContent(data.generatedContent || []);
@@ -286,19 +186,12 @@ export default function RepurposePage() {
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Failed to generate content. Please try again.";
-      addDebugLog(`💥 Generation error: ${errorMessage}`);
-      
-      // Only show auth error for actual 401
-      if (errorMessage.includes('401') && !errorMessage.includes('non-2xx')) {
-        addDebugLog('🔴 AUTH ERROR - 401 Unauthorized');
-        addDebugLog('Solution: Sign out and sign back in at /auth');
-      }
       
       setGenerationProgress('');
       
       let userFriendlyMessage = errorMessage;
       if (errorMessage.includes('non-2xx')) {
-        userFriendlyMessage = "Generation failed. Click the Debug Logs button to see details, or check Supabase function logs.";
+        userFriendlyMessage = "Generation failed. Please try again or check Supabase function logs.";
       } else if (errorMessage.includes('timeout')) {
         userFriendlyMessage = "Request timed out. Try generating for one platform at a time.";
       }
@@ -353,7 +246,7 @@ export default function RepurposePage() {
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>⚠️ Authentication Required</AlertTitle>
                 <AlertDescription className="flex items-center justify-between">
-                  <span>You must be signed in to generate content. Check debug logs for details.</span>
+                  <span>You must be signed in to generate content.</span>
                   <Button 
                     variant="outline" 
                     size="sm" 
@@ -923,12 +816,6 @@ export default function RepurposePage() {
         </section>
       </div>
 
-      {/* Debug Panel */}
-      <FeatureDebugPanel
-        logs={debugLogs}
-        featureName="Content Repurpose"
-        onClear={() => setDebugLogs([])}
-      />
     </div>
   );
 }

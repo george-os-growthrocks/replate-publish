@@ -437,25 +437,6 @@ export default function LLMCitationPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              console.log('=== LLM CITATION DEBUG ===');
-              console.log('Selected Property:', selectedProperty);
-              console.log('Stats:', stats);
-              console.log('Citations:', citations);
-              console.log('Competitors:', competitors);
-              console.log('Loading:', loading);
-              console.log('Tracking:', tracking);
-              console.log('Query Input:', queryInput);
-              console.log('Selected Models:', selectedModels);
-              toast.success('Debug info logged to console. Press F12 to view.');
-            }}
-          >
-            <AlertCircle className="w-4 h-4 mr-2" />
-            Debug Log
-          </Button>
           <Badge className="bg-gradient-to-r from-primary to-secondary text-primary-foreground">
             <Sparkles className="w-4 h-4 mr-2" />
           Revolutionary Feature

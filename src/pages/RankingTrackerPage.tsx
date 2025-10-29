@@ -40,7 +40,7 @@ import { ExportButton } from '@/components/ExportButton';
 import { formatDateForFilename } from '@/lib/export-utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { FeatureDebugPanel, DebugLog } from '@/components/debug/FeatureDebugPanel';
+ 
 
 interface TrackedKeyword {
   keyword: string;
@@ -65,19 +65,9 @@ export default function RankingTrackerPage() {
   const [isAdding, setIsAdding] = useState(false);
   const [isLoadingTracked, setIsLoadingTracked] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [debugLogs, setDebugLogs] = useState<DebugLog[]>([]);
   const [historicalData, setHistoricalData] = useState<Record<string, any[]>>({});
 
-  // Debug logging functions
-  const addDebugLog = (level: DebugLog['level'], message: string) => {
-    const log: DebugLog = {
-      timestamp: new Date().toLocaleTimeString(),
-      level,
-      message
-    };
-    console.log(`[${level.toUpperCase()}] ${message}`);
-    setDebugLogs(prev => [...prev, log]);
-  };
+  
 
   // Debug: Log selectedProperty on mount and changes
   useEffect(() => {
@@ -93,7 +83,6 @@ export default function RankingTrackerPage() {
 
   const loadTrackedKeywords = async () => {
     if (!selectedProperty) {
-      addDebugLog('warn', 'No property selected, skipping load');
       return;
     }
     
@@ -101,21 +90,13 @@ export default function RankingTrackerPage() {
     try {
       // Check auth session first
       const { data: { session } } = await supabase.auth.getSession();
-      addDebugLog('info', `Auth session: ${session ? 'EXISTS' : 'MISSING'}`);
       
       if (!session) {
-        addDebugLog('error', 'No active session - user might need to re-login');
         toast.error('Please sign in again to track keywords');
         return;
       }
       
-      // Log session details for debugging
-      if (session?.access_token) {
-        addDebugLog('info', `Access token: ${session.access_token.substring(0, 30)}...`);
-        addDebugLog('info', `Token expires at: ${new Date(session.expires_at! * 1000).toLocaleString()}`);
-      }
       
-      addDebugLog('info', `📞 Calling track-keyword with action: list, property: ${selectedProperty}`);
       
       // Manually pass the Authorization header (workaround for auth issues)
       const { data, error } = await supabase.functions.invoke('track-keyword', {
@@ -128,35 +109,27 @@ export default function RankingTrackerPage() {
         }
       });
 
-      addDebugLog('info', `📥 Response received - data keys: ${data ? Object.keys(data).join(', ') : 'null'}`);
-
       if (error) {
-        addDebugLog('error', `Edge function network error: ${JSON.stringify(error)}`);
         throw error;
       }
       
       if (data?.error) {
-        addDebugLog('error', `API error: ${data.error}`);
         if (data.details) {
-          addDebugLog('error', `Error details: ${data.details}`);
         }
         throw new Error(data.error);
       }
 
       if (data?.data) {
         const keywords = data.data.map((item: {keyword: string}) => item.keyword);
-        addDebugLog('success', `✅ Loaded ${keywords.length} tracked keywords`);
         setTrackedKeywords(keywords);
         
         // Load historical data for all tracked keywords
         await loadHistoricalData(keywords);
       } else {
-        addDebugLog('info', 'ℹ️ No tracked keywords found');
         setTrackedKeywords([]);
         setHistoricalData({});
       }
     } catch (error) {
-      addDebugLog('error', `❌ Error: ${error instanceof Error ? error.message : String(error)}`);
       toast.error('Failed to load tracked keywords. Check debug log.');
     } finally {
       setIsLoadingTracked(false);
@@ -171,15 +144,11 @@ export default function RankingTrackerPage() {
     }
     
     if (!selectedProperty) {
-      addDebugLog('error', `No property selected. selectedProperty: ${selectedProperty}`);
       toast.error('Please select a property from the dropdown above');
       return;
     }
 
-    addDebugLog('info', `Adding keyword: "${newKeyword}" to property: ${selectedProperty}`);
-    
     if (trackedKeywords.includes(newKeyword.toLowerCase())) {
-      addDebugLog('warn', 'Keyword already tracked');
       toast.error('Keyword already tracked');
       return;
     }
@@ -188,10 +157,8 @@ export default function RankingTrackerPage() {
     try {
       // Check auth session first
       const { data: { session } } = await supabase.auth.getSession();
-      addDebugLog('info', `Auth session: ${session ? 'EXISTS' : 'MISSING'}`);
       
       if (!session) {
-        addDebugLog('error', 'No active session for add operation');
         toast.error('Please sign in again to add keywords');
         return;
       }
@@ -207,33 +174,23 @@ export default function RankingTrackerPage() {
         }
       });
 
-      addDebugLog('info', `📥 Add response: ${JSON.stringify(data).substring(0, 200)}`);
-
       if (error) {
-        addDebugLog('error', `Network error: ${JSON.stringify(error)}`);
         throw error;
       }
       
       if (data?.error) {
-        addDebugLog('error', `API error: ${data.error}`);
-        if (data.details) {
-          addDebugLog('error', `Details: ${data.details}`);
-        }
         throw new Error(data.error);
       }
       
       if (!data?.success) {
-        addDebugLog('error', `Unexpected response format: ${JSON.stringify(data)}`);
         throw new Error('Unexpected response from server');
       }
 
-      addDebugLog('success', `✅ Keyword "${newKeyword}" added successfully`);
       await loadTrackedKeywords(); // Reload list
       const keywordToClear = newKeyword;
       setNewKeyword('');
       toast.success(`Now tracking "${keywordToClear}"`);
     } catch (error) {
-      addDebugLog('error', `Failed to add keyword: ${error instanceof Error ? error.message : String(error)}`);
       toast.error(error instanceof Error ? error.message : 'Failed to add keyword');
     } finally {
       setIsAdding(false);
@@ -281,11 +238,9 @@ export default function RankingTrackerPage() {
     }
 
     try {
-      addDebugLog('info', `📊 Loading historical data for ${keywords.length} keywords...`);
       
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        addDebugLog('warn', 'No session for historical data load');
         return;
       }
 
@@ -304,18 +259,15 @@ export default function RankingTrackerPage() {
           });
 
           if (error) {
-            addDebugLog('warn', `Failed to load history for "${keyword}": ${error.message}`);
             return { keyword, history: [] };
           }
 
           if (data?.data) {
-            addDebugLog('info', `✅ Loaded ${data.data.length} historical records for "${keyword}"`);
             return { keyword, history: data.data };
           }
 
           return { keyword, history: [] };
         } catch (error) {
-          addDebugLog('warn', `Error loading history for "${keyword}": ${error instanceof Error ? error.message : String(error)}`);
           return { keyword, history: [] };
         }
       });
@@ -328,9 +280,7 @@ export default function RankingTrackerPage() {
       });
 
       setHistoricalData(historyMap);
-      addDebugLog('success', `✅ Historical data loaded for all keywords`);
     } catch (error) {
-      addDebugLog('error', `Failed to load historical data: ${error instanceof Error ? error.message : String(error)}`);
       setHistoricalData({});
     }
   };
@@ -344,7 +294,6 @@ export default function RankingTrackerPage() {
     }
 
     setIsSyncing(true);
-    addDebugLog('info', `🔄 Syncing ${trackedKeywords.length} keywords with GSC...`);
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -365,22 +314,18 @@ export default function RankingTrackerPage() {
       });
 
       if (error) {
-        addDebugLog('error', `Sync error: ${JSON.stringify(error)}`);
         throw error;
       }
 
       if (data?.error) {
-        addDebugLog('error', `Sync API error: ${data.error}`);
         throw new Error(data.error);
       }
 
-      addDebugLog('success', `✅ Synced ${data.synced || 0} keywords successfully`);
       toast.success(`Synced ${data.synced || 0} keywords with GSC data`);
       
       // Reload to show updated data
       await loadTrackedKeywords();
     } catch (error) {
-      addDebugLog('error', `Sync failed: ${error instanceof Error ? error.message : String(error)}`);
       toast.error('Failed to sync keywords');
     } finally {
       setIsSyncing(false);
@@ -815,12 +760,7 @@ export default function RankingTrackerPage() {
         </TabsContent>
       </Tabs>
 
-      {/* Debug Panel */}
-      <FeatureDebugPanel
-        logs={debugLogs}
-        featureName="Rank Tracker"
-        onClear={() => setDebugLogs([])}
-      />
+      
     </div>
   );
 }

@@ -7,29 +7,16 @@ import { Gauge, Search, Loader2, CheckCircle2, AlertCircle, XCircle, Zap, FileCo
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { FeatureDebugPanel, DebugLog } from "@/components/debug/FeatureDebugPanel";
 
 export default function OnPageSeoPage() {
   const [url, setUrl] = useState("");
   const [searchUrl, setSearchUrl] = useState("");
   const [firecrawlData, setFirecrawlData] = useState<any>(null);
   const [isLoadingFirecrawl, setIsLoadingFirecrawl] = useState(false);
-  const [debugLogs, setDebugLogs] = useState<DebugLog[]>([]);
-
-  const addDebugLog = (message: string, type: DebugLog['level'] = "info") => {
-    const log: DebugLog = {
-      timestamp: new Date().toLocaleTimeString(),
-      level: type,
-      message
-    };
-    console.log(`[${type.toUpperCase()}] ${message}`);
-    setDebugLogs(prev => [...prev, log]);
-  };
 
   // Fetch data when URL is set
   useEffect(() => {
     if (searchUrl && !firecrawlData && !isLoadingFirecrawl) {
-      addDebugLog("Starting page analysis...", "info");
       fetchWithFirecrawl(searchUrl);
     }
   }, [searchUrl]);
@@ -38,36 +25,23 @@ export default function OnPageSeoPage() {
 
   const fetchWithFirecrawl = async (targetUrl: string) => {
     setIsLoadingFirecrawl(true);
-    addDebugLog(`Analyzing page: ${targetUrl}`, "info");
 
     try {
       const { data, error } = await supabase.functions.invoke("firecrawl-scrape", {
         body: { url: targetUrl }
       });
 
-      addDebugLog(`Analysis response received`, "info");
-
       if (error) {
-        addDebugLog(`Error: ${JSON.stringify(error)}`, "error");
         throw error;
       }
 
       if (!data?.success) {
-        addDebugLog(`Analysis failed: ${data?.error || "Unknown error"}`, "error");
         throw new Error(data?.error || "Analysis failed");
       }
-
-      addDebugLog("✓ Page analysis successful!", "success");
-      addDebugLog(`Extracted data: ${JSON.stringify(Object.keys(data.data))}`, "info");
-
-      // Log specific important fields
-      addDebugLog(`Title: ${data.data.title || "N/A"}`, "info");
-      addDebugLog(`H1 Count: ${data.data.h1Count}, Links: ${data.data.linkCount}, Images: ${data.data.imageCount}`, "info");
 
       setFirecrawlData(data.data);
       toast.success("Page analyzed successfully");
     } catch (error: any) {
-      addDebugLog(`Analysis error: ${error.message}`, "error");
       console.error("Analysis error:", error);
       toast.error(`Analysis failed: ${error.message}`);
     } finally {
@@ -87,7 +61,6 @@ export default function OnPageSeoPage() {
     // Add https:// if no protocol
     if (!formattedUrl.match(/^https?:\/\//i)) {
       formattedUrl = `https://${formattedUrl}`;
-      addDebugLog(`Added https:// protocol to URL`, "info");
     }
     
     // Validate URL format
@@ -95,15 +68,11 @@ export default function OnPageSeoPage() {
       new URL(formattedUrl);
     } catch (e) {
       toast.error("Invalid URL format");
-      addDebugLog(`Invalid URL: ${formattedUrl}`, "error");
       return;
     }
     
-    // Clear previous state and logs
-    setDebugLog([]);
+    // Clear previous state
     setFirecrawlData(null);
-
-    addDebugLog(`Starting analysis for: ${formattedUrl}`, "info");
 
     setSearchUrl(formattedUrl);
   };
@@ -162,56 +131,11 @@ export default function OnPageSeoPage() {
               )}
               Analyze
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowDebug(!showDebug)}
-            >
-              {showDebug ? "Hide" : "Show"} Debug
-            </Button>
           </div>
           
         </div>
       </Card>
 
-      {/* Debug Panel */}
-      {showDebug && debugLog.length > 0 && (
-        <Card className="p-4 border-blue-500/30 bg-blue-500/5">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold flex items-center gap-2">
-              <FileCode className="h-4 w-4" />
-              Debug Log ({debugLog.length} entries)
-            </h3>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setDebugLog([])}
-            >
-              Clear
-            </Button>
-          </div>
-          <div className="space-y-1 max-h-[300px] overflow-y-auto font-mono text-xs">
-            {debugLog.map((log, idx) => (
-              <div
-                key={idx}
-                className={`p-2 rounded ${
-                  log.type === "error"
-                    ? "bg-red-500/10 text-red-200"
-                    : log.type === "warn"
-                    ? "bg-amber-500/10 text-amber-200"
-                    : log.type === "success"
-                    ? "bg-emerald-500/10 text-emerald-200"
-                    : "bg-slate-800/50 text-slate-300"
-                }`}
-              >
-                <span className="text-muted-foreground">[{log.time}]</span>{" "}
-                <span className="font-semibold uppercase text-[10px]">[{log.type}]</span>{" "}
-                {log.message}
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
 
       {/* Results */}
       {searchUrl && (
@@ -564,12 +488,6 @@ export default function OnPageSeoPage() {
         </Card>
       )}
 
-      {/* Debug Panel */}
-      <FeatureDebugPanel
-        logs={debugLogs}
-        featureName="OnPage SEO"
-        onClear={() => setDebugLogs([])}
-      />
     </div>
   );
 }

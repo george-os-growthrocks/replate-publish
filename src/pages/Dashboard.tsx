@@ -5,7 +5,7 @@ import { RecentActivityFeed } from "@/components/dashboard/RecentActivityFeed";
 import { DashboardMetricsCards } from "@/components/dashboard/DashboardMetricsCards";
 import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
 import { DashboardRightSidebar } from "@/components/dashboard/DashboardRightSidebar";
-import { GSCDebugPanel } from "@/components/debug/GSCDebugPanel";
+ 
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TrendingUp, Sparkles, Clock } from "lucide-react";
@@ -125,8 +125,7 @@ const Dashboard = () => {
         <DashboardRightSidebar />
       </div>
       
-      {/* Debug Panel */}
-      <GSCDebugPanel />
+      
     </div>
   );
 };

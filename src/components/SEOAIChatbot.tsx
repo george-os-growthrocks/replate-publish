@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { MessageSquare, X, Send, Loader2, Sparkles, TrendingUp, Link2, Search, Download, Maximize2, Minimize2, Bug, Copy, Check } from "lucide-react";
+import { MessageSquare, X, Send, Loader2, Sparkles, TrendingUp, Link2, Search, Download, Maximize2, Minimize2, Copy, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import ReactMarkdown from "react-markdown";
@@ -104,8 +104,6 @@ export function SEOAIChatbot() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showQuickPrompts, setShowQuickPrompts] = useState(true);
-  const [showDebugDialog, setShowDebugDialog] = useState(false);
-  const [debugCopied, setDebugCopied] = useState(false);
   const [lastError, setLastError] = useState<ChatbotErrorDetails | null>(null);
   const [properties, setProperties] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -576,28 +574,7 @@ export function SEOAIChatbot() {
                 disabled={isLoading}
                 className="flex-1 text-sm sm:text-base"
               />
-              <Button 
-                type="button"
-                onClick={() => {
-                  console.log('=== CHATBOT DEBUG ===');
-                  console.log('User:', user);
-                  console.log('Selected Property:', selectedProperty);
-                  console.log('Properties:', properties);
-                  console.log('Messages:', messages);
-                  console.log('Is Loading:', isLoading);
-                  console.log('Input:', input);
-                  console.log('Is Open:', isOpen);
-                  console.log('Is Fullscreen:', isFullscreen);
-                  console.log('LocalStorage property:', localStorage.getItem('anotherseo_selected_property'));
-                  setShowDebugDialog(true);
-                }}
-                variant="outline"
-                size="icon"
-                className="shrink-0 h-9 w-9 sm:h-10 sm:w-10"
-                title="Debug Info"
-              >
-                <Bug className="w-3 h-3 sm:w-4 sm:h-4" />
-              </Button>
+              
               <Button 
                 onClick={() => sendMessage()} 
                 disabled={isLoading || !input.trim()} 
@@ -618,223 +595,7 @@ export function SEOAIChatbot() {
         </Card>
       )}
 
-      {/* Debug Dialog */}
-      <Dialog open={showDebugDialog} onOpenChange={setShowDebugDialog}>
-        <DialogContent className="max-w-3xl w-[calc(100vw-2rem)] sm:w-full max-h-[80vh] overflow-y-auto m-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Bug className="w-5 h-5 text-primary" />
-              Chatbot Debug Information
-            </DialogTitle>
-            <DialogDescription>
-              Complete chatbot state and configuration details
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            {/* User Info */}
-            <div className="rounded-lg border p-4 bg-muted/50">
-              <h3 className="font-semibold text-sm mb-2 flex items-center gap-2">
-                👤 User Information
-              </h3>
-              <div className="space-y-1 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Signed In:</span>
-                  <span className="font-mono">{user ? '✅ Yes' : '❌ No'}</span>
-                </div>
-                {user && (
-                  <>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">User ID:</span>
-                      <span className="font-mono text-xs">{user.id}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Email:</span>
-                      <span className="font-mono text-xs">{user.email}</span>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Properties */}
-            <div className="rounded-lg border p-4 bg-muted/50">
-              <h3 className="font-semibold text-sm mb-2 flex items-center gap-2">
-                🌐 Properties
-              </h3>
-              <div className="space-y-1 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Selected:</span>
-                  <span className="font-mono text-xs">{selectedProperty || 'None'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Total Properties:</span>
-                  <span className="font-mono">{properties.length}</span>
-                </div>
-                {properties.length > 0 && (
-                  <div className="mt-2 p-2 bg-background rounded border">
-                    <p className="text-xs text-muted-foreground mb-1">All Properties:</p>
-                    {properties.map((prop, idx) => (
-                      <div key={idx} className="text-xs font-mono py-1">• {prop}</div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Chat State */}
-            <div className="rounded-lg border p-4 bg-muted/50">
-              <h3 className="font-semibold text-sm mb-2 flex items-center gap-2">
-                💬 Chat State
-              </h3>
-              <div className="space-y-1 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Messages:</span>
-                  <span className="font-mono">{messages.length}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Is Loading:</span>
-                  <span className="font-mono">{isLoading ? '⏳ Yes' : '✅ No'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Current Input:</span>
-                  <span className="font-mono text-xs">{input || '(empty)'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Session ID:</span>
-                  <span className="font-mono text-xs">{sessionId}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* UI State */}
-            <div className="rounded-lg border p-4 bg-muted/50">
-              <h3 className="font-semibold text-sm mb-2 flex items-center gap-2">
-                🎨 UI State
-              </h3>
-              <div className="space-y-1 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Is Open:</span>
-                  <span className="font-mono">{isOpen ? '✅ Yes' : '❌ No'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Is Fullscreen:</span>
-                  <span className="font-mono">{isFullscreen ? '✅ Yes' : '❌ No'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Show Quick Prompts:</span>
-                  <span className="font-mono">{showQuickPrompts ? '✅ Yes' : '❌ No'}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* LocalStorage */}
-            <div className="rounded-lg border p-4 bg-muted/50">
-              <h3 className="font-semibold text-sm mb-2 flex items-center gap-2">
-                💾 LocalStorage
-              </h3>
-              <div className="space-y-1 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Saved Property:</span>
-                  <span className="font-mono text-xs">{localStorage.getItem('anotherseo_selected_property') || '(none)'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Filter Property:</span>
-                  <span className="font-mono text-xs">{localStorage.getItem('anotherseo_filter_property') || '(none)'}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Error Details */}
-            <div className="rounded-lg border p-4 bg-muted/50">
-              <h3 className="font-semibold text-sm mb-2 flex items-center gap-2">
-                ⚠️ Latest Error Details
-              </h3>
-              {lastError ? (
-                <div className="space-y-2 text-sm">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-muted-foreground">Message:</span>
-                    <span className="font-mono text-xs whitespace-pre-wrap">{lastError.message}</span>
-                  </div>
-                  {lastError.name && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Type:</span>
-                      <span className="font-mono text-xs">{lastError.name}</span>
-                    </div>
-                  )}
-                  {lastError.stack && (
-                    <div className="flex flex-col gap-1">
-                      <span className="text-muted-foreground">Stack Trace:</span>
-                      <pre className="bg-background border rounded p-2 text-[11px] overflow-auto max-h-40 whitespace-pre-wrap">{lastError.stack}</pre>
-                    </div>
-                  )}
-                  {lastError.request && (
-                    <div className="flex flex-col gap-1">
-                      <span className="text-muted-foreground">Last Request Payload:</span>
-                      <pre className="bg-background border rounded p-2 text-[11px] overflow-auto max-h-40 whitespace-pre-wrap">{JSON.stringify(lastError.request, null, 2)}</pre>
-                    </div>
-                  )}
-                  {lastError.response && (
-                    <div className="flex flex-col gap-1">
-                      <span className="text-muted-foreground">Last Response/Error Object:</span>
-                      <pre className="bg-background border rounded p-2 text-[11px] overflow-auto max-h-40 whitespace-pre-wrap">{JSON.stringify(lastError.response, null, 2)}</pre>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <p className="text-muted-foreground text-sm">No errors captured yet in this session.</p>
-              )}
-            </div>
-
-            {/* Copy All Button */}
-            <div className="flex gap-2">
-              <Button
-                onClick={() => {
-                  const debugInfo = {
-                    user: user ? { id: user.id, email: user.email } : null,
-                    selectedProperty,
-                    properties,
-                    messagesCount: messages.length,
-                    isLoading,
-                    input,
-                    isOpen,
-                    isFullscreen,
-                    sessionId,
-                    localStorage: {
-                      savedProperty: localStorage.getItem('anotherseo_selected_property'),
-                      filterProperty: localStorage.getItem('anotherseo_filter_property'),
-                    }
-                  };
-                  navigator.clipboard.writeText(JSON.stringify(debugInfo, null, 2));
-                  setDebugCopied(true);
-                  setTimeout(() => setDebugCopied(false), 2000);
-                  toast({ title: 'Debug info copied!', description: 'Paste it to share with support' });
-                }}
-                variant="outline"
-                className="flex-1"
-              >
-                {debugCopied ? (
-                  <>
-                    <Check className="w-4 h-4 mr-2" />
-                    Copied!
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-4 h-4 mr-2" />
-                    Copy Debug Info
-                  </>
-                )}
-              </Button>
-              <Button
-                onClick={() => setShowDebugDialog(false)}
-                className="flex-1"
-              >
-                Close
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      
     </>
   );
 }

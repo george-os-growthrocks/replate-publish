@@ -46,7 +46,6 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { calculateKeywordDifficulty, analyzeCtr } from "@/lib/seo-algorithms";
-import { FeatureDebugPanel, DebugLog } from "@/components/debug/FeatureDebugPanel";
 import { AIOverview } from "@/components/serp/AIOverview";
 
 interface KeywordResult {
@@ -110,38 +109,24 @@ export default function KeywordResearchPage() {
   const [isLoadingAiOverview, setIsLoadingAiOverview] = useState(false);
   const [locationCode, setLocationCode] = useState(2300); // Greece default
   const [languageCode, setLanguageCode] = useState("el"); // Greek default
-  const [debugLogs, setDebugLogs] = useState<DebugLog[]>([]);
   const [monthlyTrendData, setMonthlyTrendData] = useState<any[]>([]);
   const [isLoadingTrend, setIsLoadingTrend] = useState(false);
 
-  const addDebugLog = (level: DebugLog['level'], message: string) => {
-    const log: DebugLog = {
-      timestamp: new Date().toLocaleTimeString(),
-      level,
-      message
-    };
-    console.log(`[${level.toUpperCase()}] ${message}`);
-    setDebugLogs(prev => [...prev, log]);
-  };
-
-      // Load monthly search trend data
+  // Load monthly search trend data
   const loadMonthlyTrend = async (targetKeyword?: string) => {
     // Use provided keyword or get from selectedKeyword
     const keyword = targetKeyword || selectedKeyword?.keyword_data?.keyword || selectedKeyword?.keyword;
     if (!keyword) {
-      addDebugLog('error', '❌ No keyword provided for trend data');
       toast.error('Please select a keyword first');
       return;
     }
 
     setIsLoadingTrend(true);
-    addDebugLog('info', `📊 Loading monthly trend data for: "${keyword}"`);
     
     try {
       // Get session token for auth
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
-        addDebugLog('error', '❌ No auth session - please login');
         toast.error('Please sign in again');
         setIsLoadingTrend(false);
         return;
@@ -159,48 +144,29 @@ export default function KeywordResearchPage() {
       });
 
       if (error) {
-        addDebugLog('error', `❌ API error: ${error.message}`);
         throw error;
       }
 
       if (data?.error) {
-        addDebugLog('error', `❌ API error: ${data.error}`);
         throw new Error(data.error);
       }
 
-      console.log('🔵 Full API response:', JSON.stringify(data, null, 2));
-      addDebugLog('info', `📊 Full response keys: ${data ? Object.keys(data).join(', ') : 'null'}`);
-      
       const overview = data?.overview;
       if (!overview) {
-        addDebugLog('error', '❌ No overview in response');
         console.error('❌ Response structure:', data);
         toast.error('Invalid response from API');
         setMonthlyTrendData([]);
         return;
       }
 
-      addDebugLog('info', `📊 Overview keys: ${Object.keys(overview).join(', ')}`);
-      addDebugLog('info', `📊 monthly_searches type: ${typeof overview.monthly_searches}`);
-      addDebugLog('info', `📊 monthly_searches length: ${Array.isArray(overview.monthly_searches) ? overview.monthly_searches.length : 'NOT AN ARRAY'}`);
-      
       const monthlySearches = overview.monthly_searches || [];
-      
-      console.log('🔵 Monthly searches raw:', monthlySearches);
-      
       if (monthlySearches.length === 0) {
-        addDebugLog('warn', '⚠️ No monthly search data returned');
-        addDebugLog('info', `📊 Debug info: ${JSON.stringify(overview._debug || {})}`);
-        
-        // Check if there's data in other places
         if (overview.clickstream_keyword_info?.monthly_searches) {
-          addDebugLog('info', '📊 Found monthly_searches in clickstream_keyword_info');
           const clickstreamData = overview.clickstream_keyword_info.monthly_searches;
           if (Array.isArray(clickstreamData) && clickstreamData.length > 0) {
             monthlySearches.push(...clickstreamData);
           }
         }
-        
         if (monthlySearches.length === 0) {
           toast.warning('No trend data available for this keyword');
           setMonthlyTrendData([]);
@@ -222,13 +188,10 @@ export default function KeywordResearchPage() {
           return a.month - b.month;
         });
 
-      console.log('🔵 Chart data prepared:', chartData);
       setMonthlyTrendData(chartData);
-      addDebugLog('success', `✅ Loaded ${chartData.length} months of trend data`);
       toast.success(`Loaded ${chartData.length} months of trend data`);
     } catch (error: any) {
       console.error('💥 Monthly Trend Error:', error);
-      addDebugLog('error', `❌ Failed to load trend data: ${error.message}`);
       toast.error(`Failed to load trend data: ${error.message}`);
       setMonthlyTrendData([]);
     } finally {
@@ -242,13 +205,11 @@ export default function KeywordResearchPage() {
     if (!keyword) return;
 
     setIsLoadingAiOverview(true);
-    addDebugLog('info', `🤖 Loading SERP with AI Overview for: "${keyword}"`);
 
     try {
       // Get session token for auth
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
-        addDebugLog('error', '❌ No auth session - please login');
         setIsLoadingAiOverview(false);
         return;
       }
@@ -267,7 +228,6 @@ export default function KeywordResearchPage() {
       });
 
       if (error) {
-        addDebugLog('error', `❌ SERP API error: ${error.message}`);
         setIsLoadingAiOverview(false);
         return;
       }
@@ -288,14 +248,11 @@ export default function KeywordResearchPage() {
             favicon: src.favicon || `https://www.google.com/s2/favicons?domain=${src.domain || src.url}`
           }))
         });
-        addDebugLog('success', `✅ AI Overview found with ${aiItem.sources?.length || 0} sources`);
       } else {
-        addDebugLog('info', `ℹ️ No AI Overview detected for this keyword`);
         setAiOverviewData(null);
       }
     } catch (error: any) {
       console.error('💥 AI Overview Error:', error);
-      addDebugLog('error', `❌ Failed to load AI Overview: ${error.message}`);
       setAiOverviewData(null);
     } finally {
       setIsLoadingAiOverview(false);
@@ -308,7 +265,6 @@ export default function KeywordResearchPage() {
       const keyword = selectedKeyword?.keyword_data?.keyword || selectedKeyword?.keyword;
       if (keyword) {
         // Always reload both to ensure fresh data
-        addDebugLog('info', `📌 Keyword selected in dialog: "${keyword}" - loading trend data and AI Overview`);
         loadMonthlyTrend(keyword);
         loadSerpWithAiOverview(keyword);
       }
@@ -327,15 +283,7 @@ export default function KeywordResearchPage() {
     }
 
     setIsLoading(true);
-    addDebugLog('info', `🔍 Fetching keyword ideas for: "${seedKeyword}"`);
     try {
-      console.log("🔍 Keyword Ideas Request:", {
-        keywords: [seedKeyword],
-        location_code: locationCode,
-        language_code: languageCode,
-        limit: 100
-      });
-
       const { data, error } = await supabase.functions.invoke("dataforseo-labs-keyword-ideas", {
         body: {
           keywords: [seedKeyword],
@@ -345,30 +293,16 @@ export default function KeywordResearchPage() {
         }
       });
 
-      console.log("📦 Keyword Ideas Raw Response:", { data, error });
-
       if (error) {
-        console.error("❌ Supabase Error:", error);
         throw error;
       }
 
       if (data?.error) {
-        console.error("❌ API Error:", data.error);
         throw new Error(data.error);
       }
 
-      console.log("📊 Full Data Structure:", JSON.stringify(data, null, 2));
-
       const items = data?.tasks?.[0]?.result?.[0]?.items || [];
-      console.log(`✅ Extracted ${items.length} keyword ideas:`, items.slice(0, 3));
-      
-      // Log the field names of the first item to help debug
-      if (items.length > 0) {
-        console.log("🔑 Available fields in first item:", Object.keys(items[0]));
-        console.log("📝 First item structure:", items[0]);
-      }
 
-      // Save debug info
       setDebugInfo({
         type: "Keyword Ideas",
         request: { keywords: [seedKeyword], location_code: locationCode, language_code: languageCode },
@@ -380,17 +314,13 @@ export default function KeywordResearchPage() {
       });
 
       setResults(prev => ({ ...prev, ideas: items }));
-      
       if (items.length === 0) {
-        addDebugLog('warn', '⚠️ No keyword ideas found');
         toast.warning("No keywords found. Check console for details.");
       } else {
-        addDebugLog('success', `✅ Found ${items.length} keyword ideas`);
         toast.success(`Found ${items.length} keyword ideas`);
       }
     } catch (error: any) {
       console.error("💥 Keyword Ideas Error:", error);
-      addDebugLog('error', `❌ Failed to fetch keyword ideas: ${error.message}`);
       toast.error(`Failed to fetch keyword ideas: ${error.message}`);
     } finally {
       setIsLoading(false);
@@ -405,13 +335,6 @@ export default function KeywordResearchPage() {
 
     setIsLoading(true);
     try {
-      console.log("🔍 Keyword Suggestions Request:", {
-        keyword: seedKeyword,
-        location_code: locationCode,
-        language_code: languageCode,
-        limit: 100
-      });
-
       const { data, error } = await supabase.functions.invoke("dataforseo-labs-keyword-suggestions", {
         body: {
           keyword: seedKeyword,
@@ -421,27 +344,15 @@ export default function KeywordResearchPage() {
         }
       });
 
-      console.log("📦 Keyword Suggestions Raw Response:", { data, error });
-
       if (error) {
-        console.error("❌ Supabase Error:", error);
         throw error;
       }
 
       if (data?.error) {
-        console.error("❌ API Error:", data.error);
         throw new Error(data.error);
       }
 
-      console.log("📊 Full Data Structure:", JSON.stringify(data, null, 2));
-
       const items = data?.tasks?.[0]?.result?.[0]?.items || [];
-      console.log(`✅ Extracted ${items.length} keyword suggestions:`, items.slice(0, 3));
-      
-      if (items.length > 0) {
-        console.log("🔑 Available fields in first item:", Object.keys(items[0]));
-        console.log("📝 First item structure:", items[0]);
-      }
 
       setDebugInfo({
         type: "Keyword Suggestions",
@@ -454,7 +365,6 @@ export default function KeywordResearchPage() {
       });
 
       setResults(prev => ({ ...prev, suggestions: items }));
-      
       if (items.length === 0) {
         toast.warning("No keywords found. Check console for details.");
       } else {
@@ -476,14 +386,6 @@ export default function KeywordResearchPage() {
 
     setIsLoading(true);
     try {
-      console.log("🔍 Related Keywords Request:", {
-        keyword: seedKeyword,
-        location_code: locationCode,
-        language_code: languageCode,
-        depth: 1,
-        limit: 100
-      });
-
       const { data, error } = await supabase.functions.invoke("dataforseo-labs-related-keywords", {
         body: {
           keyword: seedKeyword,
@@ -494,27 +396,15 @@ export default function KeywordResearchPage() {
         }
       });
 
-      console.log("📦 Related Keywords Raw Response:", { data, error });
-
       if (error) {
-        console.error("❌ Supabase Error:", error);
         throw error;
       }
 
       if (data?.error) {
-        console.error("❌ API Error:", data.error);
         throw new Error(data.error);
       }
 
-      console.log("📊 Full Data Structure:", JSON.stringify(data, null, 2));
-
       const items = data?.tasks?.[0]?.result?.[0]?.items || [];
-      console.log(`✅ Extracted ${items.length} related keywords:`, items.slice(0, 3));
-      
-      if (items.length > 0) {
-        console.log("🔑 Available fields in first item:", Object.keys(items[0]));
-        console.log("📝 First item structure:", items[0]);
-      }
 
       setDebugInfo({
         type: "Related Keywords",
@@ -527,7 +417,6 @@ export default function KeywordResearchPage() {
       });
 
       setResults(prev => ({ ...prev, related: items }));
-      
       if (items.length === 0) {
         toast.warning("No keywords found. Check console for details.");
       } else {
@@ -549,13 +438,6 @@ export default function KeywordResearchPage() {
 
     setIsLoading(true);
     try {
-      console.log("🔍 Competitor Keywords Request:", {
-        target: targetDomain,
-        location_code: locationCode,
-        language_code: languageCode,
-        limit: 100
-      });
-
       const { data, error } = await supabase.functions.invoke("dataforseo-labs-keywords-for-site", {
         body: {
           target: targetDomain,
@@ -565,27 +447,15 @@ export default function KeywordResearchPage() {
         }
       });
 
-      console.log("📦 Competitor Keywords Raw Response:", { data, error });
-
       if (error) {
-        console.error("❌ Supabase Error:", error);
         throw error;
       }
 
       if (data?.error) {
-        console.error("❌ API Error:", data.error);
         throw new Error(data.error);
       }
 
-      console.log("📊 Full Data Structure:", JSON.stringify(data, null, 2));
-
       const items = data?.tasks?.[0]?.result?.[0]?.items || [];
-      console.log(`✅ Extracted ${items.length} competitor keywords:`, items.slice(0, 3));
-      
-      if (items.length > 0) {
-        console.log("🔑 Available fields in first item:", Object.keys(items[0]));
-        console.log("📝 First item structure:", items[0]);
-      }
 
       setDebugInfo({
         type: "Competitor Keywords",
@@ -598,7 +468,6 @@ export default function KeywordResearchPage() {
       });
 
       setResults(prev => ({ ...prev, competitor: items }));
-      
       if (items.length === 0) {
         toast.warning("No keywords found. Check console for details.");
       } else {
@@ -692,19 +561,6 @@ export default function KeywordResearchPage() {
         kw.impressions_info?.se_results_count ??
         kw.se_results_count ??
         undefined;
-
-      // Log extraction for first 3 items for debugging
-      if (idx < 3) {
-        console.log(`🔍 Extracting data for keyword #${idx + 1}:`, {
-          keyword,
-          searchVolume,
-          cpc,
-          competition,
-          difficulty,
-          serpResults,
-          rawItem: kw
-        });
-      }
 
       return { keyword, searchVolume, cpc, competition, difficulty, serpResults };
     };
@@ -1097,117 +953,7 @@ export default function KeywordResearchPage() {
       </Card>
 
       {/* Debug Panel */}
-      {debugInfo && (
-        <Card className="p-6 bg-muted border-amber-500/20">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-lg bg-amber-500/20 flex items-center justify-center">
-                <span className="text-amber-400 text-lg">🐛</span>
-              </div>
-              <div>
-                <h3 className="font-semibold text-amber-200">Debug Information</h3>
-                <p className="text-xs text-amber-300/70">Last API call details</p>
-              </div>
-            </div>
-            <Button variant="ghost" size="sm" onClick={() => setDebugInfo(null)}>
-              Close
-            </Button>
-          </div>
-
-          <div className="space-y-4">
-            <div>
-              <div className="text-xs font-medium text-amber-300 mb-1">Request Type</div>
-              <div className="text-sm text-white bg-slate-950/50 p-2 rounded border border-border">
-                {debugInfo.type}
-              </div>
-            </div>
-
-            <div>
-              <div className="text-xs font-medium text-amber-300 mb-1">Items Found</div>
-              <div className="text-sm text-white bg-slate-950/50 p-2 rounded border border-border">
-                {debugInfo.itemsFound} keywords
-              </div>
-            </div>
-
-            {debugInfo.availableFields && debugInfo.availableFields.length > 0 && (
-              <div>
-                <div className="text-xs font-medium text-amber-300 mb-1">
-                  🔑 Available Fields in Response
-                </div>
-                <div className="text-xs text-white bg-slate-950/50 p-3 rounded border border-border">
-                  <div className="flex flex-wrap gap-2">
-                    {debugInfo.availableFields.map((field: string) => (
-                      <Badge key={field} variant="outline" className="text-[10px] border-amber-500/30 text-amber-200">
-                        {field}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {debugInfo.firstItemSample && (
-              <div>
-                <div className="text-xs font-medium text-amber-300 mb-1">
-                  ✅ Data Extraction Status
-                </div>
-                <div className="grid grid-cols-2 gap-2 mb-3">
-                  {(() => {
-                    const sample = debugInfo.firstItemSample;
-                    const checks = [
-                      { label: "Keyword", found: !!(sample.keyword || sample.keyword_data?.keyword || sample.key) },
-                      { label: "Search Volume", found: !!(sample.search_volume ?? sample.keyword_info?.search_volume ?? sample.keyword_data?.keyword_info?.search_volume ?? sample.keyword_properties?.search_volume) },
-                      { label: "CPC", found: !!(sample.cpc ?? sample.keyword_info?.cpc ?? sample.keyword_data?.keyword_info?.cpc ?? sample.keyword_properties?.cpc) },
-                      { label: "Competition", found: !!(sample.competition ?? sample.keyword_info?.competition ?? sample.keyword_data?.keyword_info?.competition ?? sample.competition_index) },
-                      { label: "Difficulty", found: !!(sample.keyword_difficulty ?? sample.keyword_properties?.keyword_difficulty ?? sample.keyword_info?.keyword_difficulty) },
-                      { label: "SERP Results", found: !!(sample.serp_info?.se_results_count ?? sample.impressions_info?.se_results_count ?? sample.se_results_count) }
-                    ];
-                    return checks.map((check, i) => (
-                      <div key={i} className="flex items-center gap-2 text-xs">
-                        <span className={check.found ? "text-emerald-400" : "text-red-400"}>
-                          {check.found ? "✓" : "✗"}
-                        </span>
-                        <span className={check.found ? "text-white" : "text-red-300"}>
-                          {check.label}
-                        </span>
-                      </div>
-                    ));
-                  })()}
-                </div>
-                <div className="text-xs font-medium text-amber-300 mb-1">
-                  📝 First Item Structure (raw JSON)
-                </div>
-                <pre className="text-xs text-white bg-slate-950/50 p-3 rounded border border-border overflow-x-auto max-h-48">
-                  {JSON.stringify(debugInfo.firstItemSample, null, 2)}
-                </pre>
-              </div>
-            )}
-
-            <div>
-              <div className="text-xs font-medium text-amber-300 mb-1">Request Payload</div>
-              <pre className="text-xs text-white bg-slate-950/50 p-3 rounded border border-border overflow-x-auto">
-                {JSON.stringify(debugInfo.request, null, 2)}
-              </pre>
-            </div>
-
-            {debugInfo.sampleItems && debugInfo.sampleItems.length > 0 && (
-              <div>
-                <div className="text-xs font-medium text-amber-300 mb-1">Sample Results (first 3)</div>
-                <pre className="text-xs text-white bg-slate-950/50 p-3 rounded border border-border overflow-x-auto">
-                  {JSON.stringify(debugInfo.sampleItems, null, 2)}
-                </pre>
-              </div>
-            )}
-
-            <div>
-              <div className="text-xs font-medium text-amber-300 mb-1">Full API Response</div>
-              <pre className="text-xs text-white bg-slate-950/50 p-3 rounded border border-border overflow-x-auto max-h-96">
-                {JSON.stringify(debugInfo.response, null, 2)}
-              </pre>
-            </div>
-          </div>
-        </Card>
-      )}
+      {/* Removed debug panel */}
 
       {/* SERP Preview Dialog */}
       <Dialog open={showSerpDialog} onOpenChange={(open) => {
@@ -1456,11 +1202,7 @@ export default function KeywordResearchPage() {
       </Dialog>
 
       {/* Debug Panel */}
-      <FeatureDebugPanel
-        logs={debugLogs}
-        featureName="Keyword Research"
-        onClear={() => setDebugLogs([])}
-      />
+      {/* Removed debug panel */}
     </div>
   );
 }

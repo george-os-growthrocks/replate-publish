@@ -6,7 +6,7 @@ import { Footer } from "@/components/landing/Footer";
 import { Check, X, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { addDebugLog } from "@/lib/utils";
+ 
 import { Database } from "@/integrations/supabase/types";
 
 type SubscriptionPlan = Database['public']['Tables']['subscription_plans']['Row'];
@@ -127,8 +127,6 @@ export default function PricingFullPage() {
   const { data: plans = [], isLoading } = useQuery<SubscriptionPlan[]>({
     queryKey: ['subscription_plans_comparison'],
     queryFn: async () => {
-      addDebugLog('Fetching plans for comparison table');
-      
       const { data, error } = await supabase
         .from('subscription_plans')
         .select('*')
@@ -136,11 +134,9 @@ export default function PricingFullPage() {
         .order('sort_order', { ascending: true });
 
       if (error) {
-        addDebugLog(`Error fetching comparison plans: ${error.message}`, 'error');
         throw error;
       }
 
-      addDebugLog(`Loaded ${data?.length || 0} plans for comparison`);
       return data || [];
     }
   });

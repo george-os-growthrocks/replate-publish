@@ -25,7 +25,6 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { FeatureDebugPanel, DebugLog } from "@/components/debug/FeatureDebugPanel";
 
 interface CrawlStatus {
   max_crawl_pages: number;
@@ -73,17 +72,6 @@ export default function SiteAuditPage() {
   const [auditData, setAuditData] = useState<AuditData | null>(null);
   const [activeTab, setActiveTab] = useState("summary");
   const pollIntervalRef = useRef<number | null>(null);
-  const [debugLogs, setDebugLogs] = useState<DebugLog[]>([]);
-
-  const addDebugLog = (message: string, type: DebugLog['level'] = "info") => {
-    const log: DebugLog = {
-      timestamp: new Date().toLocaleTimeString(),
-      level: type,
-      message
-    };
-    setDebugLogs(prev => [...prev, log]);
-    console.log(`[${type.toUpperCase()}] ${message}`);
-  };
 
   // Poll for crawl progress
   useEffect(() => {
@@ -102,30 +90,19 @@ export default function SiteAuditPage() {
 
   const fetchSummary = async (taskId: string) => {
     try {
-      addDebugLog(`Polling summary for task: ${taskId}`, "info");
       
       const { data, error } = await supabase.functions.invoke('dataforseo-onpage-crawl', {
         body: { action: 'summary', taskId }
       });
 
       if (error) {
-        addDebugLog(`Summary error: ${JSON.stringify(error)}`, "error");
         throw error;
       }
 
-      addDebugLog(`Summary response received`, "info");
-      addDebugLog(`Response keys: ${data ? Object.keys(data).join(", ") : "none"}`, "info");
-
       const result = data?.tasks?.[0]?.result?.[0];
       if (!result) {
-        addDebugLog(`No result in summary response`, "warn");
-        addDebugLog(`Full response: ${JSON.stringify(data)}`, "warn");
         return;
       }
-
-      addDebugLog(`Crawl progress: ${result.crawl_progress}`, "info");
-      addDebugLog(`Pages crawled: ${result.crawl_status?.pages_crawled || 0} / ${result.crawl_status?.max_crawl_pages || 0}`, "info");
-      addDebugLog(`Pages in queue: ${result.crawl_status?.pages_in_queue || 0}`, "info");
 
       setAuditData(prev => prev ? {
         ...prev,
@@ -137,7 +114,6 @@ export default function SiteAuditPage() {
 
       // If finished, fetch pages
       if (result.crawl_progress === 'finished') {
-        addDebugLog(`✓ Crawl finished! Total pages: ${result.domain_info?.total_pages || 0}`, "success");
         if (pollIntervalRef.current) {
           clearInterval(pollIntervalRef.current);
         }
@@ -145,15 +121,12 @@ export default function SiteAuditPage() {
         toast.success("Site audit completed!");
       }
     } catch (error: any) {
-      addDebugLog(`Failed to fetch summary: ${error.message}`, "error");
       console.error("Failed to fetch summary:", error);
     }
   };
 
   const fetchPages = async (taskId: string, filters?: any[], orderBy?: string[]) => {
     try {
-      addDebugLog(`Fetching pages for task: ${taskId}`, "info");
-      
       const { data, error } = await supabase.functions.invoke('dataforseo-onpage-crawl', {
         body: {
           action: 'pages',
@@ -165,18 +138,13 @@ export default function SiteAuditPage() {
       });
 
       if (error) {
-        addDebugLog(`Pages error: ${JSON.stringify(error)}`, "error");
         throw error;
       }
 
       const result = data?.tasks?.[0]?.result?.[0];
       if (!result) {
-        addDebugLog(`No pages result`, "warn");
         return;
       }
-
-      addDebugLog(`✓ Pages fetched: ${result.items?.length || 0} pages`, "success");
-      addDebugLog(`Total pages in task: ${result.total_items_count || 0}`, "info");
 
       setAuditData(prev => prev ? {
         ...prev,
@@ -184,7 +152,6 @@ export default function SiteAuditPage() {
         totalPages: result.total_items_count || 0,
       } : null);
     } catch (error: any) {
-      addDebugLog(`Failed to fetch pages: ${error.message}`, "error");
       console.error("Failed to fetch pages:", error);
       toast.error("Failed to load page details");
     }
@@ -198,57 +165,33 @@ export default function SiteAuditPage() {
 
     setIsLoading(true);
     setAuditData(null);
-    setDebugLog([]);
 
     try {
-      addDebugLog(`=== Starting Site Audit for: ${domain.trim()} ===`, "info");
-      
       const { data, error } = await supabase.functions.invoke('dataforseo-onpage-crawl', {
         body: { action: 'task_post', domain: domain.trim() }
       });
 
-      addDebugLog(`Task POST response received`, "info");
-
       if (error) {
-        addDebugLog(`Supabase error: ${JSON.stringify(error)}`, "error");
         throw error;
       }
 
       if (!data) {
-        addDebugLog(`No data in response`, "error");
         throw new Error("No data received from edge function");
       }
 
-      addDebugLog(`Response status: ${data.status_code} - ${data.status_message}`, "info");
-      addDebugLog(`Tasks count: ${data.tasks_count}, Errors: ${data.tasks_error}`, "info");
-
       const task = data?.tasks?.[0];
       if (!task) {
-        addDebugLog(`No task in response`, "error");
-        addDebugLog(`Full response: ${JSON.stringify(data)}`, "error");
         throw new Error("No task returned");
       }
 
-      addDebugLog(`Task status: ${task.status_code} - ${task.status_message}`, task.status_code === 20100 ? "success" : "error");
-      addDebugLog(`Task data sent: ${JSON.stringify(task.data)}`, "info");
-
       // Check if task failed
       if (task.status_code !== 20100) {
-        addDebugLog(`❌ Task creation FAILED!`, "error");
-        addDebugLog(`Error code: ${task.status_code}`, "error");
-        addDebugLog(`Error message: ${task.status_message}`, "error");
-        addDebugLog(`Full task: ${JSON.stringify(task)}`, "error");
         throw new Error(`Audit task failed: ${task.status_message} (${task.status_code})`);
       }
 
       if (!task.id) {
-        addDebugLog(`Task has no ID. Status: ${task.status_code} - ${task.status_message}`, "error");
-        addDebugLog(`Task data: ${JSON.stringify(task.data)}`, "info");
         throw new Error("Failed to create crawl task - no ID returned");
       }
-
-      addDebugLog(`✓ Task created successfully! ID: ${task.id}`, "success");
-      addDebugLog(`Task cost: $${task.cost}`, "info");
 
       setAuditData({
         taskId: task.id,
@@ -265,15 +208,9 @@ export default function SiteAuditPage() {
 
       toast.success("Site audit started! Crawling pages...");
 
-      addDebugLog(`Starting polling in 2 seconds...`, "info");
       // Start polling immediately
       setTimeout(() => fetchSummary(task.id), 2000);
     } catch (error: any) {
-      addDebugLog(`=== AUDIT FAILED ===`, "error");
-      addDebugLog(`Error: ${error.message}`, "error");
-      if (error.stack) {
-        addDebugLog(`Stack: ${error.stack}`, "error");
-      }
       console.error("Site audit error:", error);
       toast.error(error.message || "Failed to start site audit");
     } finally {
@@ -637,12 +574,6 @@ export default function SiteAuditPage() {
         </Card>
       )}
 
-      {/* Debug Panel */}
-      <FeatureDebugPanel
-        logs={debugLogs}
-        featureName="Site Audit"
-        onClear={() => setDebugLogs([])}
-      />
     </div>
   );
 }

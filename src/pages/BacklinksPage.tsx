@@ -15,17 +15,6 @@ export default function BacklinksPage() {
   const [url, setUrl] = useState("");
   const [searchUrl, setSearchUrl] = useState("");
   const [activeTab, setActiveTab] = useState("live");
-  const [debugLogs, setDebugLogs] = useState<DebugLog[]>([]);
-
-  const addDebugLog = (level: DebugLog['level'], message: string) => {
-    const log: DebugLog = {
-      timestamp: new Date().toLocaleTimeString(),
-      level,
-      message
-    };
-    console.log(`[${level.toUpperCase()}] ${message}`);
-    setDebugLogs(prev => [...prev, log]);
-  };
 
   const { data: backlinksData, isLoading: backlinksLoading, error: backlinksError } = useBacklinksLive(
     { target: searchUrl, mode: "as_is", limit: 100 },
@@ -50,7 +39,6 @@ export default function BacklinksPage() {
       toast.error("Please enter a domain or URL");
       return;
     }
-    addDebugLog('info', `🔍 Starting backlink analysis for: ${url.trim()}`);
     setSearchUrl(url.trim());
   };
 
@@ -58,41 +46,28 @@ export default function BacklinksPage() {
   const backlinks = backlinksResult?.items || [];
   const historyItems = historyData?.tasks?.[0]?.result?.[0]?.items || [];
 
-  // Calculate Link Quality Score (0-100)
   const calculateLinkQuality = (backlink: any): number => {
-    let score = 50; // Base score
-
-    // Domain authority (estimated from rank)
+    let score = 50;
     if (backlink.rank && backlink.rank > 0) {
       const authorityBonus = Math.min(30, Math.floor(backlink.rank / 10));
       score += authorityBonus;
     }
-
-    // Dofollow bonus
     if (backlink.dofollow) {
       score += 20;
     }
-
-    // Link placement bonus (content links are better)
     if (backlink.url_from_https) {
       score += 5;
     }
-
-    // Anchor text relevance (not empty/generic)
     if (backlink.anchor && backlink.anchor.length > 3 && 
         !['click here', 'read more', 'here'].includes(backlink.anchor.toLowerCase())) {
       score += 15;
     }
-
-    // Penalize if too many links from same domain
     if (backlink.links_count && backlink.links_count > 10) {
       score -= 10;
     }
-
     return Math.max(0, Math.min(100, score));
   };
 
-  // Enhanced backlinks with quality scores
   const enrichedBacklinks = useMemo(() => {
     return backlinks.map((bl: any) => ({
       ...bl,
@@ -101,7 +76,6 @@ export default function BacklinksPage() {
     }));
   }, [backlinks]);
 
-  // Analytics
   const analytics = useMemo(() => {
     if (enrichedBacklinks.length === 0) return null;
 
@@ -111,7 +85,6 @@ export default function BacklinksPage() {
     
     const avgQuality = enrichedBacklinks.reduce((sum: number, bl: any) => sum + bl.qualityScore, 0) / enrichedBacklinks.length;
 
-    // Anchor text distribution
     const anchorMap = new Map<string, number>();
     enrichedBacklinks.forEach((bl: any) => {
       const anchor = bl.anchor || '(no anchor)';
@@ -121,7 +94,6 @@ export default function BacklinksPage() {
       .sort((a, b) => b[1] - a[1])
       .slice(0, 10);
 
-    // Top referring domains
     const domainMap = new Map<string, { count: number; dofollow: number; avgQuality: number; qualities: number[] }>();
     enrichedBacklinks.forEach((bl: any) => {
       const domain = bl.domain_from || 'unknown';
@@ -664,12 +636,7 @@ export default function BacklinksPage() {
         </Card>
       )}
 
-      {/* Debug Panel */}
-      <FeatureDebugPanel
-        logs={debugLogs}
-        featureName="Backlinks"
-        onClear={() => setDebugLogs([])}
-      />
+      {/* Debug Panel removed */}
     </div>
   );
 }
