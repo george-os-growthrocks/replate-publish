@@ -1,4 +1,4 @@
-import { useCredits } from "@/hooks/useSubscription";
+import { useCredits, useSubscription } from "@/hooks/useSubscription";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -7,12 +7,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Zap, TrendingUp, AlertCircle } from "lucide-react";
+import { Zap, TrendingUp, AlertCircle, Clock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 export function CreditCounter() {
   const { data: credits, isLoading } = useCredits();
+  const { data: subscription } = useSubscription();
 
   if (isLoading || !credits) {
     return (
@@ -23,9 +24,17 @@ export function CreditCounter() {
     );
   }
 
-  const usagePercent = (credits.used_credits / credits.total_credits) * 100;
+  const usagePercent = credits.total_credits > 0 
+    ? (credits.used_credits / credits.total_credits) * 100 
+    : 0;
   const isLow = credits.available_credits < credits.total_credits * 0.2;
   const isCritical = credits.available_credits < credits.total_credits * 0.1;
+
+  // Calculate trial days remaining
+  const isTrialing = subscription?.status === 'trialing' && subscription?.trial_end;
+  const trialDaysRemaining = isTrialing && subscription.trial_end
+    ? Math.ceil((new Date(subscription.trial_end).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    : null;
 
   return (
     <Popover>
@@ -51,6 +60,47 @@ export function CreditCounter() {
       </PopoverTrigger>
       <PopoverContent className="w-80" align="end">
         <div className="space-y-4">
+          {/* Trial Status Banner */}
+          {isTrialing && trialDaysRemaining !== null && trialDaysRemaining > 0 && (
+            <div className={cn(
+              "p-3 rounded-lg border",
+              trialDaysRemaining <= 2 
+                ? "bg-red-500/10 border-red-500/20" 
+                : trialDaysRemaining <= 4
+                ? "bg-amber-500/10 border-amber-500/20"
+                : "bg-primary/10 border-primary/20"
+            )}>
+              <div className="flex items-center gap-2 mb-1">
+                <Clock className={cn(
+                  "w-4 h-4",
+                  trialDaysRemaining <= 2 ? "text-red-600 dark:text-red-400" :
+                  trialDaysRemaining <= 4 ? "text-amber-600 dark:text-amber-400" :
+                  "text-primary"
+                )} />
+                <p className={cn(
+                  "text-sm font-semibold",
+                  trialDaysRemaining <= 2 ? "text-red-700 dark:text-red-400" :
+                  trialDaysRemaining <= 4 ? "text-amber-700 dark:text-amber-400" :
+                  "text-foreground"
+                )}>
+                  {trialDaysRemaining === 1 
+                    ? "Last day of trial!" 
+                    : `${trialDaysRemaining} days left in trial`}
+                </p>
+              </div>
+              <p className="text-xs text-muted-foreground mb-2">
+                {trialDaysRemaining <= 2 
+                  ? "Your trial ends tomorrow. Add payment method to continue."
+                  : "Upgrade now to keep all features after trial ends."}
+              </p>
+              <Button asChild size="sm" className="w-full gradient-primary">
+                <Link to="/pricing">
+                  Add Payment Method
+                </Link>
+              </Button>
+            </div>
+          )}
+
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <h4 className="font-semibold text-sm">Monthly Credits</h4>

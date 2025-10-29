@@ -87,23 +87,51 @@ export function useCredits() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
 
+      // Try to get existing credits
       const { data, error } = await supabase
         .from('user_credits')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle(); // Use maybeSingle instead of single to avoid 406 errors
 
-      if (error) {
-        if (error.code === 'PGRST116') {
-          // Create default credits for user
-          const { data: newCredits } = await supabase
-            .from('user_credits')
-            .insert({ user_id: user.id, total_credits: 20, used_credits: 0 })
-            .select()
-            .single();
-          return newCredits as UserCredits;
-        }
+      if (error && error.code !== 'PGRST116') {
+        console.error('Credits query error:', error);
         throw error;
+      }
+
+      // If no credits exist, check if user has subscription and create credits accordingly
+      if (!data) {
+        // Check for subscription
+        const { data: subscription } = await supabase
+          .from('user_subscriptions')
+          .select('*, subscription_plans:plan_id(*)')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        const defaultCredits = subscription?.subscription_plans?.credits_per_month || 100;
+
+        // Create credits based on subscription or default
+        const { data: newCredits, error: insertError } = await supabase
+          .from('user_credits')
+          .insert({ 
+            user_id: user.id, 
+            total_credits: defaultCredits, 
+            used_credits: 0 
+          })
+          .select()
+          .single();
+
+        if (insertError) {
+          console.error('Failed to create credits:', insertError);
+          // Return a default object if insert fails
+          return {
+            total_credits: defaultCredits,
+            used_credits: 0,
+            available_credits: defaultCredits,
+          } as UserCredits;
+        }
+
+        return newCredits as UserCredits;
       }
 
       return data as UserCredits;

@@ -20,6 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useSerpOverview } from "@/hooks/useDataForSEO";
 import { VisualContentBrief } from "@/components/cannibalization/VisualContentBrief";
+import { FeatureGate } from "@/components/FeatureGate";
 
 // Component to show SERP competitors for a query
 interface SerpCompetitorsProps {
@@ -562,16 +563,18 @@ export default function CannibalizationPage() {
                 </div>
               </div>
 
-              {/* Gemini Brief Button */}
-              <Button
-                onClick={() => generateGeminiBrief(selectedCluster)}
-                disabled={isGeneratingBrief}
-                className="w-full"
-                variant="outline"
-              >
-                <Sparkles className="h-4 w-4 mr-2" />
-                {isGeneratingBrief ? "Generating Brief..." : "Generate Content Brief with AI"}
-              </Button>
+              {/* Gemini Brief Button - Pro Feature */}
+              <FeatureGate feature="ai_content_brief" requiredPlan="Pro" showCost={false}>
+                <Button
+                  onClick={() => generateGeminiBrief(selectedCluster)}
+                  disabled={isGeneratingBrief}
+                  className="w-full"
+                  variant="outline"
+                >
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  {isGeneratingBrief ? "Generating Brief..." : "Generate Content Brief with AI"}
+                </Button>
+              </FeatureGate>
 
               {/* Show Brief - Beautifully Formatted */}
               {geminiBrief && (

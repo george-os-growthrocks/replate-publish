@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
 import { useCredits } from "@/hooks/useCreditManager";
+import { FeatureGate } from "@/components/FeatureGate";
 
 export default function CompetitorAnalysisPage() {
   const [targetDomain, setTargetDomain] = useState("");
@@ -65,19 +66,20 @@ export default function CompetitorAnalysisPage() {
   const totalCount = competitorData?.tasks?.[0]?.result?.[0]?.total_count || 0;
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Competitor Analysis</h1>
-          <p className="text-muted-foreground mt-1">
-            Discover domains ranking for similar keywords
-          </p>
+    <FeatureGate feature="competitor_analysis" requiredPlan="Pro">
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Competitor Analysis</h1>
+            <p className="text-muted-foreground mt-1">
+              Discover domains ranking for similar keywords
+            </p>
+          </div>
         </div>
-      </div>
 
-      {/* Search Input */}
-      <Card className="p-6">
+        {/* Search Input */}
+        <Card className="p-6">
         <div className="flex items-center gap-3">
           <Target className="h-5 w-5 text-primary" />
           <div className="flex-1 flex gap-3">
@@ -232,7 +234,8 @@ export default function CompetitorAnalysisPage() {
           </p>
         </Card>
       )}
-    </div>
+      </div>
+    </FeatureGate>
   );
 }
 

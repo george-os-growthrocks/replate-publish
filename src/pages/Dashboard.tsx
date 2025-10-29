@@ -5,14 +5,26 @@ import { RecentActivityFeed } from "@/components/dashboard/RecentActivityFeed";
 import { DashboardMetricsCards } from "@/components/dashboard/DashboardMetricsCards";
 import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
 import { DashboardRightSidebar } from "@/components/dashboard/DashboardRightSidebar";
+import { useSubscription } from "@/hooks/useSubscription";
  
 import { Card } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TrendingUp, Sparkles, Clock } from "lucide-react";
+import { TrendingUp, Sparkles, Clock, ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
 const Dashboard = () => {
   const [userEmail, setUserEmail] = useState<string>("");
+  const { data: subscription, isLoading: isLoadingSubscription, refetch: refetchSubscription } = useSubscription();
+
+  // Calculate trial days remaining
+  const isTrialing = subscription?.status === 'trialing' && subscription?.trial_end;
+  const trialDaysRemaining = isTrialing && subscription.trial_end
+    ? Math.ceil((new Date(subscription.trial_end).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    : null;
+
 
   useEffect(() => {
     // Handle OAuth callback from hash
@@ -95,6 +107,45 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6">
+
+      {/* Trial Status Banner */}
+      {isTrialing && trialDaysRemaining !== null && trialDaysRemaining > 0 && (
+        <Alert className={trialDaysRemaining <= 2 
+          ? "border-red-500/20 bg-red-500/10" 
+          : trialDaysRemaining <= 4
+          ? "border-amber-500/20 bg-amber-500/10"
+          : "border-primary/20 bg-primary/10"
+        }>
+          <Clock className={trialDaysRemaining <= 2 ? "h-4 w-4 text-red-600 dark:text-red-400" :
+            trialDaysRemaining <= 4 ? "h-4 w-4 text-amber-600 dark:text-amber-400" :
+            "h-4 w-4 text-primary"} />
+          <AlertTitle className={trialDaysRemaining <= 2 ? "text-red-700 dark:text-red-400" :
+            trialDaysRemaining <= 4 ? "text-amber-700 dark:text-amber-400" :
+            "text-foreground"}>
+            {trialDaysRemaining === 1 
+              ? "Last Day of Free Trial!" 
+              : `${trialDaysRemaining} Days Left in Your Free Trial`}
+          </AlertTitle>
+          <AlertDescription className="flex items-center justify-between gap-4">
+            <span className={trialDaysRemaining <= 2 ? "text-red-700/80 dark:text-red-300" :
+              trialDaysRemaining <= 4 ? "text-amber-700/80 dark:text-amber-300" :
+              "text-muted-foreground"}>
+              {trialDaysRemaining <= 2 
+                ? "Your trial ends tomorrow. Add a payment method to keep all features."
+                : trialDaysRemaining <= 4
+                ? "Your trial ends soon. Upgrade now to continue enjoying all Starter plan features."
+                : `You're on a 7-day free trial of the Starter plan. Full access to 500 credits and all features.`}
+            </span>
+            <Button asChild size="sm" className="gradient-primary whitespace-nowrap">
+              <Link to="/pricing">
+                {trialDaysRemaining <= 2 ? "Add Payment Method" : "Upgrade Now"}
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Link>
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Hero Section */}
       {userEmail && <DashboardHero userEmail={userEmail} />}
       

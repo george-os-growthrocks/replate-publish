@@ -2,13 +2,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { useSubscription, useCredits } from "@/hooks/useSubscription";
+import { useSubscription, useCredits, useCreateCheckout } from "@/hooks/useSubscription";
 import { Link } from "react-router-dom";
-import { Crown, Zap, Calendar, CreditCard, TrendingUp, ArrowRight, Sparkles } from "lucide-react";
+import { Crown, Zap, Calendar, CreditCard, TrendingUp, ArrowRight, Sparkles, Rocket } from "lucide-react";
+import { getFeaturesForPlan, getPlanName, type PlanName } from "@/lib/feature-access";
+import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 
 export function SubscriptionSettings() {
   const { data: subscription, isLoading: isLoadingSub } = useSubscription();
   const { data: credits, isLoading: isLoadingCredits } = useCredits();
+  const { userPlan, isActive } = useFeatureAccess();
+  const { mutate: createCheckout, isPending: isCreatingCheckout } = useCreateCheckout();
 
   if (isLoadingSub || isLoadingCredits) {
     return <div>Loading...</div>;
@@ -60,29 +64,136 @@ export function SubscriptionSettings() {
                 </div>
               )}
 
-              {subscription.trial_end && new Date(subscription.trial_end) > new Date() && (
-                <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Calendar className="w-4 h-4 text-blue-500" />
-                    <p className="font-semibold text-blue-700 dark:text-blue-400">Trial Active</p>
+              {subscription.trial_end && new Date(subscription.trial_end) > new Date() && (() => {
+                const trialEnd = new Date(subscription.trial_end);
+                const daysRemaining = Math.ceil((trialEnd.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                const isUrgent = daysRemaining <= 2;
+                
+                return (
+                  <div className={`p-4 rounded-lg border ${
+                    isUrgent 
+                      ? "bg-red-500/10 border-red-500/20" 
+                      : daysRemaining <= 4
+                      ? "bg-amber-500/10 border-amber-500/20"
+                      : "bg-primary/10 border-primary/20"
+                  }`}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Calendar className={`w-4 h-4 ${
+                        isUrgent ? "text-red-600 dark:text-red-400" :
+                        daysRemaining <= 4 ? "text-amber-600 dark:text-amber-400" :
+                        "text-primary"
+                      }`} />
+                      <p className={`font-semibold ${
+                        isUrgent ? "text-red-700 dark:text-red-400" :
+                        daysRemaining <= 4 ? "text-amber-700 dark:text-amber-400" :
+                        "text-foreground"
+                      }`}>
+                        {daysRemaining === 1 
+                          ? "Last Day of Trial!" 
+                          : `${daysRemaining} Days Left in Trial`}
+                      </p>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Your free trial ends on {trialEnd.toLocaleDateString('en-US', { 
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                      })}. {isUrgent 
+                        ? "Add a payment method now to continue your subscription."
+                        : "Upgrade now to keep all features after your trial ends."}
+                    </p>
+                    <Button asChild size="sm" className="gradient-primary">
+                      <Link to="/pricing">
+                        {isUrgent ? "Add Payment Method" : "Upgrade Plan"}
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </Link>
+                    </Button>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    Trial ends on {new Date(subscription.trial_end).toLocaleDateString()}
-                  </p>
-                </div>
-              )}
+                );
+              })()}
 
-              <div className="flex gap-3">
-                <Button asChild variant="outline" className="flex-1">
-                  <Link to="/pricing">
-                    <TrendingUp className="w-4 h-4 mr-2" />
-                    Upgrade Plan
-                  </Link>
-                </Button>
-                <Button variant="outline" className="flex-1" disabled>
-                  <CreditCard className="w-4 h-4 mr-2" />
-                  Manage Billing
-                </Button>
+              {/* Upgrade Options */}
+              <div className="space-y-3">
+                <div className="flex gap-3">
+                  {userPlan !== 'Enterprise' && (
+                    <Button 
+                      asChild 
+                      variant="outline" 
+                      className="flex-1 gradient-primary"
+                    >
+                      <Link to="/pricing">
+                        <TrendingUp className="w-4 h-4 mr-2" />
+                        {userPlan === 'Free' ? 'Upgrade to Starter' : 
+                         userPlan === 'Starter' ? 'Upgrade to Pro' :
+                         userPlan === 'Pro' ? 'Upgrade to Agency' :
+                         'Upgrade Plan'}
+                      </Link>
+                    </Button>
+                  )}
+                  <Button variant="outline" className="flex-1" disabled>
+                    <CreditCard className="w-4 h-4 mr-2" />
+                    Manage Billing
+                  </Button>
+                </div>
+
+                {/* Available Plans Quick Access */}
+                {userPlan !== 'Enterprise' && (
+                  <div className="grid grid-cols-2 gap-2">
+                    {(userPlan === 'Free' || userPlan === 'Starter') && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          if (userPlan === 'Free') {
+                            createCheckout({ planName: 'Starter', billingCycle: 'monthly' });
+                          } else {
+                            createCheckout({ planName: 'Pro', billingCycle: 'monthly' });
+                          }
+                        }}
+                        disabled={isCreatingCheckout}
+                      >
+                        {userPlan === 'Free' ? (
+                          <>
+                            <Zap className="w-3 h-3 mr-1" />
+                            Starter $29/mo
+                          </>
+                        ) : (
+                          <>
+                            <Crown className="w-3 h-3 mr-1" />
+                            Pro $79/mo
+                          </>
+                        )}
+                      </Button>
+                    )}
+                    {(userPlan === 'Free' || userPlan === 'Starter' || userPlan === 'Pro') && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          if (userPlan === 'Free' || userPlan === 'Starter') {
+                            createCheckout({ planName: 'Pro', billingCycle: 'monthly' });
+                          } else {
+                            createCheckout({ planName: 'Agency', billingCycle: 'monthly' });
+                          }
+                        }}
+                        disabled={isCreatingCheckout}
+                      >
+                        {userPlan === 'Free' || userPlan === 'Starter' ? (
+                          <>
+                            <Crown className="w-3 h-3 mr-1" />
+                            Pro $79/mo
+                          </>
+                        ) : (
+                          <>
+                            <Rocket className="w-3 h-3 mr-1" />
+                            Agency $149/mo
+                          </>
+                        )}
+                      </Button>
+                    )}
+                  </div>
+                )}
               </div>
             </>
           ) : (
@@ -164,6 +275,9 @@ export function SubscriptionSettings() {
         <Card>
           <CardHeader>
             <CardTitle>Plan Features</CardTitle>
+            <CardDescription>
+              {isActive ? `${getFeaturesForPlan(userPlan).length} features available` : 'Subscribe to unlock features'}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <ul className="space-y-2">
@@ -174,6 +288,27 @@ export function SubscriptionSettings() {
                 </li>
               ))}
             </ul>
+            
+            {/* Feature Categories */}
+            {isActive && (
+              <div className="mt-6 pt-6 border-t space-y-4">
+                <div>
+                  <h4 className="text-sm font-semibold mb-2">Available Feature Categories</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {['Research', 'Content', 'Technical', 'Competitive', 'Advanced', 'Reporting'].map((cat) => {
+                      const count = getFeaturesForPlan(userPlan).filter(f => 
+                        f.category.toLowerCase() === cat.toLowerCase()
+                      ).length;
+                      return count > 0 ? (
+                        <Badge key={cat} variant="secondary" className="text-xs">
+                          {cat}: {count}
+                        </Badge>
+                      ) : null;
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

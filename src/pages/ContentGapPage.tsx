@@ -10,6 +10,7 @@ import { useGscData } from "@/hooks/useGscData";
 import { groupByQuery } from "@/lib/cannibalization";
 import { calculateKeywordDifficulty, analyzeCtr, analyzeContentQuality } from "@/lib/seo-algorithms";
 import { toast } from "sonner";
+import { FeatureGate } from "@/components/FeatureGate";
 
 interface ContentGap {
   keyword: string;
@@ -233,9 +234,10 @@ export default function ContentGapPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
-      {/* Header */}
-      <div className="mb-8">
+    <FeatureGate feature="content_gap_analysis" requiredPlan="Pro">
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        {/* Header */}
+        <div className="mb-8">
         <div className="flex items-center gap-2 mb-2">
           <Target className="w-8 h-8 text-primary" />
           <h1 className="text-3xl font-bold text-foreground">Content Gap Analysis</h1>
@@ -490,7 +492,8 @@ export default function ContentGapPage() {
           </p>
         </Card>
       )}
-    </div>
+      </div>
+    </FeatureGate>
   );
 }
 

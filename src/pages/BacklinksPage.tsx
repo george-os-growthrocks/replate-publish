@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
+import { FeatureGate } from "@/components/FeatureGate";
 
 export default function BacklinksPage() {
   const [url, setUrl] = useState("");
@@ -125,9 +126,10 @@ export default function BacklinksPage() {
   }, [enrichedBacklinks]);
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
+    <FeatureGate feature="backlink_analysis" requiredPlan="Pro">
+      <div className="space-y-6">
+        {/* Header */}
+        <div>
         <h1 className="text-3xl font-bold text-foreground">Backlinks Analysis</h1>
         <p className="text-muted-foreground mt-1">
           AI-powered backlink quality scoring, authority analysis, and link profile insights with actionable recommendations
@@ -637,7 +639,8 @@ export default function BacklinksPage() {
       )}
 
       {/* Debug Panel removed */}
-    </div>
+      </div>
+    </FeatureGate>
   );
 }
 

@@ -7,6 +7,7 @@ import { MapPin, Search, Loader2, Star, Phone, ExternalLink, MessageSquare } fro
 import { useGoogleMapsSearch } from "@/hooks/useDataForSEO";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { FeatureGate } from "@/components/FeatureGate";
 
 export default function LocalSeoPage() {
   const [keyword, setKeyword] = useState("");
@@ -42,10 +43,11 @@ export default function LocalSeoPage() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Local SEO & Google Maps</h1>
+    <FeatureGate feature="local_seo_audit" requiredPlan="Pro">
+      <div className="space-y-6">
+        {/* Header */}
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Local SEO & Google Maps</h1>
         <p className="text-muted-foreground mt-1">
           Track local rankings and analyze Google Business Profile performance
         </p>
@@ -229,7 +231,8 @@ export default function LocalSeoPage() {
           </div>
         </Card>
       )}
-    </div>
+      </div>
+    </FeatureGate>
   );
 }
 

@@ -10,12 +10,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Database } from "@/integrations/supabase/types";
 import { UserSubscription, SubscriptionPlan as HookSubscriptionPlan } from "@/hooks/useSubscription";
+import { getFeaturesForPlan, type PlanName } from "@/lib/feature-access";
 
 type SubscriptionPlan = Database['public']['Tables']['subscription_plans']['Row'];
 type Json = Database['public']['Tables']['subscription_plans']['Row']['features'];
 
 const iconMap = {
   'Starter': Zap,
+  'Pro': Crown,
   'Professional': Crown,
   'Agency': Rocket,
   'Enterprise': Rocket
@@ -47,6 +49,36 @@ const formatFeatures = (features: Json | string[], planName: string, credits: nu
   return featureList;
 };
 
+// Helper to generate feature list from feature-access system
+const getFeatureListForPlan = (planName: string): string[] => {
+  const planMap: Record<string, PlanName> = {
+    'Starter': 'Starter',
+    'Professional': 'Pro',
+    'Pro': 'Pro',
+    'Agency': 'Agency',
+    'Enterprise': 'Enterprise',
+  };
+  
+  const plan = planMap[planName] || 'Starter';
+  const features = getFeaturesForPlan(plan);
+  
+  // Group by category
+  const byCategory = features.reduce((acc, f) => {
+    if (!acc[f.category]) acc[f.category] = [];
+    acc[f.category].push(f.name);
+    return acc;
+  }, {} as Record<string, string[]>);
+  
+  const featureList: string[] = [];
+  
+  // Add category headers and features
+  Object.entries(byCategory).forEach(([category, items]) => {
+    featureList.push(...items);
+  });
+  
+  return featureList;
+};
+
 // Fallback plans in case database fails
 const fallbackPlans: SubscriptionPlan[] = [
   {
@@ -56,7 +88,23 @@ const fallbackPlans: SubscriptionPlan[] = [
     stripe_price_id: null,
     price_monthly: 29,
     price_yearly: 290,
-    features: ['All SEO Tools', 'Social Media SEO', 'SERP Preview', 'Email Support', 'Keyword Research', 'Rank Tracking', 'Site Audit', 'Backlink Analysis', 'Competitor Analysis', '7-Day Free Trial'] as unknown as Json,
+    features: [
+      'Keyword Research',
+      'Keyword Autocomplete',
+      'Keyword Clustering',
+      'Answer The Public',
+      'People Also Ask Extractor',
+      'SERP Analysis',
+      'Rank Tracking',
+      'Content Repurposing',
+      'Meta Description Generator',
+      'Technical SEO Audit',
+      'Site Crawler',
+      'Core Web Vitals Checker',
+      'Schema Validator',
+      'AI Overview Checker',
+      '7-Day Free Trial'
+    ] as unknown as Json,
     limits: { max_keywords: 500, max_reports: 50 },
     is_active: true,
     sort_order: 2,
@@ -75,12 +123,27 @@ const fallbackPlans: SubscriptionPlan[] = [
   },
   {
     id: 'professional-fallback',
-    name: 'Professional',
+    name: 'Pro',
     stripe_product_id: null,
     stripe_price_id: null,
     price_monthly: 79,
     price_yearly: 790,
-    features: ['Everything in Starter', 'GA4 Analytics', 'Unlimited Keywords', 'Content Repurpose (200 generations)', 'Site Audit (5 sites)', 'Competitor Analysis (10 competitors)', 'Backlink Analysis', 'Local SEO Suite', 'Priority Support', 'White-Label Reports', 'Export Reports', '7-Day Free Trial'] as unknown as Json,
+    features: [
+      'Everything in Starter',
+      'AI Content Briefs',
+      'ChatGPT Citation Optimization',
+      'SERP Similarity Analysis',
+      'Competitor Analysis',
+      'Backlink Analysis',
+      'Content Gap Analysis',
+      'Competitor Monitoring',
+      'Local SEO Audit',
+      'AI Overview Optimization',
+      'Citation Optimization',
+      'Bulk URL Analyzer',
+      'Priority Support',
+      '7-Day Free Trial'
+    ] as unknown as Json,
     limits: { max_keywords: 2000, max_reports: 500 },
     is_active: true,
     sort_order: 3,
@@ -88,7 +151,7 @@ const fallbackPlans: SubscriptionPlan[] = [
     updated_at: new Date().toISOString(),
     stripe_price_id_monthly: 'price_pro_monthly',
     stripe_price_id_yearly: 'price_pro_yearly',
-    credits_per_month: 1500,
+    credits_per_month: 2000,
     max_projects: 10,
     max_team_members: 5,
     has_ai_tools: true,
@@ -104,7 +167,16 @@ const fallbackPlans: SubscriptionPlan[] = [
     stripe_price_id: null,
     price_monthly: 149,
     price_yearly: 1490,
-    features: ['Everything in Professional', 'White-label Reports', 'Team Collaboration', 'API Access', 'Advanced Analytics', 'Custom Dashboards', 'Multi-location Tracking', 'Priority Phone Support', 'Dedicated Account Manager', 'Custom Integrations', '7-Day Free Trial'] as unknown as Json,
+    features: [
+      'Everything in Pro',
+      'Automated Reports',
+      'White-Label Reports',
+      'API Access',
+      '20 Team Members',
+      'Priority Phone Support',
+      'Dedicated Account Manager',
+      '7-Day Free Trial'
+    ] as unknown as Json,
     limits: { max_keywords: 10000, max_reports: -1 },
     is_active: true,
     sort_order: 4,
@@ -112,7 +184,7 @@ const fallbackPlans: SubscriptionPlan[] = [
     updated_at: new Date().toISOString(),
     stripe_price_id_monthly: 'price_agency_monthly',
     stripe_price_id_yearly: 'price_agency_yearly',
-    credits_per_month: 3500,
+    credits_per_month: 5000,
     max_projects: 50,
     max_team_members: 20,
     has_ai_tools: true,
@@ -128,7 +200,20 @@ const fallbackPlans: SubscriptionPlan[] = [
     stripe_price_id: null,
     price_monthly: 299,
     price_yearly: 2990,
-    features: ['Everything in Agency', 'Custom Integration', 'SLA Guarantee', 'Custom Limits', 'Unlimited Projects', 'Unlimited Team Members', 'White-glove Support', 'Priority Development', 'Custom Training', 'Dedicated Success Manager', '7-Day Free Trial'] as unknown as Json,
+    features: [
+      'Everything in Agency',
+      'Unlimited Credits',
+      'Unlimited Projects',
+      'Unlimited Team Members',
+      'Custom Integrations',
+      'SLA Guarantee',
+      'Custom Contracts',
+      'White-glove Support',
+      'Priority Development',
+      'Custom Training',
+      'Dedicated Success Manager',
+      '7-Day Free Trial'
+    ] as unknown as Json,
     limits: { max_keywords: -1, max_reports: -1 },
     is_active: true,
     sort_order: 5,
@@ -136,7 +221,7 @@ const fallbackPlans: SubscriptionPlan[] = [
     updated_at: new Date().toISOString(),
     stripe_price_id_monthly: 'price_enterprise_monthly',
     stripe_price_id_yearly: 'price_enterprise_yearly',
-    credits_per_month: 10000,
+    credits_per_month: 999999,
     max_projects: 100,
     max_team_members: 50,
     has_ai_tools: true,
@@ -160,19 +245,13 @@ export function PricingSection() {
   const refetch = () => window.location.reload();
 
   const handleSelectPlan = (planName: string) => {
-    // Stripe checkout is skipped for now - just signup
-    // Store plan selection for future use
+    // Store plan selection for future use (after Google sign-in, trial will be assigned)
     localStorage.setItem('selected_plan', planName);
     localStorage.setItem('selected_billing', billingCycle);
     
-    // Redirect to signup if not authenticated
-    if (!subscription) {
-      window.location.href = '/signup';
-      return;
-    }
-    
-    // If already logged in, just go to dashboard
-    window.location.href = '/dashboard';
+    // Always redirect to Google sign-in for trial (trial is assigned automatically on first sign-in)
+    // The handle_new_user trigger will assign the Starter plan with 7-day trial
+    window.location.href = '/auth';
   };
 
   const calculateSavings = (monthly: number, yearly: number | null) => {
@@ -276,7 +355,7 @@ export function PricingSection() {
             <div className="flex justify-center">
               <Link to="/auth">
                 <Button size="lg" className="gradient-primary shadow-lg">
-                  Sign Up Free - Start Now
+                  Sign In with Google - Start 7-Day Trial
                 </Button>
               </Link>
             </div>
@@ -341,7 +420,7 @@ export function PricingSection() {
               plan.credits_per_month || 0, 
               plan.max_projects || 0
             );
-            const isPopular = plan.name === 'Professional';
+            const isPopular = plan.name === 'Professional' || plan.name === 'Pro';
 
             return (
               <div
@@ -366,8 +445,8 @@ export function PricingSection() {
                   <h3 className="text-xl font-bold mb-1 text-foreground">{plan.name}</h3>
                   <p className="text-xs text-muted-foreground mb-3">
                     {plan.name === 'Starter' && 'Perfect for freelancers and small businesses'}
-                    {plan.name === 'Professional' && 'For growing agencies and businesses'}
-                    {plan.name === 'Agency' && 'For large agencies and enterprises'}
+                    {(plan.name === 'Professional' || plan.name === 'Pro') && 'For growing agencies and businesses'}
+                    {plan.name === 'Agency' && 'For large agencies managing multiple clients'}
                     {plan.name === 'Enterprise' && 'For large enterprises with custom needs'}
                   </p>
                   

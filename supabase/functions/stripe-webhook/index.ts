@@ -121,18 +121,53 @@ serve(async (req) => {
       case 'customer.subscription.updated': {
         const subscription = event.data.object as Stripe.Subscription;
         
+        // Check if trial ended and subscription is now active
+        const wasTrialing = subscription.status === 'trialing';
+        const isNowActive = subscription.status === 'active';
+        const trialEnded = subscription.trial_end && subscription.trial_end * 1000 < Date.now();
+        
         await supabaseAdmin
           .from('user_subscriptions')
           .update({
-            status: subscription.status,
+            status: subscription.status as any,
             current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
             current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+            trial_end: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null,
             cancel_at_period_end: subscription.cancel_at_period_end,
             updated_at: new Date().toISOString(),
           })
           .eq('stripe_subscription_id', subscription.id);
 
+        // If trial ended and payment succeeded, log it
+        if (trialEnded && isNowActive) {
+          console.log('Trial ended, subscription now active:', subscription.id);
+          // Optionally send notification email here
+        }
+
         console.log('Subscription updated:', subscription.id);
+        break;
+      }
+
+      case 'customer.subscription.trial_will_end': {
+        const subscription = event.data.object as Stripe.Subscription;
+        const daysUntilTrialEnd = subscription.trial_end 
+          ? Math.ceil((subscription.trial_end * 1000 - Date.now()) / (1000 * 60 * 60 * 24))
+          : 0;
+        
+        console.log(`Trial ending soon for subscription ${subscription.id}. ${daysUntilTrialEnd} days remaining.`);
+        
+        // Get user to potentially send notification
+        const { data: userSub } = await supabaseAdmin
+          .from('user_subscriptions')
+          .select('user_id')
+          .eq('stripe_subscription_id', subscription.id)
+          .single();
+
+        if (userSub && daysUntilTrialEnd <= 1) {
+          // Trial ends tomorrow - could send email notification here
+          console.log(`User ${userSub.user_id} trial ends tomorrow. Send reminder email.`);
+        }
+        
         break;
       }
 
