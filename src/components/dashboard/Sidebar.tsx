@@ -17,6 +17,7 @@ import {
   Search,
   Globe,
   Lightbulb,
+  FlaskConical,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -38,6 +39,7 @@ export function Sidebar({ userEmail, onSignOut, collapsed = false, onToggle }: S
     { id: "queries", label: "Search Queries", icon: Search, path: "/queries" },
     { id: "pages", label: "Top Pages", icon: FileText, path: "/pages" },
     { id: "seo-insights", label: "SEO Insights", icon: Lightbulb, path: "/seo-insights", badge: "NEW" },
+    { id: "serp-proof", label: "SERPProof", icon: FlaskConical, path: "/serp-proof", badge: "PREMIUM" },
     { id: "keyword-research", label: "Keyword Research", icon: Search, path: "/keyword-research" },
     { id: "properties", label: "Properties", icon: Globe, path: "/projects" },
   ];
