@@ -41,8 +41,7 @@ export const tools = [
             },
             location: {
               type: "string",
-              description: "Location code for search (default: '2840' for United States). Use '2300' for Greece, '2826' for UK, etc.",
-              optional: true
+              description: "Location code for search (default: '2840' for United States). Use '2300' for Greece, '2826' for UK, etc."
             }
           },
           required: ["keyword"]
@@ -61,13 +60,11 @@ export const tools = [
             },
             filter_query: {
               type: "string",
-              description: "Optional: Filter by specific query or page",
-              optional: true
+              description: "Optional: Filter by specific query or page"
             },
             limit: {
               type: "number",
-              description: "Number of results (default: 20, max: 100)",
-              optional: true
+              description: "Number of results (default: 20, max: 100)"
             }
           },
           required: ["dimension"]
@@ -85,13 +82,11 @@ export const tools = [
             },
             location: {
               type: "string",
-              description: "Location code (default: '2840' for US)",
-              optional: true
+              description: "Location code (default: '2840' for US)"
             },
             limit: {
               type: "number",
-              description: "Number of competitors to analyze (default: 10)",
-              optional: true
+              description: "Number of competitors to analyze (default: 10)"
             }
           },
           required: ["keyword"]
@@ -109,8 +104,7 @@ export const tools = [
             },
             limit: {
               type: "number",
-              description: "Number of backlinks to return (default: 50)",
-              optional: true
+              description: "Number of backlinks to return (default: 50)"
             }
           },
           required: ["target"]
@@ -142,8 +136,7 @@ export const tools = [
             },
             target_keyword: {
               type: "string",
-              description: "Optional: Keyword to optimize for",
-              optional: true
+              description: "Optional: Keyword to optimize for"
             }
           },
           required: ["url"]

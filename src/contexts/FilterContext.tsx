@@ -1,12 +1,16 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { DateRange } from "react-day-picker";
 
+export type DateRangePreset = "last_7_days" | "last_30_days" | "last_90_days" | "this_month" | "last_month" | "custom";
+
 interface FilterContextType {
   propertyUrl: string;
   setPropertyUrl: (url: string) => void;
   selectedProperty: string; // Alias for consistency
   dateRange: DateRange | undefined;
   setDateRange: (range: DateRange | undefined) => void;
+  dateRangePreset: DateRangePreset;
+  setDateRangePreset: (preset: DateRangePreset) => void;
   country: string;
   setCountry: (country: string) => void;
   device: "ALL" | "DESKTOP" | "MOBILE" | "TABLET";
@@ -17,14 +21,49 @@ interface FilterContextType {
 
 const FilterContext = createContext<FilterContextType | undefined>(undefined);
 
+// Helper function to calculate date ranges based on presets
+function calculateDateRange(preset: DateRangePreset): DateRange {
+  const now = new Date();
+  const end = new Date(now);
+
+  switch (preset) {
+    case "last_7_days": {
+      const start = new Date(now);
+      start.setDate(start.getDate() - 7);
+      return { from: start, to: end };
+    }
+    case "last_30_days": {
+      const start = new Date(now);
+      start.setDate(start.getDate() - 30);
+      return { from: start, to: end };
+    }
+    case "last_90_days": {
+      const start = new Date(now);
+      start.setDate(start.getDate() - 90);
+      return { from: start, to: end };
+    }
+    case "this_month": {
+      const start = new Date(now.getFullYear(), now.getMonth(), 1);
+      return { from: start, to: end };
+    }
+    case "last_month": {
+      const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+      return { from: start, to: lastMonthEnd };
+    }
+    case "custom":
+    default: {
+      const start = new Date(now);
+      start.setDate(start.getDate() - 28);
+      return { from: start, to: end };
+    }
+  }
+}
+
 export function FilterProvider({ children }: { children: ReactNode }) {
   const [propertyUrl, setPropertyUrl] = useState<string>("");
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(() => {
-    const end = new Date();
-    const start = new Date();
-    start.setDate(start.getDate() - 28);
-    return { from: start, to: end };
-  });
+  const [dateRangePreset, setDateRangePreset] = useState<DateRangePreset>("last_30_days");
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(() => calculateDateRange("last_30_days"));
   const [country, setCountry] = useState<string>("ALL");
   const [device, setDevice] = useState<"ALL" | "DESKTOP" | "MOBILE" | "TABLET">("ALL");
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -47,6 +86,21 @@ export function FilterProvider({ children }: { children: ReactNode }) {
     }
   }, [propertyUrl]);
 
+  // Update date range when preset changes
+  useEffect(() => {
+    if (dateRangePreset !== "custom") {
+      setDateRange(calculateDateRange(dateRangePreset));
+    }
+  }, [dateRangePreset]);
+
+  // Custom setDateRangePreset that handles the logic
+  const handleSetDateRangePreset = (preset: DateRangePreset) => {
+    setDateRangePreset(preset);
+    if (preset !== "custom") {
+      setDateRange(calculateDateRange(preset));
+    }
+  };
+
   return (
     <FilterContext.Provider
       value={{
@@ -55,6 +109,8 @@ export function FilterProvider({ children }: { children: ReactNode }) {
         selectedProperty: propertyUrl, // Alias for consistency
         dateRange,
         setDateRange,
+        dateRangePreset,
+        setDateRangePreset: handleSetDateRangePreset,
         country,
         setCountry,
         device,

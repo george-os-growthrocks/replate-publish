@@ -11,11 +11,11 @@ export default function CompetitiveIntelligence() {
   const [activeTab, setActiveTab] = useState("content-gap");
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">Competitive Intelligence</h1>
-        <p className="text-muted-foreground">
+      <div>
+        <h1 className="text-3xl font-bold text-foreground tracking-tight">Competitive Intelligence</h1>
+        <p className="text-muted-foreground mt-1">
           Discover opportunities, track AI impact, and monitor your competitive landscape
         </p>
       </div>

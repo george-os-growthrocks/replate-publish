@@ -8,6 +8,15 @@ export interface GscRow {
   impressions: number;
   ctr: number;
   position: number;
+  // Period-over-period comparison fields
+  positionChange?: number | null;
+  clicksChange?: number | null;
+  impressionsChange?: number | null;
+  ctrChange?: number | null;
+  positionChangePercent?: number | null;
+  clicksChangePercent?: number | null;
+  impressionsChangePercent?: number | null;
+  ctrChangePercent?: number | null;
 }
 
 export interface QueryToPages {
@@ -23,6 +32,15 @@ export interface QueryToPages {
     ctr: number;
     position: number;
   }>;
+  // Period-over-period comparison fields
+  positionChange?: number | null;
+  clicksChange?: number | null;
+  impressionsChange?: number | null;
+  ctrChange?: number | null;
+  positionChangePercent?: number | null;
+  clicksChangePercent?: number | null;
+  impressionsChangePercent?: number | null;
+  ctrChangePercent?: number | null;
 }
 
 export interface PageToQueries {

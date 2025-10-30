@@ -215,9 +215,10 @@ export default function KeywordClusteringPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
-      <div className="mb-8">
-        <div className="flex items-center gap-2 mb-2">
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <div className="flex items-center gap-2 mb-1">
           <Sparkles className="w-8 h-8 text-primary" />
           <h1 className="text-3xl font-bold text-foreground">Keyword Clustering</h1>
         </div>

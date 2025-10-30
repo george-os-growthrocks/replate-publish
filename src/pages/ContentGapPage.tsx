@@ -235,9 +235,9 @@ export default function ContentGapPage() {
 
   return (
     <FeatureGate feature="content_gap_analysis" requiredPlan="Pro">
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
+      <div className="space-y-6">
         {/* Header */}
-        <div className="mb-8">
+        <div>
         <div className="flex items-center gap-2 mb-2">
           <Target className="w-8 h-8 text-primary" />
           <h1 className="text-3xl font-bold text-foreground">Content Gap Analysis</h1>

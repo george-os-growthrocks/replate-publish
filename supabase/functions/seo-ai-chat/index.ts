@@ -6,12 +6,15 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
+// Note: Function calling requires v1beta endpoint
 const MODELS_ENDPOINT = "https://generativelanguage.googleapis.com/v1/models";
+const MODELS_ENDPOINT_BETA = "https://generativelanguage.googleapis.com/v1beta/models";
 const PREFERRED = ["gemini-2.5-flash", "gemini-2.5-pro"];
 
 async function pickModel(apiKey: string): Promise<string> {
-  console.log("Selecting Gemini model for AI chat...");
+  console.log("Selecting Gemini model for AI chat with function calling...");
   
+  // Try preferred models
   for (const m of PREFERRED) {
     const meta = await fetch(`${MODELS_ENDPOINT}/${m}?key=${apiKey}`);
     if (meta.ok) {
@@ -20,6 +23,7 @@ async function pickModel(apiKey: string): Promise<string> {
     }
   }
   
+  // Fallback: list all models
   const res = await fetch(`${MODELS_ENDPOINT}?key=${apiKey}`);
   if (!res.ok) throw new Error(`ListModels failed: ${res.status}`);
   
@@ -27,7 +31,10 @@ async function pickModel(apiKey: string): Promise<string> {
   const candidate = models?.map((x: any) => x.name?.replace(/^models\//, ""))
     .find((n: string) => /gemini-(2(\.5)?)-flash/.test(n) || /gemini-(2(\.5)?)-pro/.test(n));
   
-  if (!candidate) throw new Error("No suitable Gemini model found");
+  if (!candidate) {
+    console.log("⚠️ No Gemini 2.5 found, using gemini-1.5-flash as fallback");
+    return "gemini-1.5-flash";
+  }
   
   console.log(`✓ Found fallback model: ${candidate}`);
   return candidate;
@@ -174,44 +181,60 @@ Deno.serve(async (req) => {
       parts: [{ text: "Understood! I'm AnotherSEOGuru AI with access to real-time SEO data tools. I can analyze keywords, fetch GSC data, analyze competitors, check backlinks, run site audits, and analyze pages. I'll provide data-driven, actionable insights based on your actual site performance. How can I help you today?" }]
     });
 
-    // Initial API call with function calling enabled
-    let response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: geminiMessages,
-          tools,
-          generationConfig: {
-            temperature: 0.7,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 4096,
-          },
-          safetySettings: [
-            { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
-            { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
-            { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
-            { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_MEDIUM_AND_ABOVE" }
-          ]
-        }),
-      }
-    );
+    // Initial API call with function calling enabled (requires v1beta for tools)
+    const geminiUrl = `${MODELS_ENDPOINT_BETA}/${model}:generateContent?key=${GEMINI_API_KEY}`;
+    console.log("Calling Gemini API with function calling:", geminiUrl);
+    
+    let response = await fetch(geminiUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: geminiMessages,
+        tools,
+        generationConfig: {
+          temperature: 0.7,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: 8192,
+        },
+        safetySettings: [
+          { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+          { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+          { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+          { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_MEDIUM_AND_ABOVE" }
+        ]
+      }),
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Gemini API error:", response.status, errorText);
-      throw new Error(`Gemini API error: ${response.status}`);
+      console.error("❌ Gemini API error:", response.status, errorText);
+      throw new Error(`Gemini API error: ${response.status} - ${errorText.substring(0, 200)}`);
     }
 
     let data = await response.json();
-    console.log("📥 Gemini API response:", JSON.stringify(data, null, 2));
+    
+    // Detailed logging
+    console.log("=== GEMINI CHATBOT RESPONSE ===");
+    console.log("Response keys:", Object.keys(data));
+    console.log("Has candidates?:", !!data.candidates);
+    console.log("Candidates length:", data.candidates?.length || 0);
+    if (data.candidates && data.candidates.length > 0) {
+      console.log("First candidate keys:", Object.keys(data.candidates[0]));
+      console.log("Finish reason:", data.candidates[0].finishReason);
+      console.log("Has content?:", !!data.candidates[0].content);
+      if (data.candidates[0].content) {
+        console.log("Content parts length:", data.candidates[0].content.parts?.length || 0);
+      }
+    }
+    console.log("===============================");
+    
     let candidate = data.candidates?.[0];
     
     if (!candidate) {
-      console.error("❌ No candidate in response:", data);
-      throw new Error("No response candidate from Gemini API");
+      console.error("❌ No candidate in response");
+      console.error("Full response:", JSON.stringify(data, null, 2));
+      throw new Error("No response candidate from Gemini API - the model may have blocked the response");
     }
 
     // Check if AI wants to call a function
@@ -240,39 +263,66 @@ Deno.serve(async (req) => {
       });
 
       // Get AI's interpretation of the tool result
-      response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: geminiMessages,
-            tools,
-            generationConfig: {
-              temperature: 0.7,
-              topK: 40,
-              topP: 0.95,
-              maxOutputTokens: 4096,
-            }
-          }),
-        }
-      );
+      console.log("Getting AI interpretation of tool result...");
+      response = await fetch(geminiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: geminiMessages,
+          tools,
+          generationConfig: {
+            temperature: 0.7,
+            topK: 40,
+            topP: 0.95,
+            maxOutputTokens: 8192,
+          }
+        }),
+      });
 
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error("❌ Gemini API error on follow-up:", response.status, errorText);
         throw new Error(`Gemini API error on follow-up: ${response.status}`);
       }
 
       data = await response.json();
-      console.log("📥 Gemini follow-up response:", JSON.stringify(data, null, 2));
+      console.log("📥 Gemini follow-up response received");
+      console.log("Follow-up finish reason:", data.candidates?.[0]?.finishReason);
       candidate = data.candidates?.[0];
+      
+      if (!candidate) {
+        console.error("❌ No candidate in follow-up response");
+        throw new Error("No candidate in follow-up response from Gemini");
+      }
     }
 
-    if (!candidate?.content?.parts?.[0]?.text) {
-      console.error("❌ No text in candidate:", candidate);
+    // Extract the text response
+    const responseText = candidate?.content?.parts?.[0]?.text;
+    
+    if (!responseText || responseText.trim() === "") {
+      console.error("❌ No text in candidate");
+      console.error("Candidate content:", JSON.stringify(candidate?.content, null, 2));
+      console.error("Finish reason:", candidate?.finishReason);
+      
+      // Provide helpful error based on finish reason
+      let errorMessage = "I encountered an issue generating a response.";
+      if (candidate?.finishReason === "SAFETY") {
+        errorMessage = "My response was blocked by safety filters. Please try rephrasing your question.";
+      } else if (candidate?.finishReason === "MAX_TOKENS") {
+        errorMessage = "My response was too long. Please ask a more specific question.";
+      } else if (candidate?.finishReason === "RECITATION") {
+        errorMessage = "I couldn't provide a unique response. Please try a different question.";
+      }
+      
       return new Response(
         JSON.stringify({ 
-          message: "I encountered an issue processing your request. The AI response was incomplete. Please try rephrasing your question or try again.",
-          debug: { candidate }
+          message: `⚠️ ${errorMessage}\n\n**Debug Info:**\n- Finish Reason: ${candidate?.finishReason || 'unknown'}\n- Please try again or rephrase your question.`,
+          debug: { 
+            finishReason: candidate?.finishReason,
+            hasContent: !!candidate?.content,
+            hasParts: !!candidate?.content?.parts,
+            partsLength: candidate?.content?.parts?.length || 0
+          }
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );

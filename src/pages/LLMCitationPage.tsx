@@ -338,7 +338,7 @@ export default function LLMCitationPage() {
 
   if (!selectedProperty) {
     return (
-      <div className="container mx-auto p-6">
+      <div className="space-y-6">
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
@@ -350,21 +350,22 @@ export default function LLMCitationPage() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground mb-2 flex items-center gap-3">
-            <Brain className="w-8 h-8 text-primary" />
-            LLM Citation Tracker
-          </h1>
-          <p className="text-muted-foreground">
-            Track if your domain appears in ChatGPT, Claude, Gemini, and Perplexity responses
-          </p>
-          <p className="text-sm text-muted-foreground mt-1">
-            <span className="font-medium">Tracking:</span> <span className="font-semibold text-foreground">{domain}</span>
-          </p>
-        </div>
+      <div>
+        <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
+          <Brain className="w-8 h-8 text-primary" />
+          LLM Citation Tracker
+        </h1>
+        <p className="text-muted-foreground mt-1">
+          Track if your domain appears in ChatGPT, Claude, Gemini, and Perplexity responses
+        </p>
+        <p className="text-sm text-muted-foreground mt-1">
+          <span className="font-medium">Tracking:</span> <span className="font-semibold text-foreground">{domain}</span>
+        </p>
+      </div>
+      
+      <div className="flex items-center justify-end gap-2">
         <div className="flex items-center gap-2">
           <Badge className="bg-gradient-to-r from-primary to-secondary text-primary-foreground">
             <Sparkles className="w-4 h-4 mr-2" />

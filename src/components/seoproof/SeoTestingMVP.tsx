@@ -32,7 +32,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip as ShadTooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Loader2, FlaskConical, LineChart as LineChartIcon, Plus, AlertCircle, CheckCircle2, BarChart3, X } from 'lucide-react';
+import { Loader2, FlaskConical, LineChart as LineChartIcon, Plus, AlertCircle, CheckCircle2, BarChart3, X, Zap } from 'lucide-react';
 import { useSubscription, useCredits, useDeductCredits } from "@/hooks/useSubscription";
 import { toast } from 'sonner';
 import {
@@ -191,8 +191,8 @@ function downloadCSV(filename: string, rows: any[]) {
 
 function Stat({ label, value, hint }: { label: string; value: React.ReactNode; hint?: string }) {
   return (
-    <div className="flex flex-col rounded-2xl border p-4 bg-white/50 dark:bg-zinc-900/50 shadow-sm">
-      <div className="text-xs uppercase tracking-wide text-zinc-500 flex items-center gap-2">
+    <div className="flex flex-col rounded-2xl border-2 p-4 bg-card shadow-sm">
+      <div className="text-xs uppercase tracking-wide text-muted-foreground flex items-center gap-2 font-medium">
         {label}
         {hint && (
           <TooltipProvider>
@@ -205,7 +205,7 @@ function Stat({ label, value, hint }: { label: string; value: React.ReactNode; h
           </TooltipProvider>
         )}
       </div>
-      <div className="text-2xl font-semibold mt-1">{value}</div>
+      <div className="text-2xl font-semibold mt-1 text-foreground">{value}</div>
     </div>
   );
 }
@@ -228,9 +228,9 @@ function DateRangeInputs({ start, end, onChange }:{ start: string; end: string; 
 function MetricDelta({ label, delta, pct }:{ label: string; delta: number; pct: number }){
   const pos = pct >= 0; const pctStr = (pct*100).toFixed(1)+"%";
   return (
-    <div className="text-sm flex items-center justify-between border rounded-xl px-3 py-2">
-      <span className="text-zinc-500">{label}</span>
-      <span className={pos ? "text-emerald-600" : "text-rose-600"}>
+    <div className="text-sm flex items-center justify-between border-2 rounded-xl px-3 py-2 bg-card">
+      <span className="text-muted-foreground font-medium">{label}</span>
+      <span className={`font-semibold ${pos ? "text-emerald-600" : "text-rose-600"}`}>
         {delta.toLocaleString()} ({pctStr})
       </span>
     </div>
@@ -240,10 +240,10 @@ function MetricDelta({ label, delta, pct }:{ label: string; delta: number; pct: 
 function SectionTitle({ icon: Icon, title, subtitle }:{ icon: any; title: string; subtitle?: string }){
   return (
     <div className="flex items-center gap-3 mb-3">
-      <div className="p-2 rounded-2xl bg-gradient-to-br from-indigo-500/15 to-cyan-500/15 border"><Icon className="h-5 w-5"/></div>
+      <div className="p-2 rounded-2xl bg-gradient-to-br from-primary/15 to-primary/10 border-2 border-primary/20"><Icon className="h-5 w-5 text-primary"/></div>
       <div>
-        <div className="text-lg font-semibold leading-tight">{title}</div>
-        {subtitle && <div className="text-sm text-zinc-500 -mt-0.5">{subtitle}</div>}
+        <div className="text-lg font-semibold leading-tight text-foreground">{title}</div>
+        {subtitle && <div className="text-sm text-muted-foreground -mt-0.5">{subtitle}</div>}
       </div>
     </div>
   );
@@ -408,17 +408,19 @@ export default function SeoTestingMVP(){
   };
 
   return (
-    <div className="p-5 md:p-8 lg:p-10 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-green-500/15 to-emerald-500/15 border flex items-center justify-center">
-            <FlaskConical className="h-5 w-5"/>
-          </div>
-          <div>
-            <div className="text-xl font-semibold">SERPProof - Automated SEO Testing</div>
-            <div className="text-sm text-zinc-500">Track SEO changes and measure performance impact over time</div>
-          </div>
-        </div>
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
+          <FlaskConical className="w-8 h-8 text-primary" />
+          SERPProof - Automated SEO Testing
+        </h1>
+        <p className="text-muted-foreground mt-1">
+          Track SEO changes and measure performance impact over time
+        </p>
+      </div>
+
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Badge className="bg-emerald-600 hover:bg-emerald-600">GSC Connected</Badge>
 

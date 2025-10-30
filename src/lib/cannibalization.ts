@@ -105,6 +105,17 @@ export function groupByQuery(rows: GscRow[]): QueryToPages[] {
         { clicks: number; impressions: number; positions: number[] }
       >();
 
+      // Get the first row's change data (all rows for same query should have same changes)
+      const firstRow = list[0];
+      const positionChange = firstRow.positionChange ?? null;
+      const clicksChange = firstRow.clicksChange ?? null;
+      const impressionsChange = firstRow.impressionsChange ?? null;
+      const ctrChange = firstRow.ctrChange ?? null;
+      const positionChangePercent = firstRow.positionChangePercent ?? null;
+      const clicksChangePercent = firstRow.clicksChangePercent ?? null;
+      const impressionsChangePercent = firstRow.impressionsChangePercent ?? null;
+      const ctrChangePercent = firstRow.ctrChangePercent ?? null;
+
       list.forEach((r) => {
         if (!r.page) return;
         const p = pagesMap.get(r.page) ?? {
@@ -139,6 +150,14 @@ export function groupByQuery(rows: GscRow[]): QueryToPages[] {
         avgCtr: totalImpressions > 0 ? totalClicks / totalImpressions : 0,
         avgPosition:
           pages.reduce((sum, p) => sum + p.position, 0) / pages.length,
+        positionChange,
+        clicksChange,
+        impressionsChange,
+        ctrChange,
+        positionChangePercent,
+        clicksChangePercent,
+        impressionsChangePercent,
+        ctrChangePercent,
       };
     })
     .sort((a, b) => b.totalClicks - a.totalClicks);
