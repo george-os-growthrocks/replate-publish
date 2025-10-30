@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Bell, X, CheckCircle, AlertTriangle, Info, TrendingUp, TrendingDown, Eye, CircleCheckBig } from 'lucide-react';
+import { Bell, X, CheckCircle, AlertTriangle, Info, TrendingUp, TrendingDown, Eye, CheckCircle2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useFilters } from '@/contexts/FilterContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -126,7 +126,7 @@ export function NotificationCenter() {
   const getIcon = (type: string) => {
     switch (type) {
       case 'success':
-        return <CircleCheckBig className="w-4 h-4 text-emerald-500" />;
+        return <CheckCircle2 className="w-4 h-4 text-emerald-500" />;
       case 'warning':
         return <AlertTriangle className="w-4 h-4 text-amber-500" />;
       case 'ranking_up':

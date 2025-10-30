@@ -741,6 +741,8 @@ export default function SeoTestingMVP(){
                     </tbody>
                   </table>
                 </div>
+                </>
+              )}
               </CardContent>
             </Card>
           </TabsContent>
