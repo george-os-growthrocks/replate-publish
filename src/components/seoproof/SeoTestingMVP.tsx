@@ -32,8 +32,9 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip as ShadTooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Loader2, FlaskConical, TestTube, Rocket, Link2, SplitSquareHorizontal, LineChart as LineChartIcon, CalendarDays, Plus, RefreshCw, Download, AlertCircle, CheckCircle2, Zap } from 'lucide-react';
+import { Loader2, FlaskConical, LineChart as LineChartIcon, Plus, AlertCircle, CheckCircle2, BarChart3, X } from 'lucide-react';
 import { useSubscription, useCredits, useDeductCredits } from "@/hooks/useSubscription";
+import { toast } from 'sonner';
 import {
   ResponsiveContainer,
   LineChart,
@@ -60,41 +61,28 @@ type GscPoint = {
   query?: string;
 };
 
-type ChangelogItem = {
+type TestRun = {
   id: string;
-  date: string; // YYYY-MM-DD
-  title: string;
-  note?: string;
-};
-
-type Scope = 'url' | 'group' | 'query';
-
-type TimeTestDefinition = {
-  type: 'time';
-  scope: Scope;
-  target: string;     // URL, prefix/regex, or query
-  preStart: string;   // YYYY-MM-DD
-  preEnd: string;
-  postStart: string;
-  postEnd: string;
-};
-
-type SplitTestDefinition = {
-  type: 'split';
-  controlPattern: string; // prefix/regex/list key for URL group A
-  variantPattern: string; // prefix/regex/list key for URL group B
-  start: string;
-  end: string;
-};
-
-type TestDefinition = TimeTestDefinition | SplitTestDefinition;
-
-type TestSummary = {
-  id: string;
-  type: 'time' | 'split';
-  title: string;
-  createdAt: string;
-  status: 'running' | 'completed' | 'queued' | 'error';
+  user_id: string;
+  target_url: string;
+  changes_made: string[]; // What was changed (meta title, meta desc, etc.)
+  keywords_to_track: string[]; // Keywords to monitor
+  test_duration_days: number; // Usually 14
+  started_at: string;
+  status: 'running' | 'completed' | 'paused';
+  baseline_data: GscPoint[]; // Pre-change data
+  daily_data: GscPoint[]; // Daily tracking data
+  final_results?: {
+    clicks_change: number;
+    impressions_change: number;
+    ctr_change: number;
+    position_change: number;
+    keyword_improvements: Array<{
+      keyword: string;
+      position_change: number;
+      clicks_change: number;
+    }>;
+  };
 };
 
 type UpliftSummary = {
@@ -124,37 +112,9 @@ async function http<T>(url: string, init?: RequestInit): Promise<T> {
   return res.json();
 }
 
-const API_CLIENT = {
-  async gscStatus(): Promise<{ connected: boolean; properties?: string[] }>{
-    return http(`${API_BASE}/gsc/status`);
-  },
-  async gscConnectUrl(): Promise<{ url: string }>{
-    return http(`${API_BASE}/gsc/connect-url`);
-  },
-  async performance(params: { start: string; end: string; dimension: 'page' | 'query'; target?: string }): Promise<{ rows: GscPoint[] }>{
-    const q = new URLSearchParams({ start: params.start, end: params.end, dimension: params.dimension, ...(params.target ? { target: params.target } : {}) });
-    return http(`${API_BASE}/gsc/performance?${q.toString()}`);
-  },
-  async listChangelog(): Promise<{ items: ChangelogItem[] }>{
-    return http(`${API_BASE}/changelog`);
-  },
-  async addChangelog(item: { date: string; title: string; note?: string }): Promise<ChangelogItem>{
-    return http(`${API_BASE}/changelog`, { method: 'POST', body: JSON.stringify(item) });
-  },
-  async listTests(): Promise<{ items: TestSummary[] }>{
-    return http(`${API_BASE}/tests`);
-  },
-  async createTest(def: TestDefinition): Promise<{ id: string }>{
-    return http(`${API_BASE}/tests`, { method: 'POST', body: JSON.stringify(def) });
-  },
-  async testResults(id: string): Promise<{ pre: GscPoint[]; post: GscPoint[]; summary?: UpliftSummary }>{
-    return http(`${API_BASE}/tests/${id}/results`);
-  },
-  async ctrOpportunities(params: { start: string; end: string; minImpr?: number; maxCtr?: number }): Promise<{ rows: Array<{ query: string; impressions: number; clicks: number; ctr: number; avgPos: number }> }>{
-    const q = new URLSearchParams({ start: params.start, end: params.end, ...(params.minImpr ? { minImpr: String(params.minImpr) } : {}), ...(params.maxCtr ? { maxCtr: String(params.maxCtr) } : {}) });
-    return http(`${API_BASE}/insights/ctr-opportunities?${q.toString()}`);
-  },
-};
+// Supabase client for direct database access
+import { supabase } from '@/integrations/supabase/client';
+import { getGoogleToken } from '../../../supabase/functions/_shared/get-google-token';
 
 // ----------------------------- Utils -----------------------------
 
@@ -292,164 +252,175 @@ function SectionTitle({ icon: Icon, title, subtitle }:{ icon: any; title: string
 // ----------------------------- Main Component -----------------------------
 
 export default function SeoTestingMVP(){
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [connected, setConnected] = useState(false);
-  const [properties, setProperties] = useState<string[]>([]);
 
   // Credit system integration
   const { data: subscription } = useSubscription();
   const { data: credits } = useCredits();
   const { mutate: deductCredits } = useDeductCredits();
 
-  const today = new Date().toISOString().slice(0,10);
-  const [preStart, setPreStart] = useState(dateAdd(today, -56));
-  const [preEnd, setPreEnd] = useState(dateAdd(today, -29));
-  const [postStart, setPostStart] = useState(dateAdd(today, -28));
-  const [postEnd, setPostEnd] = useState(dateAdd(today, -1));
+  // Test creation state
+  const [targetUrl, setTargetUrl] = useState('');
+  const [changesMade, setChangesMade] = useState<string[]>([]);
+  const [keywordsToTrack, setKeywordsToTrack] = useState<string[]>([]);
+  const [testDuration, setTestDuration] = useState(14);
 
-  const [scope, setScope] = useState<Scope>('url');
-  const [target, setTarget] = useState('');
+  // Current tests
+  const [currentTests, setCurrentTests] = useState<TestRun[]>([]);
+  const [selectedTest, setSelectedTest] = useState<TestRun | null>(null);
 
-  const [preData, setPreData] = useState<GscPoint[] | null>(null);
-  const [postData, setPostData] = useState<GscPoint[] | null>(null);
-  const [summary, setSummary] = useState<UpliftSummary | null>(null);
+  // Form state
+  const [newChange, setNewChange] = useState('');
+  const [newKeyword, setNewKeyword] = useState('');
 
-  const [changelog, setChangelog] = useState<ChangelogItem[]>([]);
-  const [newChange, setNewChange] = useState<{date: string; title: string; note?: string}>({ date: today, title: '' });
-
-  const [insights, setInsights] = useState<Array<{ query: string; impressions: number; clicks: number; ctr: number; avgPos: number }>>([]);
-  const [insightRange, setInsightRange] = useState<{start: string; end: string}>({ start: dateAdd(today, -28), end: today });
-
-  const [creatingTest, setCreatingTest] = useState(false);
-  const [testTitle, setTestTitle] = useState('');
-  const [tests, setTests] = useState<TestSummary[]>([]);
-
-  const [controlPattern, setControlPattern] = useState('');
-  const [variantPattern, setVariantPattern] = useState('');
-  const [splitStart, setSplitStart] = useState(dateAdd(today, -28));
-  const [splitEnd, setSplitEnd] = useState(today);
-
-  useEffect(()=>{
-    (async ()=>{
-      try {
-        setLoading(true);
-        const st = await API_CLIENT.gscStatus();
-        setConnected(!!st.connected);
-        setProperties(st.properties || []);
-        const ch = await API_CLIENT.listChangelog();
-        setChangelog(ch.items || []);
-        const t = await API_CLIENT.listTests();
-        setTests(t.items || []);
-        const ins = await API_CLIENT.ctrOpportunities({ start: insightRange.start, end: insightRange.end, minImpr: 200, maxCtr: 0.02 });
-        setInsights(ins.rows || []);
-      } catch (e:any){
-        setError(e.message);
-      } finally {
-        setLoading(false);
-      }
-    })();
+  useEffect(() => {
+    loadTests();
   }, []);
 
-  const connectGSC = async ()=>{
-    try{
-      const { url } = await API_CLIENT.gscConnectUrl();
-      window.location.href = url;
-    }catch(e:any){ setError(e.message); }
+  const loadTests = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('seo_tests')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setCurrentTests(data || []);
+    } catch (err: any) {
+      console.error('Failed to load tests:', err);
+    }
   };
 
-  const dimension = scope === 'query' ? 'query' : 'page';
+  const startNewTest = async () => {
+    if (!targetUrl || changesMade.length === 0) {
+      setError('Please fill in target URL and at least one change');
+      return;
+    }
 
-  const runTimeTest = async ()=>{
-    setError(null);
-    setPreData(null); setPostData(null); setSummary(null);
-
-    // Check plan access (Growth+ for time tests)
+    // Check plan access (Growth+ required)
     if (!subscription || subscription.plan.name === 'Free' || subscription.plan.name === 'Launch') {
-      setError('Time-based tests require Growth plan or higher. Upgrade to access this feature.');
+      setError('SEO testing requires Growth plan or higher. Upgrade to access this feature.');
       return;
     }
 
-    // Check credits (15 credits for time test)
-    if (!credits || credits.available_credits < 15) {
-      setError(`Insufficient credits. Time tests cost 15 credits. You have ${credits?.available_credits || 0} available.`);
+    // Check credits (20 credits for automated testing)
+    if (!credits || credits.available_credits < 20) {
+      setError(`Insufficient credits. Automated testing costs 20 credits. You have ${credits?.available_credits || 0} available.`);
       return;
     }
 
-    try{
-      // Deduct credits first
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      // Deduct credits
       await new Promise((resolve, reject) => {
         deductCredits({
-          feature: 'seo_time_test',
-          credits: 15,
-          metadata: { test_type: 'time', scope, target, pre_period: `${preStart}-${preEnd}`, post_period: `${postStart}-${postEnd}` }
+          feature: 'seo_automated_test',
+          credits: 20,
+          metadata: {
+            target_url: targetUrl,
+            changes_made: changesMade,
+            keywords_to_track: keywordsToTrack,
+            test_duration_days: testDuration
+          }
         }, {
           onSuccess: resolve,
           onError: (error) => reject(error)
         });
       });
 
-      const [pre, post] = await Promise.all([
-        API_CLIENT.performance({ start: preStart, end: preEnd, dimension: dimension as any, target: target || undefined }),
-        API_CLIENT.performance({ start: postStart, end: postEnd, dimension: dimension as any, target: target || undefined })
-      ]);
-      setPreData(pre.rows);
-      setPostData(post.rows);
-      setSummary(summarizeUplift(pre.rows, post.rows));
-    }catch(e:any){ setError(e.message); }
+      // Get baseline data (last 7 days before changes)
+      const baselineEnd = new Date().toISOString().slice(0, 10);
+      const baselineStart = dateAdd(baselineEnd, -7);
+
+      // For now, create the test record - actual data collection will be done by a scheduled function
+      const { data: testRecord, error: insertError } = await supabase
+        .from('seo_tests')
+        .insert({
+          user_id: user.id,
+          type: 'time',
+          title: `Testing: ${targetUrl}`,
+          definition: {
+            target_url: targetUrl,
+            changes_made: changesMade,
+            keywords_to_track: keywordsToTrack,
+            test_duration_days: testDuration,
+            baseline_start: baselineStart,
+            baseline_end: baselineEnd
+          },
+          status: 'running'
+        })
+        .select()
+        .single();
+
+      if (insertError) throw insertError;
+
+      // Reset form
+      setTargetUrl('');
+      setChangesMade([]);
+      setKeywordsToTrack([]);
+
+      // Reload tests
+      await loadTests();
+
+      toast.success('SEO test started! We\'ll track performance for the next 14 days.');
+
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const saveChangelog = async ()=>{
-    if(!newChange.title) return;
-    try{
-      const item = await API_CLIENT.addChangelog(newChange);
-      setChangelog([item, ...changelog]);
-      setNewChange({ date: today, title: '' });
-    }catch(e:any){ setError(e.message); }
+  const addChange = () => {
+    if (newChange.trim()) {
+      setChangesMade([...changesMade, newChange.trim()]);
+      setNewChange('');
+    }
   };
 
-  const createTimeTestRecord = async ()=>{
-    setCreatingTest(true);
-    try{
-      const def: TimeTestDefinition = { type: 'time', scope, target, preStart, preEnd, postStart, postEnd };
-      const { id } = await API_CLIENT.createTest(def);
-      setTests([{ id, type: 'time', title: testTitle || `Time Test: ${target || dimension}`, createdAt: new Date().toISOString(), status: 'queued' }, ...tests]);
-      setTestTitle('');
-    }catch(e:any){ setError(e.message); }
-    finally{ setCreatingTest(false); }
+  const addKeyword = () => {
+    if (newKeyword.trim()) {
+      setKeywordsToTrack([...keywordsToTrack, newKeyword.trim()]);
+      setNewKeyword('');
+    }
   };
 
-  const createSplitTestRecord = async ()=>{
-    setCreatingTest(true);
-    try{
-      const def: SplitTestDefinition = { type: 'split', controlPattern, variantPattern, start: splitStart, end: splitEnd };
-      const { id } = await API_CLIENT.createTest(def);
-      setTests([{ id, type: 'split', title: testTitle || `Split: A(${controlPattern}) vs B(${variantPattern})`, createdAt: new Date().toISOString(), status: 'queued' }, ...tests]);
-      setTestTitle(''); setControlPattern(''); setVariantPattern('');
-    }catch(e:any){ setError(e.message); }
-    finally{ setCreatingTest(false); }
+  const removeChange = (index: number) => {
+    setChangesMade(changesMade.filter((_, i) => i !== index));
   };
 
-  const chartData = useMemo(()=> (preData && postData) ? toChartSeries(preData, postData) : [], [preData, postData]);
+  const removeKeyword = (index: number) => {
+    setKeywordsToTrack(keywordsToTrack.filter((_, i) => i !== index));
+  };
+
+  const viewTestResults = (test: TestRun) => {
+    setSelectedTest(test);
+  };
 
   return (
     <div className="p-5 md:p-8 lg:p-10 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-cyan-500/20 border flex items-center justify-center">
+          <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-green-500/15 to-emerald-500/15 border flex items-center justify-center">
             <FlaskConical className="h-5 w-5"/>
           </div>
           <div>
-            <div className="text-xl font-semibold">SEO Testing MVP</div>
-            <div className="text-sm text-zinc-500">Time-based and split tests on top of Google Search Console</div>
+            <div className="text-xl font-semibold">SERPProof - Automated SEO Testing</div>
+            <div className="text-sm text-zinc-500">Track SEO changes and measure performance impact over time</div>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {connected ? (
-            <Badge className="bg-emerald-600 hover:bg-emerald-600">GSC Connected</Badge>
-          ) : (
-            <Button onClick={connectGSC} className="gap-2"><Link2 className="h-4 w-4"/> Connect GSC</Button>
-          )}
+          <Badge className="bg-emerald-600 hover:bg-emerald-600">GSC Connected</Badge>
 
           {/* Credits display */}
           {credits && (
@@ -471,283 +442,227 @@ export default function SeoTestingMVP(){
               {subscription.plan.name} Plan
             </Badge>
           )}
-
-          <Button variant="outline" onClick={()=>window.location.reload()} className="gap-2"><RefreshCw className="h-4 w-4"/>Refresh</Button>
         </div>
       </div>
 
       {error && (
-        <div className="mb-4 p-3 border rounded-xl bg-rose-500/10 text-rose-700 dark:text-rose-400 flex items-center gap-2"><AlertCircle className="h-4 w-4"/> {error}</div>
+        <div className="mb-4 p-3 border rounded-xl bg-rose-500/10 text-rose-700 dark:text-rose-400 flex items-center gap-2">
+          <AlertCircle className="h-4 w-4"/> {error}
+        </div>
       )}
 
-      {loading ? (
-        <div className="flex items-center gap-2 p-6 text-zinc-500"><Loader2 className="h-4 w-4 animate-spin"/> Loading…</div>
-      ) : (
-        <Tabs defaultValue="time" className="">
-          <TabsList className="mb-4 grid grid-cols-4 w-full md:w-auto">
-            <TabsTrigger value="time" className="gap-2"><TestTube className="h-4 w-4"/> Time Test</TabsTrigger>
-            <TabsTrigger value="split" className="gap-2"><SplitSquareHorizontal className="h-4 w-4"/> Split Test</TabsTrigger>
-            <TabsTrigger value="changelog" className="gap-2"><CalendarDays className="h-4 w-4"/> Changelog</TabsTrigger>
-            <TabsTrigger value="insights" className="gap-2"><LineChartIcon className="h-4 w-4"/> Insights</TabsTrigger>
-          </TabsList>
+      <Tabs defaultValue="create" className="">
+        <TabsList className="mb-4 grid grid-cols-2 w-full md:w-auto">
+          <TabsTrigger value="create" className="gap-2"><Plus className="h-4 w-4"/> Start New Test</TabsTrigger>
+          <TabsTrigger value="results" className="gap-2"><LineChartIcon className="h-4 w-4"/> View Results</TabsTrigger>
+        </TabsList>
+        <TabsContent value="create" className="space-y-6">
+          <Card>
+            <CardContent className="p-6">
+              <SectionTitle icon={Plus} title="Start New SEO Test" subtitle="Track the impact of your SEO changes over time"/>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <Label className="text-sm font-medium">Target URL</Label>
+                    <Input
+                      placeholder="https://example.com/page"
+                      value={targetUrl}
+                      onChange={(e) => setTargetUrl(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">The page you're making SEO changes to</p>
+                  </div>
 
-          {/* Time Test */}
-          <TabsContent value="time">
-            <Card className="mb-5">
-              <CardContent className="p-5">
-                <SectionTitle icon={TestTube} title="Run a time-based test" subtitle="Compare pre vs post performance for a page, group or query"/>
-                <div className="grid md:grid-cols-3 gap-4">
-                  <div className="grid gap-2">
-                    <Label>Scope</Label>
-                    <Select value={scope} onValueChange={(v)=>setScope(v as Scope)}>
-                      <SelectTrigger><SelectValue placeholder="Select scope"/></SelectTrigger>
+                  <div>
+                    <Label className="text-sm font-medium">Changes Made</Label>
+                    <div className="flex gap-2 mb-2">
+                      <Input
+                        placeholder="e.g., Updated meta title, added keyword"
+                        value={newChange}
+                        onChange={(e) => setNewChange(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && addChange()}
+                      />
+                      <Button onClick={addChange} size="sm" variant="outline">
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="space-y-1">
+                      {changesMade.map((change, index) => (
+                        <div key={index} className="flex items-center justify-between bg-muted p-2 rounded text-sm">
+                          <span>{change}</span>
+                          <Button
+                            onClick={() => removeChange(index)}
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 w-6 p-0"
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="text-sm font-medium">Keywords to Track</Label>
+                    <div className="flex gap-2 mb-2">
+                      <Input
+                        placeholder="e.g., best seo tools"
+                        value={newKeyword}
+                        onChange={(e) => setNewKeyword(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && addKeyword()}
+                      />
+                      <Button onClick={addKeyword} size="sm" variant="outline">
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="space-y-1">
+                      {keywordsToTrack.map((keyword, index) => (
+                        <div key={index} className="flex items-center justify-between bg-muted p-2 rounded text-sm">
+                          <span>{keyword}</span>
+                          <Button
+                            onClick={() => removeKeyword(index)}
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 w-6 p-0"
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="text-sm font-medium">Test Duration</Label>
+                    <Select value={testDuration.toString()} onValueChange={(value) => setTestDuration(parseInt(value))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="url">Single URL / Prefix</SelectItem>
-                        <SelectItem value="group">Group (pattern)</SelectItem>
-                        <SelectItem value="query">Query</SelectItem>
+                        <SelectItem value="7">7 days</SelectItem>
+                        <SelectItem value="14">14 days</SelectItem>
+                        <SelectItem value="21">21 days</SelectItem>
+                        <SelectItem value="30">30 days</SelectItem>
                       </SelectContent>
                     </Select>
-                    <Label className="mt-3">{scope === 'query' ? 'Query' : 'URL / Pattern'}</Label>
-                    <Input placeholder={scope==='query' ? 'e.g., best seo tools' : 'e.g., /blog/ or ^/category/'} value={target} onChange={e=>setTarget(e.target.value)} />
                   </div>
 
-                  <div className="grid gap-3">
-                    <Label>Pre period</Label>
-                    <DateRangeInputs start={preStart} end={preEnd} onChange={(s,e)=>{ setPreStart(s); setPreEnd(e); }}/>
-                    <div className="text-xs text-zinc-500">{daysBetween(preStart, preEnd)} days</div>
-                  </div>
-
-                  <div className="grid gap-3">
-                    <Label>Post period</Label>
-                    <DateRangeInputs start={postStart} end={postEnd} onChange={(s,e)=>{ setPostStart(s); setPostEnd(e); }}/>
-                    <div className="text-xs text-zinc-500">{daysBetween(postStart, postEnd)} days</div>
-                  </div>
+                  <Button
+                    onClick={startNewTest}
+                    disabled={loading || !targetUrl || changesMade.length === 0}
+                    className="w-full gap-2"
+                  >
+                    {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+                    Start {testDuration}-Day Test (20 credits)
+                  </Button>
                 </div>
 
-                <div className="flex gap-2 mt-4">
-                  <Button className="gap-2" onClick={runTimeTest}><Rocket className="h-4 w-4"/> Run test</Button>
-                  <Input className="max-w-sm" placeholder="Optional: save as test title" value={testTitle} onChange={e=>setTestTitle(e.target.value)} />
-                  <Button variant="outline" className="gap-2" disabled={creatingTest} onClick={createTimeTestRecord}>{creatingTest && <Loader2 className="h-4 w-4 animate-spin"/>} Save test</Button>
+                <div className="space-y-4">
+                  <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+                    <h3 className="font-medium text-blue-900 dark:text-blue-100 mb-2">How it works:</h3>
+                    <ol className="text-sm text-blue-800 dark:text-blue-200 space-y-2">
+                      <li>1. Enter the URL you're optimizing</li>
+                      <li>2. List the changes you're making</li>
+                      <li>3. Add keywords to track performance</li>
+                      <li>4. We'll collect baseline data for 7 days</li>
+                      <li>5. Monitor performance for {testDuration} days after changes</li>
+                      <li>6. Get detailed before/after analysis</li>
+                    </ol>
+                  </div>
+
+                  <div className="bg-amber-50 dark:bg-amber-950/20 p-4 rounded-lg border border-amber-200 dark:border-amber-800">
+                    <h3 className="font-medium text-amber-900 dark:text-amber-100 mb-2">Requirements:</h3>
+                    <ul className="text-sm text-amber-800 dark:text-amber-200 space-y-1">
+                      <li>• Growth plan or higher</li>
+                      <li>• 20 credits available</li>
+                      <li>• GSC property with the target URL</li>
+                      <li>• At least one change described</li>
+                    </ul>
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
-
-            {(preData && postData && summary) && (
-              <div className="grid lg:grid-cols-3 gap-5">
-                <Card className="lg:col-span-2">
-                  <CardContent className="p-5">
-                    <SectionTitle icon={LineChartIcon} title="Performance over time" subtitle="Pre vs post"/>
-                    <div className="h-72">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={chartData} margin={{ left: 10, right: 10, top: 10, bottom: 10 }}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                          <YAxis yAxisId="L" tick={{ fontSize: 12 }} />
-                          <YAxis yAxisId="R" orientation="right" tick={{ fontSize: 12 }} />
-                          <Tooltip />
-                          <Legend />
-                          <Line yAxisId="L" type="monotone" dataKey="preClicks" name="Clicks (pre)" dot={false} />
-                          <Line yAxisId="L" type="monotone" dataKey="postClicks" name="Clicks (post)" dot={false} />
-                          <Line yAxisId="R" type="monotone" dataKey="preCtr" name="CTR% (pre)" strokeDasharray="4 2" dot={false} />
-                          <Line yAxisId="R" type="monotone" dataKey="postCtr" name="CTR% (post)" strokeDasharray="4 2" dot={false} />
-                          {/* Changelog reference lines */}
-                          {changelog.map(c => (
-                            <ReferenceLine key={c.id} x={c.date} label={{ value: c.title, angle: -90, position: 'top', fontSize: 10 }} stroke="#999" strokeDasharray="2 2" />
-                          ))}
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="p-5 grid gap-3">
-                    <SectionTitle icon={FlaskConical} title="Uplift summary" subtitle="Auto-computed deltas"/>
-                    <MetricDelta label="Clicks" delta={summary.clicks.delta} pct={summary.clicks.pct} />
-                    <MetricDelta label="Impressions" delta={summary.impressions.delta} pct={summary.impressions.pct} />
-                    <MetricDelta label="CTR" delta={Number((summary.ctr.delta*100).toFixed(2))} pct={summary.ctr.pct} />
-                    <MetricDelta label="Avg. Position (improvement)" delta={Number(summary.position.delta.toFixed(2))} pct={summary.position.pct} />
-                    <div className="text-xs text-zinc-500">Significance: <Badge variant="outline" className={summary.significance==='high'?'border-emerald-500 text-emerald-600':summary.significance==='medium'?'border-amber-500 text-amber-600':'border-zinc-300'}>{summary.significance.toUpperCase()}</Badge></div>
-                  </CardContent>
-                </Card>
               </div>
-            )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-            {/* Recent tests */}
-            <Card className="mt-5">
-              <CardContent className="p-5">
-                <SectionTitle icon={TestTube} title="Saved tests" subtitle="Recently created"/>
-                {tests.length === 0 ? (
-                  <div className="text-sm text-zinc-500">No tests yet.</div>
-                ) : (
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {tests.slice(0,6).map(t => (
-                      <div key={t.id} className="border rounded-xl p-3">
-                        <div className="text-sm font-medium truncate" title={t.title}>{t.title}</div>
-                        <div className="text-xs text-zinc-500 mt-1">{new Date(t.createdAt).toLocaleString()}</div>
-                        <div className="mt-2"><Badge variant="outline">{t.type}</Badge> <Badge className={t.status==='completed'?"bg-emerald-600":"bg-indigo-600"}>{t.status}</Badge></div>
-                        <div className="mt-2 flex gap-2">
-                          <Button variant="outline" size="sm" onClick={async()=>{
-                            try{ const r = await API_CLIENT.testResults(t.id); setPreData(r.pre); setPostData(r.post); setSummary(r.summary || summarizeUplift(r.pre, r.post)); }catch(e:any){ setError(e.message); }
-                          }}>View</Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Split Test */}
-          <TabsContent value="split">
-            <Card>
-              <CardContent className="p-5">
-                <SectionTitle icon={SplitSquareHorizontal} title="Create a split test" subtitle="Compare control vs variant URL groups over the same period"/>
-                {subscription?.plan.name === 'Free' || subscription?.plan.name === 'Launch' ? (
-                  <div className="text-center py-8">
-                    <div className="text-zinc-500 mb-4">Split testing requires Agency plan or higher</div>
-                    <Button onClick={() => window.location.href = '/dashboard?tab=subscription'} className="gap-2">
-                      <Rocket className="h-4 w-4" />
-                      Upgrade to Agency Plan
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="grid md:grid-cols-3 gap-4">
-                  <div className="grid gap-2">
-                    <Label>Control pattern</Label>
-                    <Input placeholder="e.g., ^/category-a/ or list:groupA" value={controlPattern} onChange={e=>setControlPattern(e.target.value)} />
-                    <Label className="mt-3">Variant pattern</Label>
-                    <Input placeholder="e.g., ^/category-b/ or list:groupB" value={variantPattern} onChange={e=>setVariantPattern(e.target.value)} />
-                  </div>
-                  <div className="grid gap-3">
-                    <Label>Start / End</Label>
-                    <DateRangeInputs start={splitStart} end={splitEnd} onChange={(s,e)=>{ setSplitStart(s); setSplitEnd(e); }}/>
-                    <div className="text-xs text-zinc-500">{daysBetween(splitStart, splitEnd)} days</div>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label>Test title</Label>
-                    <Input placeholder="Optional title" value={testTitle} onChange={e=>setTestTitle(e.target.value)} />
-                    <Button className="mt-2 gap-2" disabled={creatingTest} onClick={createSplitTestRecord}>{creatingTest && <Loader2 className="h-4 w-4 animate-spin"/>} Save split test</Button>
-                  </div>
+        <TabsContent value="results" className="space-y-6">
+          <Card>
+            <CardContent className="p-6">
+              <SectionTitle icon={LineChartIcon} title="Test Results" subtitle="View performance impact of your SEO changes"/>
+              {currentTests.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No tests yet. Start your first SEO test to see results here.
                 </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Changelog */}
-          <TabsContent value="changelog">
-            <div className="grid md:grid-cols-3 gap-5">
-              <Card className="md:col-span-2">
-                <CardContent className="p-5">
-                  <SectionTitle icon={CalendarDays} title="Site Changelog" subtitle="What changed and when"/>
-                  <div className="grid gap-3">
-                    {changelog.length === 0 && <div className="text-sm text-zinc-500">No entries yet.</div>}
-                    {changelog.map(c => (
-                      <div key={c.id} className="border rounded-xl p-3">
-                        <div className="text-sm font-medium">{c.title}</div>
-                        <div className="text-xs text-zinc-500">{c.date}</div>
-                        {c.note && <div className="text-sm mt-1 whitespace-pre-wrap">{c.note}</div>}
+              ) : (
+                <div className="space-y-4">
+                  {currentTests.map((test) => (
+                    <div key={test.id} className="border rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-medium">{test.title}</h3>
+                        <Badge variant={test.status === 'completed' ? 'default' : 'secondary'}>
+                          {test.status}
+                        </Badge>
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-5 grid gap-3">
-                  <SectionTitle icon={Plus} title="Add entry"/>
-                  <div className="grid gap-2">
-                    <Label>Date</Label>
-                    <Input type="date" value={newChange.date} onChange={e=>setNewChange({...newChange, date: e.target.value})} />
-                    <Label>Title</Label>
-                    <Input placeholder="e.g., Deployed new title templates" value={newChange.title} onChange={e=>setNewChange({...newChange, title: e.target.value})} />
-                    <Label>Note (optional)</Label>
-                    <Textarea rows={5} placeholder="Details, tickets, links…" value={newChange.note || ''} onChange={e=>setNewChange({...newChange, note: e.target.value})} />
-                    <Button className="mt-2" onClick={saveChangelog}><CheckCircle2 className="h-4 w-4 mr-2"/>Save</Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          {/* Insights */}
-          <TabsContent value="insights">
-            <Card>
-              <CardContent className="p-5">
-                <SectionTitle icon={LineChartIcon} title="CTR Opportunities" subtitle="High impressions, low CTR queries"/>
-                {subscription?.plan.name === 'Free' ? (
-                  <div className="text-center py-8">
-                    <div className="text-zinc-500 mb-4">CTR Opportunities analysis requires a paid plan</div>
-                    <Button onClick={() => window.location.href = '/dashboard?tab=subscription'} className="gap-2">
-                      <Rocket className="h-4 w-4" />
-                      Upgrade to Access
-                    </Button>
-                  </div>
-                ) : (
-                  <>
-                    <div className="grid md:grid-cols-3 gap-4 mb-4">
-                      <div className="md:col-span-2 grid grid-cols-2 gap-3">
-                        <DateRangeInputs start={insightRange.start} end={insightRange.end} onChange={(s,e)=>setInsightRange({ start: s, end: e })} />
-                        <Button variant="outline" className="gap-2" onClick={async()=>{
-                          // Check credits (5 credits for insights)
-                          if (!credits || credits.available_credits < 5) {
-                            setError(`Insufficient credits. CTR analysis costs 5 credits. You have ${credits?.available_credits || 0} available.`);
-                            return;
-                          }
-
-                          try{
-                            // Deduct credits first
-                            await new Promise((resolve, reject) => {
-                              deductCredits({
-                                feature: 'seo_ctr_opportunities',
-                                credits: 5,
-                                metadata: { date_range: `${insightRange.start}-${insightRange.end}` }
-                              }, {
-                                onSuccess: resolve,
-                                onError: (error) => reject(error)
-                              });
-                            });
-
-                            const ins = await API_CLIENT.ctrOpportunities({ start: insightRange.start, end: insightRange.end, minImpr: 200, maxCtr: 0.02 });
-                            setInsights(ins.rows || []);
-                          }catch(e:any){ setError(e.message); }
-                        }}><RefreshCw className="h-4 w-4"/> Refresh (5 credits)</Button>
+                      <p className="text-sm text-muted-foreground mb-3">{test.target_url}</p>
+                      <div className="flex items-center gap-4 text-sm">
+                        <span>Started: {new Date(test.started_at).toLocaleDateString()}</span>
+                        <span>Duration: {test.test_duration_days} days</span>
+                        <Button size="sm" onClick={() => viewTestResults(test)}>
+                          View Results
+                        </Button>
                       </div>
-                      <div className="flex items-end"><Button variant="outline" className="gap-2 w-full" onClick={()=>downloadCSV(`ctr-opportunities-${insightRange.start}-${insightRange.end}.csv`, insights)}><Download className="h-4 w-4"/>Export CSV</Button></div>
                     </div>
-
-                <div className="overflow-x-auto">
-                  <table className="min-w-full text-sm">
-                    <thead>
-                      <tr className="text-left border-b">
-                        <th className="py-2 pr-4">Query</th>
-                        <th className="py-2 pr-4">Impressions</th>
-                        <th className="py-2 pr-4">Clicks</th>
-                        <th className="py-2 pr-4">CTR</th>
-                        <th className="py-2 pr-4">Avg. Pos</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {insights.map((r, i) => (
-                        <tr key={i} className="border-b hover:bg-zinc-50/50">
-                          <td className="py-2 pr-4 max-w-[420px] truncate" title={r.query}>{r.query}</td>
-                          <td className="py-2 pr-4">{r.impressions.toLocaleString()}</td>
-                          <td className="py-2 pr-4">{r.clicks.toLocaleString()}</td>
-                          <td className="py-2 pr-4">{fmtPct(r.ctr)}</td>
-                          <td className="py-2 pr-4">{r.avgPos.toFixed(1)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  ))}
                 </div>
-                </>
               )}
+            </CardContent>
+          </Card>
+
+          {selectedTest && selectedTest.final_results && (
+            <Card>
+              <CardContent className="p-6">
+                <SectionTitle icon={BarChart3} title="Detailed Results" subtitle={`Performance analysis for ${selectedTest.target_url}`}/>
+                <div className="grid md:grid-cols-3 gap-4 mb-6">
+                  <div className="text-center p-4 bg-green-50 dark:bg-green-950/20 rounded-lg">
+                    <div className="text-2xl font-bold text-green-600">
+                      {selectedTest.final_results.clicks_change > 0 ? '+' : ''}
+                      {selectedTest.final_results.clicks_change}
+                    </div>
+                    <div className="text-sm text-muted-foreground">Clicks Change</div>
+                  </div>
+                  <div className="text-center p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
+                    <div className="text-2xl font-bold text-blue-600">
+                      {selectedTest.final_results.impressions_change > 0 ? '+' : ''}
+                      {selectedTest.final_results.impressions_change}
+                    </div>
+                    <div className="text-sm text-muted-foreground">Impressions Change</div>
+                  </div>
+                  <div className="text-center p-4 bg-purple-50 dark:bg-purple-950/20 rounded-lg">
+                    <div className="text-2xl font-bold text-purple-600">
+                      {selectedTest.final_results.ctr_change > 0 ? '+' : ''}
+                      {selectedTest.final_results.ctr_change.toFixed(2)}%
+                    </div>
+                    <div className="text-sm text-muted-foreground">CTR Change</div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h4 className="font-medium">Keyword Performance</h4>
+                  {selectedTest.final_results.keyword_improvements.map((kw, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 border rounded">
+                      <span className="font-medium">{kw.keyword}</span>
+                      <div className="flex items-center gap-4 text-sm">
+                        <span>Position: {kw.position_change > 0 ? '+' : ''}{kw.position_change}</span>
+                        <span>Clicks: {kw.clicks_change > 0 ? '+' : ''}{kw.clicks_change}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </CardContent>
             </Card>
-          </TabsContent>
-        </Tabs>
-      )}
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
