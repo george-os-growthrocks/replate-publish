@@ -28,16 +28,15 @@ const Onboarding = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
 
-  // Step 1: Create Project
+  // Step 2: GSC Connection
+  const [gscConnected, setGscConnected] = useState(false);
+  const [gscProperties, setGscProperties] = useState<GSCProperty[]>([]);
+  const [isConnecting, setIsConnecting] = useState(false);
+
+  // Step 3: Create Project + Select Property
   const [projectName, setProjectName] = useState("");
   const [projectDomain, setProjectDomain] = useState("");
-  const [projectId, setProjectId] = useState<string | null>(null);
-
-  // Step 2: Connect GSC
-  const [gscProperties, setGscProperties] = useState<GSCProperty[]>([]);
   const [selectedProperty, setSelectedProperty] = useState<string | null>(null);
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [gscConnected, setGscConnected] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -46,14 +45,16 @@ const Onboarding = () => {
   useEffect(() => {
     // Check if user just returned from Google OAuth
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('gsc_connected') === 'true' && currentStep === 2) {
+    if (urlParams.get('gsc_connected') === 'true') {
+      toast.success('Google connected! Loading your properties...');
       setGscConnected(true);
+      setCurrentStep(3); // Move to step 3
       // Automatically fetch properties
       handleFetchProperties();
       // Clean up URL
       window.history.replaceState({}, '', '/onboarding');
     }
-  }, [currentStep]);
+  }, []);
 
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -70,44 +71,92 @@ const Onboarding = () => {
       .from("profiles")
       .select("onboarding_completed")
       .eq("user_id", session.user.id)
-      .single();
+      .maybeSingle();
 
     if (profile?.onboarding_completed) {
       navigate("/dashboard", { replace: true });
+      return;
+    }
+
+    // Check if user has connected GSC (OAuth tokens)
+    const { data: tokens } = await supabase
+      .from("user_oauth_tokens")
+      .select("*")
+      .eq("user_id", session.user.id)
+      .eq("provider", "google")
+      .maybeSingle();
+
+    if (tokens) {
+      // User has GSC connected, go to step 3
+      setGscConnected(true);
+      setCurrentStep(3);
+      // Fetch properties
+      await handleFetchProperties();
     }
   };
 
-  const handleCreateProject = async (e: React.FormEvent) => {
+  const handleFinishOnboarding = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!projectName || !projectDomain) {
-      toast.error("Please fill in all fields");
+    if (!projectName || !projectDomain || !selectedProperty) {
+      toast.error("Please fill in all fields and select a property");
       return;
     }
 
     setIsLoading(true);
 
     try {
-      const { data: project, error } = await supabase
+      // Create project with selected GSC property
+      const { data: project, error: projectError } = await supabase
         .from("projects")
         .insert({
           user_id: user.id,
           name: projectName,
           domain: projectDomain,
-          gsc_connected: false,
+          gsc_connected: true,
+          gsc_site_url: selectedProperty,
           plan: "free",
         })
         .select()
         .single();
 
-      if (error) throw error;
+      if (projectError) throw projectError;
 
-      setProjectId(project.id);
-      toast.success("Project created successfully!");
-      setCurrentStep(2);
+      // Save GSC property connection
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const selectedProp = gscProperties.find(p => p.siteUrl === selectedProperty);
+        
+        await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gsc-save-property`,
+          {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${session.access_token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              project_id: project.id,
+              site_url: selectedProperty,
+              permission_level: selectedProp?.permissionLevel || "full",
+            }),
+          }
+        );
+      }
+
+      // Mark onboarding as completed (this also activates 7-day trial)
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({ onboarding_completed: true })
+        .eq("user_id", user.id);
+
+      if (profileError) throw profileError;
+
+      toast.success("Setup complete! Your 7-day free trial has started. Welcome!");
+      navigate("/dashboard", { replace: true });
     } catch (error: any) {
-      console.error("Error creating project:", error);
-      toast.error(error.message || "Failed to create project");
+      console.error("Error completing onboarding:", error);
+      toast.error(error.message || "Failed to complete setup");
     } finally {
       setIsLoading(false);
     }
