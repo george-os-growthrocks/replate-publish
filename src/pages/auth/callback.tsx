@@ -40,6 +40,13 @@ export default function AuthCallback() {
               console.log('✅ User authenticated:', user.id);
               
               // Save OAuth tokens to database
+              console.log('💾 Saving OAuth tokens to database...', {
+                userId: user.id,
+                hasProviderToken: !!providerToken,
+                hasRefreshToken: !!refreshToken,
+                expiresAt: expiresAt ? new Date(parseInt(expiresAt) * 1000).toISOString() : null
+              });
+
               const { error: tokenError } = await supabase
                 .from('user_oauth_tokens')
                 .upsert({
@@ -48,7 +55,7 @@ export default function AuthCallback() {
                   access_token: providerToken,
                   refresh_token: refreshToken,
                   expires_at: expiresAt ? new Date(parseInt(expiresAt) * 1000).toISOString() : null,
-                  scope: 'https://www.googleapis.com/auth/webmasters.readonly',
+                  scopes: ['https://www.googleapis.com/auth/webmasters.readonly'], // Note: using 'scopes' (array) as per migration
                   updated_at: new Date().toISOString(),
                 }, {
                   onConflict: 'user_id,provider'
@@ -56,8 +63,23 @@ export default function AuthCallback() {
 
               if (tokenError) {
                 console.error('❌ Error saving tokens:', tokenError);
+                console.error('Token error details:', JSON.stringify(tokenError, null, 2));
               } else {
                 console.log('✅ OAuth tokens saved successfully');
+
+                // Verify tokens were saved
+                const { data: verifyData, error: verifyError } = await supabase
+                  .from('user_oauth_tokens')
+                  .select('access_token, expires_at')
+                  .eq('user_id', user.id)
+                  .eq('provider', 'google')
+                  .single();
+
+                console.log('🔍 Token verification:', {
+                  saved: !!verifyData,
+                  hasToken: !!verifyData?.access_token,
+                  verifyError: verifyError?.message
+                });
               }
             }
           } else {

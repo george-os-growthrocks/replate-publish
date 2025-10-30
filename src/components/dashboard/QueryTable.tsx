@@ -11,6 +11,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface QueryTableProps {
   propertyUrl: string;
@@ -32,15 +33,16 @@ const QueryTable = ({ propertyUrl, startDate, endDate }: QueryTableProps) => {
     try {
       setIsLoading(true);
       
+      // Verify user is authenticated
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.provider_token) {
-        toast.error("No Google access token. Please sign out and sign in again.");
+      if (!session) {
+        toast.error("Please sign in to view data");
         return;
       }
 
+      // gsc-query will get provider_token from database using Authorization header
       const { data, error } = await supabase.functions.invoke("gsc-query", {
         body: {
-          provider_token: session.provider_token,
           siteUrl: propertyUrl,
           startDate,
           endDate,
@@ -51,6 +53,7 @@ const QueryTable = ({ propertyUrl, startDate, endDate }: QueryTableProps) => {
 
       if (error) {
         console.error("Edge function error:", error);
+        console.error("Error data:", data);
         throw error;
       }
 

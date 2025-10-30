@@ -1,6 +1,27 @@
 -- USER OAUTH TOKENS TABLE
 -- Store Google OAuth tokens for GSC API access
 
+-- Handle potential column name inconsistency
+DO $$
+BEGIN
+    -- Rename column if it exists as 'scope' instead of 'scopes'
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'user_oauth_tokens'
+        AND column_name = 'scope'
+        AND table_schema = 'public'
+    ) AND NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'user_oauth_tokens'
+        AND column_name = 'scopes'
+        AND table_schema = 'public'
+    ) THEN
+        ALTER TABLE user_oauth_tokens RENAME COLUMN scope TO scopes;
+        -- Convert single text value to array if needed
+        UPDATE user_oauth_tokens SET scopes = ARRAY[scopes] WHERE scopes IS NOT NULL AND array_length(scopes, 1) IS NULL;
+    END IF;
+END $$;
+
 CREATE TABLE IF NOT EXISTS user_oauth_tokens (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -11,7 +32,7 @@ CREATE TABLE IF NOT EXISTS user_oauth_tokens (
   scopes TEXT[],
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
-  
+
   UNIQUE(user_id, provider)
 );
 

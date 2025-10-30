@@ -22,15 +22,16 @@ const TimeSeriesChart = ({ propertyUrl, startDate, endDate }: TimeSeriesChartPro
     try {
       setIsLoading(true);
       
+      // Verify user is authenticated
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.provider_token) {
-        toast.error("No Google access token. Please sign out and sign in again.");
+      if (!session) {
+        toast.error("Please sign in to view data");
         return;
       }
 
+      // gsc-query will get provider_token from database using Authorization header
       const { data, error } = await supabase.functions.invoke("gsc-query", {
         body: {
-          provider_token: session.provider_token,
           siteUrl: propertyUrl,
           startDate,
           endDate,
@@ -38,7 +39,17 @@ const TimeSeriesChart = ({ propertyUrl, startDate, endDate }: TimeSeriesChartPro
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("GSC query error details:", error);
+        console.error("Error data:", data);
+        throw error;
+      }
+      
+      // Check for application errors
+      if (data?.error) {
+        console.error("GSC API error:", data.error);
+        throw new Error(data.error);
+      }
 
       if (data?.rows) {
         const formatted = data.rows.map((row: any) => ({

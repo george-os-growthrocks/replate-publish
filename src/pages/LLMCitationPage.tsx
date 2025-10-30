@@ -135,64 +135,27 @@ export default function LLMCitationPage() {
       // Get all user projects and find matching one
       const { data: allProjects, error: allError } = await supabase
         .from("seo_projects")
-        .select("id, url")
+        .select("id, domain, gsc_property_url")
         .eq("user_id", session.session.user.id);
 
       if (allError) {
         console.error("❌ Error fetching projects:", allError);
+        toast.error("Failed to load projects");
+        setLoading(false);
+        return;
       }
 
-      console.log("📊 All user projects:", allProjects);
-
-      // Find matching project by normalized URL
+      // Find matching project by normalized URL or GSC property
       let project = allProjects?.find(p => {
-        const normalizedProjectUrl = normalizeUrl(p.url);
-        return normalizedProjectUrl === normalizedProperty;
+        const normalizedProjectUrl = normalizeUrl(p.domain || '');
+        const normalizedGsc = p.gsc_property_url ? normalizeUrl(p.gsc_property_url) : '';
+        return normalizedProjectUrl === normalizedProperty || normalizedGsc === normalizedProperty;
       });
 
       if (!project) {
-        console.log("🆕 Creating new project for:", selectedProperty);
-        
-        // Create clean URL for storage
-        let cleanUrl = selectedProperty;
-        let projectName = selectedProperty;
-        
-        try {
-          if (selectedProperty.startsWith('sc-domain:')) {
-            const domain = selectedProperty.replace('sc-domain:', '');
-            cleanUrl = 'https://' + domain;
-            projectName = domain;
-          } else {
-            const url = new URL(selectedProperty);
-            cleanUrl = url.origin;
-            projectName = url.hostname;
-          }
-        } catch (e) {
-          console.error("URL parsing error:", e);
-        }
-
-        const { data: newProject, error: createError } = await supabase
-          .from("seo_projects")
-          .insert({
-            url: cleanUrl,
-            user_id: session.session.user.id,
-            name: projectName,
-          })
-          .select("id")
-          .single();
-
-        if (createError) {
-          console.error("❌ Error creating project:", createError);
-          toast.error("Failed to create project: " + (createError.message || "Unknown error"));
-          setLoading(false);
-          return;
-        }
-
-        project = newProject;
-        console.log("✅ Project created:", project);
-        toast.success("Project created! You can now track LLM citations.");
-      } else {
-        console.log("✅ Found existing project:", project);
+        toast.error("No project found for this property. Please create a project first from the Projects page.");
+        setLoading(false);
+        return;
       }
 
       const projectId = project.id;
@@ -306,54 +269,20 @@ export default function LLMCitationPage() {
       // Get all user projects and find matching one
       const { data: allProjects } = await supabase
         .from("seo_projects")
-        .select("id, url")
+        .select("id, domain, gsc_property_url")
         .eq("user_id", session.session.user.id);
 
       let project = allProjects?.find(p => {
-        const normalizedProjectUrl = normalizeUrl(p.url);
-        return normalizedProjectUrl === normalizedProperty;
+        const normalizedProjectUrl = normalizeUrl(p.domain || '');
+        const normalizedGsc = p.gsc_property_url ? normalizeUrl(p.gsc_property_url) : '';
+        return normalizedProjectUrl === normalizedProperty || normalizedGsc === normalizedProperty;
       });
 
-      // If project doesn't exist, create it
+      // If project doesn't exist, show error
       if (!project) {
-        // Create clean URL for storage
-        let cleanUrl = selectedProperty;
-        let projectName = selectedProperty;
-        
-        try {
-          if (selectedProperty.startsWith('sc-domain:')) {
-            const domain = selectedProperty.replace('sc-domain:', '');
-            cleanUrl = 'https://' + domain;
-            projectName = domain;
-          } else {
-            const url = new URL(selectedProperty);
-            cleanUrl = url.origin;
-            projectName = url.hostname;
-          }
-        } catch (e) {
-          console.error("URL parsing error:", e);
-        }
-
-        const { data: newProject, error: createError } = await supabase
-          .from("seo_projects")
-          .insert({
-            url: cleanUrl,
-            user_id: session.session.user.id,
-            name: projectName,
-          })
-          .select("id")
-          .single();
-
-        if (createError) {
-          console.error("❌ Error creating project:", createError);
-          toast.error("Failed to create project: " + (createError.message || "Unknown error"));
-          setTracking(false);
-          return;
-        }
-
-        project = newProject;
-        console.log("✅ Project created:", project);
-        toast.success("Project created! You can now track LLM citations.");
+        toast.error("No project found for this property. Please create a project first from the Projects page.");
+        setTracking(false);
+        return;
       }
 
       const queries = queryInput.split("\n").filter((q) => q.trim());

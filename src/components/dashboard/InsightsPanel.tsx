@@ -29,16 +29,28 @@ const InsightsPanel = ({ propertyUrl, startDate, endDate }: InsightsPanelProps) 
     try {
       setIsLoading(true);
       
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session?.provider_token) {
-        toast.error("No Google access token. Please sign out and sign in again.");
+      // Get user and fetch stored Google access token from database
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Please sign in to generate insights");
+        return;
+      }
+
+      const { data: tokenData, error: tokenError } = await supabase
+        .from('user_oauth_tokens')
+        .select('access_token')
+        .eq('user_id', user.id)
+        .eq('provider', 'google')
+        .maybeSingle();
+
+      if (tokenError || !tokenData?.access_token) {
+        toast.error("No Google connection found. Please sign out and sign in again.");
         return;
       }
 
       const { data, error } = await supabase.functions.invoke("gemini-insights", {
         body: {
-          provider_token: session.provider_token,
+          provider_token: tokenData.access_token,
           siteUrl: propertyUrl,
           startDate,
           endDate,

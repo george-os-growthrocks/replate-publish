@@ -51,7 +51,7 @@ export function FeatureGate({
   
   // Get feature definition to check plan requirements
   const featureDef = getFeatureByKey(feature);
-  const planRequirement = requiredPlan || featureDef?.requiredPlan || 'Starter';
+  const planRequirement = requiredPlan || featureDef?.requiredPlan || 'Launch';
   const userPlan = subscription ? getPlanName(subscription.plan) : 'Free';
   const isActive = isSubscriptionActive(subscription?.status);
   const isTrialing = subscription?.status === 'trialing';
@@ -71,7 +71,14 @@ export function FeatureGate({
 
       // If user is on trial, grant access to all features (with notification shown in UI)
       // Otherwise, check plan access normally
-      if (!isTrialing && !hasFeatureAccess(userPlan, planRequirement)) {
+      if (isTrialing) {
+        // Trial users get access to all features - check credits only
+        const hasCredits = (credits?.available || 0) >= creditCost;
+        setHasAccess(hasCredits);
+        return;
+      }
+      
+      if (!hasFeatureAccess(userPlan, planRequirement)) {
         setHasAccess(false);
         return;
       }
@@ -179,44 +186,44 @@ export function FeatureGate({
             
             <div className="space-y-4 py-4">
               {/* Show relevant upgrade options based on plan requirement */}
-              {(planRequirement === 'Starter' || planRequirement === 'Pro' || planRequirement === 'Agency') && (
+              {(planRequirement === 'Launch' || planRequirement === 'Growth' || planRequirement === 'Agency' || planRequirement === 'Scale') && (
                 <>
-                  {planRequirement === 'Starter' && userPlan === 'Free' && (
+                  {planRequirement === 'Launch' && userPlan === 'Free' && (
                     <Card className="p-4 border-2 border-primary">
                       <div className="flex justify-between items-start mb-2">
                         <div>
-                          <h4 className="font-semibold">Starter Plan</h4>
-                          <p className="text-sm text-muted-foreground">500 credits/month • {featureDef?.name || 'This feature'}</p>
+                          <h4 className="font-semibold">Launch Plan</h4>
+                          <p className="text-sm text-muted-foreground">1,200 credits/month • {featureDef?.name || 'This feature'}</p>
                         </div>
                         <Badge>$29/mo</Badge>
                       </div>
                       <Button className="w-full mt-2 gradient-primary" onClick={() => navigate('/pricing')}>
-                        Choose Starter
+                        Choose Launch
                       </Button>
                     </Card>
                   )}
                   
-                  {(planRequirement === 'Pro' || (planRequirement === 'Starter' && userPlan === 'Starter')) && (
-                    <Card className={`p-4 ${planRequirement === 'Pro' ? 'border-2 border-primary' : ''}`}>
+                  {(planRequirement === 'Growth' || (planRequirement === 'Launch' && userPlan === 'Launch')) && (
+                    <Card className={`p-4 ${planRequirement === 'Growth' ? 'border-2 border-primary' : ''}`}>
                       <div className="flex justify-between items-start mb-2">
                         <div>
-                          <h4 className="font-semibold">Pro Plan</h4>
-                          <p className="text-sm text-muted-foreground">2,000 credits/month • All Starter + Pro features</p>
+                          <h4 className="font-semibold">Growth Plan</h4>
+                          <p className="text-sm text-muted-foreground">6,000 credits/month • All Launch + Growth features</p>
                         </div>
                         <Badge>$79/mo</Badge>
                       </div>
                       <Button className="w-full mt-2 gradient-primary" onClick={() => navigate('/pricing')}>
-                        Choose Pro
+                        Choose Growth
                       </Button>
                     </Card>
                   )}
                   
-                  {(planRequirement === 'Agency' || (planRequirement === 'Pro' && userPlan === 'Pro')) && (
+                  {(planRequirement === 'Agency' || (planRequirement === 'Growth' && userPlan === 'Growth')) && (
                     <Card className={`p-4 ${planRequirement === 'Agency' ? 'border-2 border-primary' : ''}`}>
                       <div className="flex justify-between items-start mb-2">
                         <div>
                           <h4 className="font-semibold">Agency Plan</h4>
-                          <p className="text-sm text-muted-foreground">5,000 credits/month • White-label + API</p>
+                          <p className="text-sm text-muted-foreground">20,000 credits/month • White-label + API</p>
                         </div>
                         <Badge variant="secondary">$149/mo</Badge>
                       </div>
@@ -279,7 +286,7 @@ export function FeatureGate({
       )}
 
       {/* Trial Warning for Higher-Tier Features */}
-      {isTrialing && hasFeatureAccess(userPlan, planRequirement) && planRequirement !== 'Starter' && (
+      {isTrialing && hasFeatureAccess(userPlan, planRequirement) && planRequirement !== 'Launch' && (
         <Alert className="mb-4 border-blue-500/20 bg-gradient-to-r from-blue-500/10 to-primary/10">
           <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
           <AlertTitle className="text-blue-700 dark:text-blue-300">

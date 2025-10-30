@@ -6,9 +6,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { AvatarUpload } from "@/components/profile/AvatarUpload";
-import { User, Building, Globe, Briefcase, Users, TrendingUp, Save, Upload } from "lucide-react";
+import { User, Building, Globe, Briefcase, Users, TrendingUp, Save, Upload, Trash2, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogFooter, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogTrigger 
+} from "@/components/ui/dialog";
 
 export function ProfileSettings() {
   const [userEmail, setUserEmail] = useState("");
@@ -29,6 +39,9 @@ export function ProfileSettings() {
     linkedinUrl: "",
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
   useEffect(() => {
     loadProfile();
@@ -125,6 +138,124 @@ export function ProfileSettings() {
       toast.error("Failed to update profile");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== "DELETE") {
+      toast.error("Please type 'DELETE' to confirm");
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      toast.info("Deleting your account and all data... This may take a moment.");
+
+      // Delete user data from all tables in order (respecting foreign key constraints)
+      const userId = user.id;
+
+      // Tables that need explicit deletion (those without ON DELETE CASCADE or direct references)
+      // Note: LLM tables (llm_citations, llm_tracking_queries, etc.) don't have user_id;
+      // they're linked via project_id and will cascade when seo_projects is deleted
+      const tablesToDelete = [
+        'usage_meters',
+        'seats',
+        'add_ons',
+        'overage_events',
+        'seo_projects', // Delete this first - will cascade to LLM tables
+        'user_profiles',
+        'user_subscriptions',
+        'user_credits',
+        'credit_transactions',
+        'user_oauth_tokens',
+        'user_feature_access',
+        'free_tool_usage',
+        'industry_intelligence',
+        'user_activity_log',
+        'chatbot_conversations',
+        'keyword_rankings',
+        'tracked_keywords',
+      ];
+      
+      // Optional tables that may or may not exist or have user_id
+      const optionalTables = [
+        'ai_overview_rankings',
+        'chatgpt_citations',
+        'atp_queries_cache',
+        'analysis_history',
+        'google_analytics_connections',
+        'google_analytics_reports',
+        'dataforseo_rate_limits',
+      ];
+
+      // Delete from each table
+      for (const table of tablesToDelete) {
+        try {
+          const { error } = await supabase
+            .from(table)
+            .delete()
+            .eq('user_id', userId);
+          
+          if (error && !error.message.includes('does not exist') && !error.message.includes('column') && !error.message.includes('not found')) {
+            console.warn(`Warning deleting from ${table}:`, error);
+          }
+        } catch (err: any) {
+          // Skip if table/column doesn't exist
+          if (err?.message?.includes('column') || err?.message?.includes('not found')) {
+            console.log(`Skipping ${table} (table or column doesn't exist)`);
+          } else {
+            console.warn(`Error deleting from ${table}:`, err);
+          }
+        }
+      }
+      
+      // Try to delete from optional tables (they may not exist or may not have user_id)
+      for (const table of optionalTables) {
+        try {
+          const { error } = await supabase
+            .from(table)
+            .delete()
+            .eq('user_id', userId);
+          
+          // Silently ignore errors for optional tables
+          if (error) {
+            console.log(`Skipped optional table ${table}`);
+          }
+        } catch (err) {
+          // Silently ignore
+          console.log(`Skipped optional table ${table}`);
+        }
+      }
+
+      // Finally, delete the auth user via database function
+      // This will also delete all remaining data via cascade
+      const { error: rpcError } = await supabase.rpc('delete_user_account', {
+        target_user_id: userId
+      });
+
+      if (rpcError) {
+        console.error('Could not fully delete account:', rpcError);
+        toast.error(rpcError.message || "Failed to delete account. Please contact support.");
+        return;
+      }
+
+      toast.success("Account and all data deleted successfully");
+      
+      // Redirect to home (user will be automatically signed out since account is deleted)
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 1500);
+
+    } catch (error: any) {
+      console.error("Account deletion error:", error);
+      toast.error(error.message || "Failed to delete account. Please contact support.");
+    } finally {
+      setIsDeleting(false);
+      setDeleteConfirmOpen(false);
+      setDeleteConfirmText("");
     }
   };
 
@@ -366,6 +497,97 @@ export function ProfileSettings() {
           )}
         </Button>
       </div>
+
+      {/* Delete Account Section */}
+      <Card className="border-destructive/50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-destructive">
+            <AlertTriangle className="w-5 h-5" />
+            Danger Zone
+          </CardTitle>
+          <CardDescription>
+            Permanently delete your account and all associated data
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Warning:</strong> This action cannot be undone. This will permanently delete:
+              <ul className="list-disc list-inside mt-2 space-y-1 text-sm">
+                <li>Your profile and account information</li>
+                <li>All SEO projects and tracking data</li>
+                <li>All keyword rankings and history</li>
+                <li>All LLM citation tracking data</li>
+                <li>All chat conversations</li>
+                <li>All credits and subscription data</li>
+                <li>All analytics and reports</li>
+                <li>Any other data associated with your account</li>
+              </ul>
+            </AlertDescription>
+          </Alert>
+
+          <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+            <DialogTrigger asChild>
+              <Button variant="destructive" className="w-full sm:w-auto">
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete Account
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Are you absolutely sure?</DialogTitle>
+                <DialogDescription>
+                  This action cannot be undone. This will permanently delete your account and all of your data from our servers.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>
+                    Type <strong className="font-mono">DELETE</strong> in the box below to confirm.
+                  </AlertDescription>
+                </Alert>
+                <div>
+                  <Input
+                    placeholder="Type DELETE to confirm"
+                    value={deleteConfirmText}
+                    onChange={(e) => setDeleteConfirmText(e.target.value)}
+                    disabled={isDeleting}
+                    className="font-mono"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setDeleteConfirmOpen(false);
+                    setDeleteConfirmText("");
+                  }}
+                  disabled={isDeleting}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={handleDeleteAccount}
+                  disabled={isDeleting || deleteConfirmText !== "DELETE"}
+                >
+                  {isDeleting ? (
+                    <>Deleting...</>
+                  ) : (
+                    <>
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Permanently Delete Account
+                    </>
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </CardContent>
+      </Card>
     </div>
   );
 }

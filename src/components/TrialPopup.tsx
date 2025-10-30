@@ -2,11 +2,22 @@ import { useState, useEffect } from "react";
 import { X, Sparkles, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { useSubscription } from "@/hooks/useSubscription";
 
 export function TrialPopup() {
+  const { data: subscription } = useSubscription();
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
+    // Only show if user is actually on trial
+    const isOnTrial = subscription?.status === 'trialing' && 
+                      subscription?.trial_end && 
+                      new Date(subscription.trial_end) > new Date();
+    
+    if (!isOnTrial) {
+      return; // Don't show popup if not on trial
+    }
+
     // Check if popup was already shown in this session
     const popupShown = sessionStorage.getItem("trialPopupShown");
     
@@ -19,7 +30,7 @@ export function TrialPopup() {
 
       return () => clearTimeout(timer);
     }
-  }, []);
+  }, [subscription]);
 
   if (!isVisible) return null;
 

@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
-import Stripe from 'https://esm.sh/stripe@14.21.0';
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
+import Stripe from 'https://esm.sh/stripe@14.21.0?target=deno';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -40,22 +40,47 @@ serve(async (req) => {
   }
 
   try {
+    console.log('🎯 Stripe checkout function called - VERSION 3.0 - FIXED AUTH');
+    const authHeader = req.headers.get('Authorization') ?? '';
+    console.log('🔐 Auth header present:', !!authHeader);
+
+    if (!authHeader) {
+      console.log('❌ No authorization header found');
+      throw new Error('Missing authorization header');
+    }
+
+    // Decode JWT token to get user ID
+    const token = authHeader.replace('Bearer ', '');
+    console.log('🔑 Token received, length:', token.length);
+    let userId: string;
+
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      userId = payload.sub;
+      console.log('✅ JWT decoded successfully, userId:', userId);
+
+      if (!userId) {
+        throw new Error('Invalid token: no user ID found');
+      }
+    } catch (jwtError) {
+      console.error('❌ JWT decoding error:', jwtError);
+      throw new Error('Invalid authentication token');
+    }
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
-        },
-      }
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const {
-      data: { user },
-    } = await supabaseClient.auth.getUser();
+    // Get user email from auth.users table
+    const { data: userData, error: userFetchError } = await supabaseClient
+      .from('auth.users')
+      .select('email')
+      .eq('id', userId)
+      .single();
 
-    if (!user) {
-      throw new Error('Not authenticated');
+    if (userFetchError || !userData) {
+      throw new Error('User not found');
     }
 
     const body = await req.json();
@@ -70,16 +95,16 @@ serve(async (req) => {
     const { data: existingSub } = await supabaseClient
       .from('user_subscriptions')
       .select('stripe_customer_id')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .maybeSingle();
 
     if (existingSub?.stripe_customer_id) {
       customerId = existingSub.stripe_customer_id;
     } else {
       const customer = await stripe.customers.create({
-        email: user.email,
+        email: userData.email,
         metadata: {
-          supabase_user_id: user.id,
+          supabase_user_id: userId,
         },
       });
       customerId = customer.id;
@@ -119,7 +144,7 @@ serve(async (req) => {
         success_url: `${req.headers.get('origin')}/dashboard?credits_purchased={CHECKOUT_SESSION_ID}`,
         cancel_url: `${req.headers.get('origin')}/settings?tab=subscription`,
         metadata: {
-          user_id: user.id,
+          user_id: userId,
           purchase_type: 'credits',
           credit_amount: creditAmount.toString(),
         },
@@ -157,7 +182,7 @@ serve(async (req) => {
         ],
         subscription_data: {
           metadata: {
-            user_id: user.id,
+            user_id: userId,
             purchase_type: 'feature',
             feature_key: featureKey,
           },
@@ -165,7 +190,7 @@ serve(async (req) => {
         success_url: `${req.headers.get('origin')}/dashboard?feature_unlocked={CHECKOUT_SESSION_ID}`,
         cancel_url: `${req.headers.get('origin')}/settings?tab=subscription`,
         metadata: {
-          user_id: user.id,
+          user_id: userId,
           purchase_type: 'feature',
           feature_key: featureKey,
         },
@@ -186,7 +211,12 @@ serve(async (req) => {
       }
 
       if (!plan) {
-        throw new Error(`Plan "${planName}" not found in database. Available plans should be: Starter, Pro, Agency`);
+        throw new Error(`Plan "${planName}" not found in database. Available plans should be: Launch, Growth, Agency, Scale`);
+      }
+
+      // Handle Scale plan - should redirect to contact form
+      if (planName === 'Scale') {
+        throw new Error('Scale plan requires custom pricing. Please contact sales.');
       }
 
       // Determine price ID based on billing cycle
@@ -235,16 +265,17 @@ serve(async (req) => {
         subscription_data: {
           trial_period_days: 7, // 7-day free trial
           metadata: {
-            user_id: user.id,
+            user_id: userId,
             plan_id: plan.id,
             plan_name: plan.name,
           },
         },
-        success_url: `${req.headers.get('origin')}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
+        success_url: `${req.headers.get('origin')}/dashboard?session_id={CHECKOUT_SESSION_ID}&plan=${plan.name}`,
         cancel_url: `${req.headers.get('origin')}/pricing`,
         metadata: {
-          user_id: user.id,
+          user_id: userId,
           plan_id: plan.id,
+          plan_name: plan.name,
           billing_cycle: billingCycle,
         },
       });

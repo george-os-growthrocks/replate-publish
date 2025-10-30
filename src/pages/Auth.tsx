@@ -1,9 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { BarChart3, TrendingUp, Sparkles, Check, ArrowLeft } from "lucide-react";
+import { BarChart3, TrendingUp, Sparkles, Check, ArrowLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { BrandLogo } from "@/components/BrandLogo";
@@ -11,45 +11,126 @@ import { trackSignup } from "@/lib/utils";
 
 const Auth = () => {
   const navigate = useNavigate();
+  const [isProcessingAuth, setIsProcessingAuth] = useState(false);
+  const hasRedirected = useRef(false);
+  const tokenData = useRef<{
+    providerToken: string | null;
+    refreshToken: string | null;
+    expiresAt: string | null;
+  }>({
+    providerToken: null,
+    refreshToken: null,
+    expiresAt: null,
+  });
 
   useEffect(() => {
-    // Handle OAuth callback from hash first
-    const handleOAuthCallback = async () => {
-      const hash = window.location.hash;
+    // Reset redirect flag when component mounts
+    hasRedirected.current = false;
+    tokenData.current = {
+      providerToken: null,
+      refreshToken: null,
+      expiresAt: null,
+    };
+    
+    // Check if we have OAuth tokens in the hash (extract immediately before Supabase processes)
+    const hash = window.location.hash;
+    const isOAuthCallback = hash.includes('access_token') && hash.includes('provider_token');
+    
+    if (isOAuthCallback) {
+      setIsProcessingAuth(true);
+      console.log('🔗 OAuth callback detected - extracting tokens...');
       
-      if (hash.includes('access_token') && hash.includes('provider_token')) {
-        console.log('🔗 OAuth callback detected in Auth page...');
-        
-        // Extract all tokens from hash
-        const params = new URLSearchParams(hash.substring(1));
-        const accessToken = params.get('access_token');
-        const providerToken = params.get('provider_token');
-        const refreshToken = params.get('refresh_token');
-        const expiresAt = params.get('expires_at');
-        
-        console.log('🔑 Tokens found:', {
-          accessToken: accessToken ? 'Yes' : 'No',
-          providerToken: providerToken ? 'Yes' : 'No',
-          refreshToken: refreshToken ? 'Yes' : 'No'
-        });
-        
-        if (accessToken && providerToken) {
-          try {
-            // Use access token directly to get user info
-            const { data: { user }, error: userError } = await supabase.auth.getUser(accessToken);
+      // Extract tokens immediately from hash before Supabase processes it
+      const params = new URLSearchParams(hash.substring(1));
+      tokenData.current = {
+        providerToken: params.get('provider_token'),
+        refreshToken: params.get('provider_refresh_token'),
+        expiresAt: params.get('expires_at'),
+      };
+      
+      console.log('🔑 Tokens extracted:', {
+        hasProviderToken: !!tokenData.current.providerToken,
+        hasRefreshToken: !!tokenData.current.refreshToken
+      });
+      
+      // Don't clean URL yet - let Supabase SDK process the hash first
+      // It will automatically trigger onAuthStateChange
+    }
+    
+    // Check for existing session first (only if not OAuth callback)
+    if (!isOAuthCallback) {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session && !hasRedirected.current) {
+          console.log("✅ Existing session found, redirecting to dashboard");
+          hasRedirected.current = true;
+          navigate("/dashboard", { replace: true });
+        }
+      });
+    } else {
+      // For OAuth callback, wait a bit then check if session was established
+      // This is a fallback in case onAuthStateChange doesn't fire
+      setTimeout(async () => {
+        if (!hasRedirected.current) {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user) {
+            console.log("✅ Fallback: Session found after OAuth callback");
             
-            if (userError) {
-              console.error('❌ Error getting user with access token:', userError);
-            } else if (user) {
-              console.log('✅ User authenticated:', user.id);
-              
-              // Save to database directly
+            // Save tokens
+            if (tokenData.current.providerToken && session.user) {
+              try {
+                await supabase.from('user_oauth_tokens').upsert({
+                  user_id: session.user.id,
+                  provider: 'google',
+                  access_token: tokenData.current.providerToken,
+                  refresh_token: tokenData.current.refreshToken || null,
+                  expires_at: tokenData.current.expiresAt 
+                    ? new Date(parseInt(tokenData.current.expiresAt) * 1000).toISOString() 
+                    : new Date(Date.now() + 3600 * 1000).toISOString(),
+                  scopes: ['https://www.googleapis.com/auth/webmasters.readonly'],
+                  updated_at: new Date().toISOString(),
+                }, {
+                  onConflict: 'user_id,provider',
+                  ignoreDuplicates: false
+                });
+                console.log('✅ OAuth tokens saved (fallback)');
+              } catch (err) {
+                console.error('Error saving token (fallback):', err);
+              }
+            }
+            
+            trackSignup();
+            setIsProcessingAuth(false);
+            hasRedirected.current = true;
+            window.history.replaceState({}, '', window.location.pathname);
+            navigate("/dashboard", { replace: true });
+          }
+        }
+      }, 2000);
+    }
+
+    // Listen for auth state changes
+    // Supabase automatically processes tokens from hash and triggers events
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("📡 Auth state changed:", event, session ? `User: ${session.user?.id}` : "No session");
+      
+      if ((event === "SIGNED_IN" || event === "TOKEN_REFRESHED" || event === "INITIAL_SESSION") && session?.user) {
+        if (!hasRedirected.current) {
+          console.log("✅ User authenticated:", session.user.id);
+          
+          // Save OAuth tokens if we extracted them
+          if (tokenData.current.providerToken && session.user) {
+            try {
+              console.log('💾 Saving OAuth tokens to database...');
               const { error } = await supabase.from('user_oauth_tokens').upsert({
-                user_id: user.id,
+                user_id: session.user.id,
                 provider: 'google',
-                access_token: providerToken,
-                refresh_token: refreshToken,
-                expires_at: expiresAt ? new Date(parseInt(expiresAt) * 1000).toISOString() : new Date(Date.now() + 3600 * 1000).toISOString(),
+                access_token: tokenData.current.providerToken,
+                refresh_token: tokenData.current.refreshToken || null,
+                expires_at: tokenData.current.expiresAt 
+                  ? new Date(parseInt(tokenData.current.expiresAt) * 1000).toISOString() 
+                  : new Date(Date.now() + 3600 * 1000).toISOString(),
                 scopes: ['https://www.googleapis.com/auth/webmasters.readonly'],
                 updated_at: new Date().toISOString(),
               }, {
@@ -59,56 +140,33 @@ const Auth = () => {
               
               if (error) {
                 console.error('❌ Failed to save token:', error);
-                console.error('Error details:', JSON.stringify(error, null, 2));
               } else {
                 console.log('✅ OAuth token saved successfully!');
               }
+            } catch (err) {
+              console.error('❌ Error saving OAuth token:', err);
             }
-          } catch (err) {
-            console.error('❌ Error processing OAuth:', err);
           }
-        }
-        
-        // Clean up URL and redirect
-        window.history.replaceState({}, '', '/auth');
-        setTimeout(() => {
-          navigate("/dashboard", { replace: true });
-        }, 500);
-        return;
-      }
-    };
-
-    handleOAuthCallback();
-    
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        console.log("Session found, redirecting to dashboard");
-        navigate("/dashboard", { replace: true });
-      }
-    });
-
-    // Listen for auth state changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state changed:", event, session ? "Session exists" : "No session");
-      
-      if (event === "SIGNED_IN" && session) {
-        console.log("User signed in");
-        
-        // Track signup in Google Analytics
-        trackSignup();
-        
-        console.log("Redirecting to dashboard");
-        navigate("/dashboard", { replace: true });
-      }
-      
-      // Handle OAuth callback with tokens in URL hash
-      if (event === "TOKEN_REFRESHED" || event === "INITIAL_SESSION") {
-        if (session) {
-          console.log("Session established, redirecting to dashboard");
-          navigate("/dashboard", { replace: true });
+          
+          // Track signup
+          if (event === "SIGNED_IN") {
+            trackSignup();
+          }
+          
+          hasRedirected.current = true;
+          
+          // Clean up URL hash after processing
+          if (window.location.hash) {
+            window.history.replaceState({}, '', window.location.pathname);
+          }
+          
+          setIsProcessingAuth(false);
+          console.log('🚀 Redirecting to dashboard...');
+          
+          // Small delay to ensure everything is saved
+          setTimeout(() => {
+            navigate("/dashboard", { replace: true });
+          }, 300);
         }
       }
     });
@@ -163,6 +221,20 @@ const Auth = () => {
 
       {/* Main Content */}
       <div className="relative z-10 flex items-center justify-center p-4 min-h-[calc(100vh-88px)]">
+        {/* Loading overlay for OAuth processing */}
+        {isProcessingAuth && (
+          <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
+            <Card className="p-8 max-w-md">
+              <div className="flex flex-col items-center gap-4">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                <h3 className="text-lg font-semibold">Completing sign-in...</h3>
+                <p className="text-sm text-muted-foreground text-center">
+                  Please wait while we set up your account and redirect you to the dashboard.
+                </p>
+              </div>
+            </Card>
+          </div>
+        )}
         <div className="w-full max-w-6xl grid lg:grid-cols-2 gap-12 items-center">
           {/* Left Side - Marketing */}
           <div className="space-y-8">

@@ -38,9 +38,10 @@ const MetricsOverview = ({ propertyUrl, startDate, endDate }: MetricsOverviewPro
     try {
       setIsLoading(true);
       
+      // Verify user is authenticated
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.provider_token) {
-        toast.error("No Google access token. Please sign out and sign in again.");
+      if (!session) {
+        toast.error("Please sign in to view data");
         return;
       }
 
@@ -52,9 +53,9 @@ const MetricsOverview = ({ propertyUrl, startDate, endDate }: MetricsOverviewPro
       const prevStart = new Date(prevEnd.getTime() - duration);
 
       // Fetch current period
+      // gsc-query will get provider_token from database using Authorization header
       const { data, error } = await supabase.functions.invoke("gsc-query", {
         body: {
-          provider_token: session.provider_token,
           siteUrl: propertyUrl,
           startDate,
           endDate,
@@ -62,12 +63,23 @@ const MetricsOverview = ({ propertyUrl, startDate, endDate }: MetricsOverviewPro
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("GSC query error:", error);
+        console.error("Error data:", data);
+        console.error("Full error response:", error);
+        throw error;
+      }
 
-      // Fetch previous period
-      const { data: prevData } = await supabase.functions.invoke("gsc-query", {
+      // Check if the response contains an error even if request succeeded
+      if (data?.error) {
+        console.error("GSC API error:", data.error);
+        console.error("Full error data:", data);
+        throw new Error(data.error);
+      }
+
+      // Fetch previous period for comparison
+      const { data: prevData, error: prevError } = await supabase.functions.invoke("gsc-query", {
         body: {
-          provider_token: session.provider_token,
           siteUrl: propertyUrl,
           startDate: prevStart.toISOString().split("T")[0],
           endDate: prevEnd.toISOString().split("T")[0],
@@ -75,10 +87,14 @@ const MetricsOverview = ({ propertyUrl, startDate, endDate }: MetricsOverviewPro
         },
       });
 
-      if (data?.rows) {
+      if (prevError) {
+        console.warn("Previous period query error:", prevError);
+      }
+
+      if (data?.rows && data.rows.length > 0) {
         const totalClicks = data.rows.reduce((sum: number, row: any) => sum + row.clicks, 0);
         const totalImpressions = data.rows.reduce((sum: number, row: any) => sum + row.impressions, 0);
-        const avgCtr = (totalClicks / totalImpressions) * 100;
+        const avgCtr = totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : 0;
         const avgPosition = data.rows.reduce((sum: number, row: any) => sum + row.position, 0) / data.rows.length;
 
         // Calculate previous period metrics
@@ -115,13 +131,19 @@ const MetricsOverview = ({ propertyUrl, startDate, endDate }: MetricsOverviewPro
             trend: positionChange < 0 ? "up" : positionChange > 0 ? "down" : "neutral" // Lower position is better
           },
         });
+      } else {
+        console.warn("No data rows returned from GSC query");
+        toast.warning("No data available for the selected date range");
       }
     } catch (error) {
       console.error("Error fetching metrics:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to fetch metrics";
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
+
 
   const metricCards = [
     {
@@ -176,30 +198,30 @@ const MetricsOverview = ({ propertyUrl, startDate, endDate }: MetricsOverviewPro
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      {metricCards.map((metric) => {
-        const Icon = metric.icon;
-        const TrendIcon = metric.data.trend === "up" ? TrendingUp : TrendingDown;
-        
-        return (
-          <Card key={metric.title} className="p-6 border shadow-soft hover:shadow-medium transition-all">
-            <div className="flex items-center justify-between mb-4">
-              <div className={`h-10 w-10 rounded-lg ${metric.bgColor} flex items-center justify-center`}>
-                <Icon className={`h-5 w-5 ${metric.color}`} />
+        {metricCards.map((metric) => {
+          const Icon = metric.icon;
+          const TrendIcon = metric.data.trend === "up" ? TrendingUp : TrendingDown;
+
+          return (
+            <Card key={metric.title} className="p-6 border shadow-soft hover:shadow-medium transition-all">
+              <div className="flex items-center justify-between mb-4">
+                <div className={`h-10 w-10 rounded-lg ${metric.bgColor} flex items-center justify-center`}>
+                  <Icon className={`h-5 w-5 ${metric.color}`} />
+                </div>
+                <div className={`flex items-center gap-1 text-sm ${
+                  metric.data.trend === "up" ? "text-success" : "text-destructive"
+                }`}>
+                  <TrendIcon className="h-4 w-4" />
+                  <span>{Math.abs(metric.data.change)}%</span>
+                </div>
               </div>
-              <div className={`flex items-center gap-1 text-sm ${
-                metric.data.trend === "up" ? "text-success" : "text-destructive"
-              }`}>
-                <TrendIcon className="h-4 w-4" />
-                <span>{Math.abs(metric.data.change)}%</span>
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">{metric.title}</p>
+                <p className="text-2xl font-bold">{metric.format(metric.data.value)}</p>
               </div>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">{metric.title}</p>
-              <p className="text-2xl font-bold">{metric.format(metric.data.value)}</p>
-            </div>
-          </Card>
-        );
-      })}
+            </Card>
+          );
+        })}
     </div>
   );
 };

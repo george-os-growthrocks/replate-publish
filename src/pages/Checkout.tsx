@@ -54,6 +54,9 @@ const Checkout = () => {
 
         console.log('Calling stripe-checkout with planName:', planName, 'billingCycle:', billingCycle);
 
+        // Add a small delay to ensure function deployment is ready
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
         const response = await fetch(`${supabaseUrl}/functions/v1/stripe-checkout`, {
           method: 'POST',
           headers: {
@@ -66,6 +69,7 @@ const Checkout = () => {
 
         if (!response.ok) {
           const errorData = await response.json();
+          console.error('Stripe Checkout Error:', errorData);
           throw new Error(errorData.error || 'Failed to create checkout session');
         }
 

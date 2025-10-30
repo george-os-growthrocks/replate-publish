@@ -146,54 +146,43 @@ export function useCreateCheckout() {
     mutationFn: async ({ planName, billingCycle }: { planName: string; billingCycle: 'monthly' | 'yearly' }) => {
       console.log('🚀 Creating checkout for:', planName, billingCycle);
       
-      // Make direct fetch call to get better error details
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      // Verify user is authenticated first
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
-      const { data: { session } } = await supabase.auth.getSession();
+      if (sessionError || !session) {
+        console.error('❌ No active session:', sessionError);
+        throw new Error('Please sign in to continue. Redirecting to sign in page...');
+      }
       
-      const url = `${supabaseUrl}/functions/v1/stripe-checkout`;
-      const headers = {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session?.access_token || supabaseAnonKey}`,
-        'apikey': supabaseAnonKey,
-      };
+      console.log('✅ User session verified:', session.user.id);
       
-      console.log('📤 Making request to:', url);
-      console.log('📤 With body:', { planName, billingCycle });
-      
-      const fetchResponse = await fetch(url, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ planName, billingCycle }),
+      // Use Supabase client's invoke method which handles auth automatically
+      const { data, error } = await supabase.functions.invoke('create-checkout-session', {
+        body: { 
+          planName, 
+          billingCycle
+        }
       });
 
-      console.log('📦 Response status:', fetchResponse.status, fetchResponse.statusText);
-      
-      const responseData = await fetchResponse.json();
-      console.log('📦 Response data:', responseData);
-
-      // Check for errors
-      if (!fetchResponse.ok) {
-        const errorMessage = responseData?.error || `HTTP ${fetchResponse.status}: ${fetchResponse.statusText}`;
-        console.error('❌ Edge function error:', errorMessage);
-        throw new Error(errorMessage);
+      if (error) {
+        console.error('❌ Edge function error:', error);
+        throw new Error(error.message || 'Failed to create checkout session');
       }
       
       // Check for application errors in the response data
-      if (responseData?.error) {
-        console.error('❌ Function returned error:', responseData.error);
-        throw new Error(responseData.error);
+      if (data?.error) {
+        console.error('❌ Function returned error:', data.error);
+        throw new Error(data.error);
       }
       
       // Check for missing URL
-      if (!responseData?.url) {
-        console.error('❌ No URL in response. Full data:', JSON.stringify(responseData));
-        throw new Error(`No checkout URL received. Response: ${JSON.stringify(responseData)}`);
+      if (!data?.url) {
+        console.error('❌ No URL in response. Full data:', JSON.stringify(data));
+        throw new Error(`No checkout URL received. Response: ${JSON.stringify(data)}`);
       }
 
-      console.log('✅ Checkout URL received:', responseData.url);
-      return responseData.url;
+      console.log('✅ Checkout URL received:', data.url);
+      return data.url;
     },
     onSuccess: (url) => {
       console.log('✅ Redirecting to checkout:', url);
@@ -203,7 +192,16 @@ export function useCreateCheckout() {
     onError: (error) => {
       console.error('❌ Checkout error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to create checkout session';
-      toast.error(errorMessage);
+      
+      // If not authenticated, redirect to auth page
+      if (errorMessage.includes('authenticated') || errorMessage.includes('sign in')) {
+        toast.error('Please sign in to upgrade your plan');
+        setTimeout(() => {
+          window.location.href = '/auth';
+        }, 1500);
+      } else {
+        toast.error(errorMessage);
+      }
     },
   });
 }

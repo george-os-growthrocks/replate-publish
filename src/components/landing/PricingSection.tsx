@@ -1,234 +1,157 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { Check, Zap, Crown, Rocket, Loader2, Sparkles, CheckCircle2 } from "lucide-react";
+import { Check, Zap, Crown, Rocket, Sparkles, CheckCircle, 
+  ArrowRight, ArrowUpRight, Play, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useCreateCheckout, useSubscription } from "@/hooks/useSubscription";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { Database } from "@/integrations/supabase/types";
-import { UserSubscription, SubscriptionPlan as HookSubscriptionPlan } from "@/hooks/useSubscription";
-import { getFeaturesForPlan, type PlanName } from "@/lib/feature-access";
 
 type SubscriptionPlan = Database['public']['Tables']['subscription_plans']['Row'];
-type Json = Database['public']['Tables']['subscription_plans']['Row']['features'];
 
-const iconMap = {
-  'Starter': Zap,
-  'Pro': Crown,
-  'Professional': Crown,
-  'Agency': Rocket,
-  'Enterprise': Rocket
-};
-
-const getPlanIcon = (planName: string) => {
-  return iconMap[planName as keyof typeof iconMap] || Rocket;
-};
-
-const formatFeatures = (features: Json | string[], planName: string, credits: number, maxProjects: number) => {
-  // Convert Json or string array to string array safely
-  let featureList: string[] = [];
-  
-  if (Array.isArray(features)) {
-    // Handle both string[] and Json (which might be stored as string array)
-    if (features.every(item => typeof item === 'string')) {
-      featureList = [...features as string[]];
+const planFeatures = {
+  Launch: {
+    icon: Zap,
+    color: "from-blue-500 to-cyan-500",
+    highlight: "Perfect for Freelancers",
+    description: "Essential SEO tools to get started",
+    price: { monthly: 29, yearly: 290 },
+    features: [
+      "Keyword Research & Ideas (50M+ database)",
+      "Autocomplete Expansions",
+      "PAA / Answer The Public",
+      "Keyword Clustering (AI-powered)",
+      "SERP Overview (top 10 analysis)",
+      "Rank Tracking (250 keywords/day)",
+      "Meta Generator (titles & descriptions)",
+      "Lite Tech Audit (1k URLs per crawl)",
+      "Sample CWV (up to 50 URLs/mo)",
+      "Schema Validator",
+      "AI Overview Checker (Basic)",
+    ],
+    limits: {
+      projects: 3,
+      credits: "1,200",
+      keywords: "250/day",
+      crawl: "10k URLs/mo",
+      reports: 5
+    }
+  },
+  Growth: {
+    icon: Crown,
+    color: "from-purple-500 to-pink-500",
+    highlight: "Most Popular",
+    description: "Everything freelancers need + team collaboration",
+    price: { monthly: 79, yearly: 790 },
+    features: [
+      "Everything in Launch",
+      "AI Content Briefs",
+      "SERP Similarity Analysis",
+      "Competitor Analysis",
+      "Content Gap Discovery",
+      "Backlink Lookups",
+      "Local SEO Audit (light)",
+      "Bulk URL Analyzer",
+      "Scheduled Reports",
+      "Priority Chat Support",
+    ],
+    limits: {
+      seats: 3,
+      projects: 10,
+      credits: "6,000",
+      keywords: "1,250/day",
+      crawl: "100k URLs/mo",
+      reports: 20
+    }
+  },
+  Agency: {
+    icon: Rocket,
+    color: "from-orange-500 to-red-500",
+    highlight: "For Agencies",
+    description: "Scale your agency with automation & white-label",
+    price: { monthly: 149, yearly: 1490 },
+    features: [
+      "Everything in Growth",
+      "White-Label Reports",
+      "API Access (read)",
+      "Competitor Monitoring (automated)",
+      "Backlink Monitoring (continuous)",
+      "AI Overview Optimization",
+      "Citation Optimization",
+      "Workflow Automations",
+      "Priority Support",
+    ],
+    limits: {
+      seats: 10,
+      projects: 30,
+      credits: "20,000",
+      keywords: "5,000/day",
+      crawl: "400k URLs/mo",
+      reports: 60
+    }
+  },
+  Scale: {
+    icon: Sparkles,
+    color: "from-indigo-500 to-purple-500",
+    highlight: "Enterprise",
+    description: "Custom solutions for large organizations",
+    price: { monthly: 399, yearly: 3990 },
+    features: [
+      "Everything in Agency",
+      "SSO/SAML Integration",
+      "Custom Limits (contracted)",
+      "Private Data Retention",
+      "SLAs & DPAs",
+      "Audit Logs",
+      "Dedicated Customer Success Manager",
+      "Custom Connectors",
+    ],
+    limits: {
+      seats: "Custom",
+      projects: "Custom",
+      credits: "Custom",
+      keywords: "Custom",
+      crawl: "Custom",
+      reports: "Custom"
     }
   }
-  
-  // Add dynamic features based on plan data
-  if (credits > 0) {
-    featureList.unshift(`${credits.toLocaleString()} credits/month`);
-  }
-  if (maxProjects > 0) {
-    featureList.unshift(`${maxProjects} SEO projects`);
-  }
-  
-  return featureList;
 };
 
-// Helper to generate feature list from feature-access system
-const getFeatureListForPlan = (planName: string): string[] => {
-  const planMap: Record<string, PlanName> = {
-    'Starter': 'Starter',
-    'Professional': 'Pro',
-    'Pro': 'Pro',
-    'Agency': 'Agency',
-    'Enterprise': 'Enterprise',
-  };
-  
-  const plan = planMap[planName] || 'Starter';
-  const features = getFeaturesForPlan(plan);
-  
-  // Group by category
-  const byCategory = features.reduce((acc, f) => {
-    if (!acc[f.category]) acc[f.category] = [];
-    acc[f.category].push(f.name);
-    return acc;
-  }, {} as Record<string, string[]>);
-  
-  const featureList: string[] = [];
-  
-  // Add category headers and features
-  Object.entries(byCategory).forEach(([category, items]) => {
-    featureList.push(...items);
-  });
-  
-  return featureList;
-};
-
-// Fallback plans in case database fails
-const fallbackPlans: SubscriptionPlan[] = [
+// Fallback plans
+const fallbackPlans: Partial<SubscriptionPlan>[] = [
   {
-    id: 'starter-fallback',
-    name: 'Starter',
-    stripe_product_id: null,
-    stripe_price_id: null,
+    id: 'launch',
+    name: 'Launch',
     price_monthly: 29,
     price_yearly: 290,
-    features: [
-      'Keyword Research',
-      'Keyword Autocomplete',
-      'Keyword Clustering',
-      'Answer The Public',
-      'People Also Ask Extractor',
-      'SERP Analysis',
-      'Rank Tracking',
-      'Content Repurposing',
-      'Meta Description Generator',
-      'Technical SEO Audit',
-      'Site Crawler',
-      'Core Web Vitals Checker',
-      'Schema Validator',
-      'AI Overview Checker',
-      '7-Day Free Trial'
-    ] as unknown as Json,
-    limits: { max_keywords: 500, max_reports: 50 },
-    is_active: true,
-    sort_order: 2,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    stripe_price_id_monthly: 'price_starter_monthly',
-    stripe_price_id_yearly: 'price_starter_yearly',
-    credits_per_month: 500,
+    credits_per_month: 1200,
     max_projects: 3,
-    max_team_members: 1,
-    has_ai_tools: false,
-    has_api_access: false,
-    has_team_features: false,
-    has_white_label: false,
-    has_unlimited_credits: false
   },
   {
-    id: 'professional-fallback',
-    name: 'Pro',
-    stripe_product_id: null,
-    stripe_price_id: null,
+    id: 'growth',
+    name: 'Growth',
     price_monthly: 79,
     price_yearly: 790,
-    features: [
-      'Everything in Starter',
-      'AI Content Briefs',
-      'ChatGPT Citation Optimization',
-      'SERP Similarity Analysis',
-      'Competitor Analysis',
-      'Backlink Analysis',
-      'Content Gap Analysis',
-      'Competitor Monitoring',
-      'Local SEO Audit',
-      'AI Overview Optimization',
-      'Citation Optimization',
-      'Bulk URL Analyzer',
-      'Priority Support',
-      '7-Day Free Trial'
-    ] as unknown as Json,
-    limits: { max_keywords: 2000, max_reports: 500 },
-    is_active: true,
-    sort_order: 3,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    stripe_price_id_monthly: 'price_pro_monthly',
-    stripe_price_id_yearly: 'price_pro_yearly',
-    credits_per_month: 2000,
+    credits_per_month: 6000,
     max_projects: 10,
-    max_team_members: 5,
-    has_ai_tools: true,
-    has_api_access: false,
-    has_team_features: false,
-    has_white_label: true,
-    has_unlimited_credits: false
   },
   {
-    id: 'agency-fallback',
+    id: 'agency',
     name: 'Agency',
-    stripe_product_id: null,
-    stripe_price_id: null,
     price_monthly: 149,
     price_yearly: 1490,
-    features: [
-      'Everything in Pro',
-      'Automated Reports',
-      'White-Label Reports',
-      'API Access',
-      '20 Team Members',
-      'Priority Phone Support',
-      'Dedicated Account Manager',
-      '7-Day Free Trial'
-    ] as unknown as Json,
-    limits: { max_keywords: 10000, max_reports: -1 },
-    is_active: true,
-    sort_order: 4,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    stripe_price_id_monthly: 'price_agency_monthly',
-    stripe_price_id_yearly: 'price_agency_yearly',
-    credits_per_month: 5000,
-    max_projects: 50,
-    max_team_members: 20,
-    has_ai_tools: true,
-    has_api_access: true,
-    has_team_features: true,
-    has_white_label: true,
-    has_unlimited_credits: true
+    credits_per_month: 20000,
+    max_projects: 30,
   },
   {
-    id: 'enterprise-fallback',
-    name: 'Enterprise',
-    stripe_product_id: null,
-    stripe_price_id: null,
-    price_monthly: 299,
-    price_yearly: 2990,
-    features: [
-      'Everything in Agency',
-      'Unlimited Credits',
-      'Unlimited Projects',
-      'Unlimited Team Members',
-      'Custom Integrations',
-      'SLA Guarantee',
-      'Custom Contracts',
-      'White-glove Support',
-      'Priority Development',
-      'Custom Training',
-      'Dedicated Success Manager',
-      '7-Day Free Trial'
-    ] as unknown as Json,
-    limits: { max_keywords: -1, max_reports: -1 },
-    is_active: true,
-    sort_order: 5,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    stripe_price_id_monthly: 'price_enterprise_monthly',
-    stripe_price_id_yearly: 'price_enterprise_yearly',
-    credits_per_month: 999999,
-    max_projects: 100,
-    max_team_members: 50,
-    has_ai_tools: true,
-    has_api_access: true,
-    has_team_features: true,
-    has_white_label: true,
-    has_unlimited_credits: true
+    id: 'scale',
+    name: 'Scale',
+    price_monthly: 399,
+    price_yearly: 3990,
+    credits_per_month: 0,
+    max_projects: 999,
   }
 ];
 
@@ -237,286 +160,285 @@ export function PricingSection() {
   const { mutate: createCheckout, isPending: isCreatingCheckout } = useCreateCheckout();
   const { data: subscription } = useSubscription();
 
-
-  // Use fallback plans directly (database API is not working)
-  const plans = fallbackPlans;
-  const isLoading = false;
-  const error = null;
-  const refetch = () => window.location.reload();
+  const plans = fallbackPlans as SubscriptionPlan[];
 
   const handleSelectPlan = (planName: string) => {
-    // Store plan selection for future use (after Google sign-in, trial will be assigned)
-    localStorage.setItem('selected_plan', planName);
-    localStorage.setItem('selected_billing', billingCycle);
-    
-    // Always redirect to Google sign-in for trial (trial is assigned automatically on first sign-in)
-    // The handle_new_user trigger will assign the Starter plan with 7-day trial
-    window.location.href = '/auth';
+    if (planName === 'Scale') {
+      window.location.href = '/contact';
+      return;
+    }
+
+    // For authenticated users, create checkout
+    if (subscription) {
+      createCheckout(
+        { planName, billingCycle },
+        {
+          onSuccess: () => {
+            // Redirect handled in useCreateCheckout
+          },
+          onError: () => {
+            // Error handled in useCreateCheckout
+          }
+        }
+      );
+    } else {
+      // For non-authenticated users, redirect to auth
+      localStorage.setItem('selected_plan', planName);
+      localStorage.setItem('selected_billing', billingCycle);
+      window.location.href = '/auth';
+    }
   };
 
-  const calculateSavings = (monthly: number, yearly: number | null) => {
-    if (!yearly) return '';
-    const yearlyMonthly = yearly / 10; // 10 months paid
+  const calculateSavings = (monthly: number, yearly: number) => {
     const savings = ((monthly * 12 - yearly) / (monthly * 12) * 100).toFixed(0);
-    return `Save ${savings}% (2 months free)`;
+    return savings;
   };
 
   return (
-    <section id="pricing">
-      {/* Hero Section */}
-      <div className="py-16 px-4 bg-gradient-to-br from-primary/5 via-background to-secondary/5">
-        <div className="container mx-auto max-w-5xl text-center">
-          <Badge className="mb-4" variant="secondary">
-            <Sparkles className="w-3 h-3 mr-1" />
+    <section id="pricing" className="relative overflow-hidden py-24 px-4">
+      {/* Animated Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-secondary/10" />
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-[120px] animate-pulse" />
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-secondary/20 rounded-full blur-[120px] animate-pulse delay-1000" />
+      
+      <div className="container mx-auto relative z-10">
+        {/* Hero Section */}
+        <div className="max-w-5xl mx-auto text-center mb-16">
+          <Badge className="mb-6 px-4 py-1.5 text-sm bg-gradient-to-r from-primary to-secondary text-white border-0">
+            <Sparkles className="w-3 h-3 mr-2" />
             7-Day Free Trial on All Plans
           </Badge>
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 text-foreground">
+          
+          <h2 className="text-4xl md:text-6xl font-bold mb-6 text-foreground leading-tight">
             Simple, Transparent
-            <span className="block bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            <span className="block bg-gradient-to-r from-primary via-purple-500 to-secondary bg-clip-text text-transparent">
               Pricing for Everyone
             </span>
-          </h1>
-          <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
+          </h2>
+          
+          <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
             Choose the perfect plan for your business. Scale as you grow with flexible pricing and powerful features.
           </p>
           
-          <div className="flex items-center justify-center gap-6 text-sm mb-8">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-green-500" />
-              <span>7-Day Free Trial</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-green-500" />
-              <span>Cancel Anytime</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-green-500" />
-              <span>No Setup Fees</span>
-            </div>
-          </div>
-
           {/* Billing Toggle */}
-          <div className="flex items-center justify-center gap-3">
-            <span className={`text-sm font-medium ${billingCycle === 'monthly' ? 'text-foreground' : 'text-muted-foreground'}`}>
+          <div className="flex items-center justify-center gap-4 mb-8">
+            <span className={`text-lg font-medium transition-colors ${billingCycle === 'monthly' ? 'text-foreground' : 'text-muted-foreground'}`}>
               Monthly
             </span>
             <Switch
               checked={billingCycle === 'yearly'}
               onCheckedChange={(checked) => setBillingCycle(checked ? 'yearly' : 'monthly')}
+              className="scale-125"
             />
-            <span className={`text-sm font-medium ${billingCycle === 'yearly' ? 'text-foreground' : 'text-muted-foreground'}`}>
+            <span className={`text-lg font-medium transition-colors ${billingCycle === 'yearly' ? 'text-foreground' : 'text-muted-foreground'}`}>
               Yearly
             </span>
-            <Badge variant="secondary" className="ml-2">Save 17%</Badge>
+            {billingCycle === 'yearly' && (
+              <Badge variant="secondary" className="ml-2 bg-green-500/20 text-green-600 dark:text-green-400 border-green-500/30">
+                Save 17%
+              </Badge>
+            )}
           </div>
-        </div>
-      </div>
-
-      {/* Pricing Content */}
-      <div className="py-12 bg-muted/30">
-        <div className="container mx-auto px-4">
-
-        {/* Free Plan Banner */}
-        <div className="max-w-4xl mx-auto mb-12">
-          <div className="relative p-6 md:p-8 rounded-2xl border-2 border-primary/20 bg-gradient-to-r from-primary/5 to-secondary/5 backdrop-blur">
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-primary to-secondary text-white text-sm font-semibold">
-              🎉 Free Forever Plan
+          
+          {/* Trust Badges */}
+          <div className="flex flex-wrap items-center justify-center gap-6 text-sm">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <CheckCircle className="w-4 h-4 text-success" />
+              <span>No credit card required</span>
             </div>
-            <div className="text-center mb-6 mt-2">
-              <h3 className="text-2xl font-bold text-foreground mb-2">Start Free - No Credit Card Required</h3>
-              <p className="text-muted-foreground">Get started with our free plan and upgrade when you're ready</p>
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <CheckCircle className="w-4 h-4 text-success" />
+              <span>Cancel anytime</span>
             </div>
-            <div className="grid md:grid-cols-3 gap-4 mb-6">
-              <div className="flex items-start gap-2">
-                <Check className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
-                <span className="text-sm text-foreground">5 Essential SEO Tools</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <Check className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
-                <span className="text-sm text-foreground">100 Credits One-time</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <Check className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
-                <span className="text-sm text-foreground">1 SEO Project</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <Check className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
-                <span className="text-sm text-foreground">Basic Keyword Research</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <Check className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
-                <span className="text-sm text-foreground">Community Support</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <Check className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
-                <span className="text-sm text-foreground">100 Keyword Tracking</span>
-              </div>
-            </div>
-            <div className="flex justify-center">
-              <Link to="/auth">
-                <Button size="lg" className="gradient-primary shadow-lg">
-                  Sign In with Google - Start 7-Day Trial
-                </Button>
-              </Link>
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <CheckCircle className="w-4 h-4 text-success" />
+              <span>Full feature access</span>
             </div>
           </div>
         </div>
 
-        {isLoading ? (
-          <div className="text-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-primary" />
-            <p className="text-lg font-medium text-foreground mb-2">Loading pricing plans...</p>
-            <p className="text-sm text-muted-foreground">Please wait while we fetch the latest pricing information.</p>
-            <Button 
-              onClick={() => refetch()} 
-              className="mt-4"
-              variant="outline"
-              size="sm"
-            >
-              Refresh
-            </Button>
-          </div>
-        ) : error ? (
-          <div className="text-center py-12">
-            <p className="text-lg font-medium text-destructive mb-2">Unable to load pricing plans</p>
-            <p className="text-sm text-muted-foreground mb-4">
-              {error instanceof Error ? error.message : 'Please try again later.'}
-            </p>
-            <Button 
-              onClick={() => refetch()} 
-              className="mt-2"
-              variant="outline"
-              size="sm"
-            >
-              Try Again
-            </Button>
-          </div>
-        ) : plans.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-lg font-medium text-foreground mb-2">No pricing plans available</p>
-            <p className="text-sm text-muted-foreground mb-4">
-              Please contact support for assistance.
-            </p>
-            <Button 
-              onClick={() => refetch()} 
-              className="mt-2"
-              variant="outline"
-              size="sm"
-            >
-              Reload
-            </Button>
-          </div>
-        ) : (
-          <div className="grid lg:grid-cols-4 md:grid-cols-2 gap-6 max-w-7xl mx-auto">
-          {plans.map((plan, index) => {
-            const Icon = getPlanIcon(plan.name);
-            const price = billingCycle === 'yearly' ? plan.price_yearly || 0 : plan.price_monthly;
-            const displayPrice = billingCycle === 'yearly' ? Math.round((plan.price_yearly || 0) / 10) : plan.price_monthly;
-            const currentPlanData = subscription?.plan as HookSubscriptionPlan | undefined;
-            const isCurrentPlan = currentPlanData?.name === plan.name;
-            const features = formatFeatures(
-              plan.features, 
-              plan.name, 
-              plan.credits_per_month || 0, 
-              plan.max_projects || 0
-            );
-            const isPopular = plan.name === 'Professional' || plan.name === 'Pro';
-
-            return (
-              <div
-                key={index}
-                className={`relative p-6 rounded-2xl border transition-all duration-300 ${
-                  isPopular
-                    ? "border-primary bg-gradient-to-br from-primary/5 to-secondary/5 shadow-xl lg:scale-105"
-                    : "border-border bg-card hover:border-primary/50 hover:shadow-lg"
-                }`}
-              >
-                {isPopular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-gradient-to-r from-primary to-secondary text-white text-xs font-semibold shadow-lg">
-                    <Sparkles className="w-3 h-3 inline mr-1" />
-                    Most Popular
-                  </div>
-                )}
-
-                <div className="text-center mb-4">
-                  <div className="inline-flex p-2 rounded-xl bg-primary/10 mb-3">
-                    <Icon className="w-6 h-6 text-primary" />
-                  </div>
-                  <h3 className="text-xl font-bold mb-1 text-foreground">{plan.name}</h3>
-                  <p className="text-xs text-muted-foreground mb-3">
-                    {plan.name === 'Starter' && 'Perfect for freelancers and small businesses'}
-                    {(plan.name === 'Professional' || plan.name === 'Pro') && 'For growing agencies and businesses'}
-                    {plan.name === 'Agency' && 'For large agencies managing multiple clients'}
-                    {plan.name === 'Enterprise' && 'For large enterprises with custom needs'}
-                  </p>
-                  
-                  <div className="mb-2">
-                    <div className="flex items-baseline justify-center">
-                      <span className="text-4xl font-bold text-foreground">${displayPrice}</span>
-                      <span className="text-muted-foreground ml-1 text-sm">/mo</span>
-                    </div>
-                    {billingCycle === 'yearly' && plan.price_yearly && (
-                      <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-                        {calculateSavings(plan.price_monthly, plan.price_yearly)}
-                      </p>
-                    )}
-                  </div>
-                  
-                  <Badge variant="outline" className="text-xs">
-                    {plan.max_team_members > 1 && `${plan.max_team_members} team • `}
-                    7-Day Free Trial
-                  </Badge>
-                </div>
-
-                <ul className="space-y-2 mb-6">
-                  {features.map((feature, i) => (
-                    <li key={i} className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
-                      <span className="text-xs text-foreground">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <Button
-                  onClick={() => {
-                    if (plan.name === "Enterprise" || plan.name === "Agency") {
-                      window.location.href = "/contact";
-                    } else {
-                      handleSelectPlan(plan.name);
-                    }
-                  }}
-                  disabled={isCreatingCheckout || isCurrentPlan || isLoading}
-                  className={`w-full ${isPopular ? "gradient-primary shadow-lg" : ""}`}
-                  variant={isPopular ? "default" : "outline"}
-                >
-                  {isCreatingCheckout ? (
-                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Processing...</>
-                  ) : isCurrentPlan ? (
-                    "Current Plan"
-                  ) : (
-                    "Start Free Trial"
-                  )}
-                </Button>
+        {/* Pricing Cards */}
+        <div className="max-w-7xl mx-auto mb-12">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {plans
+              .filter(plan => plan.name !== 'Free')
+              .map((plan) => {
+                const planConfig = planFeatures[plan.name as keyof typeof planFeatures];
+                if (!planConfig) return null;
                 
-                {isCurrentPlan && (
-                  <p className="text-xs text-center text-muted-foreground mt-2">
-                    Manage in Settings
-                  </p>
-                )}
-              </div>
-            );
-          })}
-        </div>
-        )}
-        <div className="text-center mt-12">
-          <p className="text-sm text-muted-foreground mb-4">
-            All plans include 7-day free trial • No credit card required for trial • Cancel anytime
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Need a custom plan? <Link to="/contact" className="text-primary hover:underline">Contact our sales team</Link>
-          </p>
+                const PlanIcon = planConfig.icon;
+                const isPopular = plan.name === 'Growth';
+                const price = billingCycle === 'yearly' 
+                  ? Math.round(planConfig.price.yearly / 10) 
+                  : planConfig.price.monthly;
+                const savings = billingCycle === 'yearly' 
+                  ? calculateSavings(planConfig.price.monthly, planConfig.price.yearly)
+                  : 0;
+                const currentPlanData = subscription?.plan;
+                const isCurrentPlan = currentPlanData?.name === plan.name;
+                
+                return (
+                  <Card
+                    key={plan.id}
+                    className={`relative overflow-hidden border-2 transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] ${
+                      isPopular 
+                        ? 'border-primary shadow-2xl scale-105 lg:scale-110' 
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                  >
+                    {isPopular && (
+                      <div className="absolute top-0 right-0 bg-gradient-to-r from-primary to-secondary text-white px-4 py-1.5 text-xs font-bold shadow-lg">
+                        MOST POPULAR
+                      </div>
+                    )}
+                    
+                    {/* Gradient Overlay */}
+                    <div className={`absolute inset-0 bg-gradient-to-br ${planConfig.color} opacity-5`} />
+                    
+                    <CardContent className="p-6 relative z-10">
+                      {/* Plan Header */}
+                      <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${planConfig.color} flex items-center justify-center mb-4 shadow-lg`}>
+                        <PlanIcon className="w-8 h-8 text-white" />
+                      </div>
+                      
+                      <h3 className="text-2xl font-bold mb-1 text-foreground">{plan.name}</h3>
+                      <p className="text-sm text-primary font-semibold mb-1">{planConfig.highlight}</p>
+                      <p className="text-sm text-muted-foreground mb-6">{planConfig.description}</p>
+                      
+                      {/* Pricing */}
+                      <div className="mb-6">
+                        <div className="flex items-baseline gap-1 mb-2">
+                          <span className="text-5xl font-bold text-foreground">${price}</span>
+                          <span className="text-muted-foreground text-lg">/mo</span>
+                        </div>
+                        {billingCycle === 'yearly' && savings > 0 && (
+                          <p className="text-sm text-green-600 dark:text-green-400 font-medium">
+                            Save {savings}% (2 months free)
+                          </p>
+                        )}
+                        {billingCycle === 'yearly' && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Billed ${planConfig.price.yearly} annually
+                          </p>
+                        )}
+                      </div>
+                      
+                      {/* Limits */}
+                      <div className="space-y-3 mb-6 pb-6 border-b border-border">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">Projects</span>
+                          <span className="font-semibold text-foreground">{planConfig.limits.projects}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">Credits/mo</span>
+                          <span className="font-semibold text-foreground">{planConfig.limits.credits}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">Keywords/day</span>
+                          <span className="font-semibold text-foreground">{planConfig.limits.keywords}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">Crawl Budget</span>
+                          <span className="font-semibold text-foreground">{planConfig.limits.crawl}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">Reports/mo</span>
+                          <span className="font-semibold text-foreground">{planConfig.limits.reports}</span>
+                        </div>
+                        {planConfig.limits.seats && (
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">Seats</span>
+                            <span className="font-semibold text-foreground">{planConfig.limits.seats}</span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Features List */}
+                      <div className="space-y-2 mb-6 min-h-[180px]">
+                        {planConfig.features.slice(0, 5).map((feature, i) => (
+                          <div key={i} className="flex items-start gap-2">
+                            <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                            <span className="text-sm text-muted-foreground">{feature}</span>
+                          </div>
+                        ))}
+                        {planConfig.features.length > 5 && (
+                          <div className="text-xs text-muted-foreground italic pt-2">
+                            +{planConfig.features.length - 5} more features
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* CTA */}
+                      <Button 
+                        onClick={() => handleSelectPlan(plan.name)}
+                        disabled={isCreatingCheckout || isCurrentPlan}
+                        className={`w-full text-base h-12 ${
+                          isPopular 
+                            ? 'gradient-primary shadow-lg' 
+                            : 'bg-muted hover:bg-muted/80'
+                        }`}
+                        size="lg"
+                      >
+                        {isCreatingCheckout ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Processing...
+                          </>
+                        ) : isCurrentPlan ? (
+                          <>
+                            <CheckCircle className="w-4 h-4 mr-2" />
+                            Current Plan
+                          </>
+                        ) : plan.name === 'Scale' ? (
+                          <>
+                            Contact Sales
+                            <ArrowUpRight className="w-4 h-4 ml-2" />
+                          </>
+                        ) : plan.name === 'Launch' ? (
+                          <>
+                            <Play className="w-4 h-4 mr-2" />
+                            Start Free Trial
+                            <ArrowRight className="w-4 h-4 ml-2" />
+                          </>
+                        ) : (
+                          <>
+                            Choose Plan
+                            <ArrowRight className="w-4 h-4 ml-2" />
+                          </>
+                        )}
+                      </Button>
+                      
+                      {isCurrentPlan && (
+                        <p className="text-xs text-center text-muted-foreground mt-3">
+                          Manage in <Link to="/settings?tab=subscription" className="text-primary hover:underline">Settings</Link>
+                        </p>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+          </div>
         </div>
 
+        {/* Bottom CTA */}
+        <div className="text-center max-w-3xl mx-auto">
+          <p className="text-sm text-muted-foreground mb-4">
+            Launch plan includes 7-day free trial • No credit card required • Cancel anytime
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button asChild size="lg" className="gradient-primary">
+              <Link to="/pricing">
+                View Full Pricing Details
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Link>
+            </Button>
+            <Button asChild size="lg" variant="outline">
+              <Link to="/features">
+                See All Features
+                <ArrowUpRight className="w-4 h-4 ml-2" />
+              </Link>
+            </Button>
+          </div>
         </div>
       </div>
     </section>

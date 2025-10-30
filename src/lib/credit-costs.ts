@@ -1,65 +1,85 @@
 /**
  * Credit costs for all features in the platform
- * These values determine how many credits each action consumes
+ * Updated to match new rate card from pricing redesign
  */
 
 export const CREDIT_COSTS = {
   // Keyword Research
-  keyword_research: 1,
-  keyword_autocomplete: 1,
-  keyword_clustering: 5,
+  keyword_ideas: 5, // per seed
+  keyword_autocomplete: 2, // per seed
+  answer_the_public: 1, // per keyword
+  paa_extractor: 1, // per keyword
   
   // SERP & Rankings
-  serp_analysis: 2,
-  serp_similarity: 3,
-  rank_tracking_per_keyword: 0.1, // Per keyword per check
+  serp_overview: 2, // per keyword/locale
+  rank_tracking_per_keyword: 0.02, // per keyword check (~0.6/keyword/mo)
+  keyword_clustering: 2, // per 100 keywords
   
   // Content Tools
-  content_repurpose: 5,
-  ai_content_brief: 5,
-  meta_description_generator: 1,
-  chatgpt_optimization: 5,
-  
-  // Answer The Public & Research
-  answer_the_public: 2,
-  paa_extractor: 1,
-  
-  // Competitor Analysis
-  competitor_analysis: 3,
-  content_gap_analysis: 10,
-  
-  // Backlinks & Authority
-  backlink_analysis: 3,
+  ai_content_brief: 10, // per brief
+  meta_description_generator: 0.2, // per URL
+  content_repurpose: 5, // per repurpose operation
+  chatgpt_optimization: 5, // per optimization
   
   // Technical SEO
-  technical_audit: 10,
-  site_crawl_per_page: 0.1,
-  cwv_check: 1,
-  schema_validation: 0.5,
+  crawl_fetch: 0.01, // per URL (100 URLs = 1 credit)
+  cwv_check: 0.5, // per URL
+  technical_audit: 0.5, // per 100 URLs (ruleset evaluation)
+  schema_validation: 0.5, // per URL
+  bulk_url_analyzer: 1, // per 100 URLs
   
-  // Bulk Operations
-  bulk_analyzer_per_url: 0.5,
-  bulk_keyword_analysis_per_keyword: 0.1,
+  // Competitor Analysis
+  competitor_analysis: 3, // per analysis
+  content_gap_analysis: 5, // per analysis (1 target vs 3 comps)
+  competitor_monitoring: 0.2, // per domain/day
+  backlink_lookup: 2, // per domain or URL
+  
+  // Local SEO
+  local_seo_audit: 10, // per location
   
   // AI Overview & Citations
-  ai_overview_check: 2,
-  ai_overview_optimization: 5,
-  citation_optimization: 5,
+  ai_overview_check: 1, // per keyword
+  ai_overview_optimization: 2, // per keyword
+  citation_optimization: 5, // per optimization
   
-  // Advanced Features
-  local_seo_audit: 5,
-  competitor_monitoring_per_competitor: 1,
-  automated_reporting: 3,
+  // Reporting
+  scheduled_report: 5, // per report
+  automated_reporting: 5, // per report
+  
+  // Legacy keys for backward compatibility
+  keyword_research: 5, // maps to keyword_ideas
+  serp_analysis: 2, // maps to serp_overview
+  serp_similarity: 3, // uses competitor_analysis cost
 } as const;
 
 export type FeatureKey = keyof typeof CREDIT_COSTS;
 
 /**
  * Get credit cost for a feature
+ * @param feature - The feature key
+ * @param quantity - Number of units (keywords, URLs, etc.)
+ * @returns Total credit cost
  */
 export function getCreditCost(feature: FeatureKey, quantity: number = 1): number {
   const baseCost = CREDIT_COSTS[feature] || 1;
-  return baseCost * quantity;
+  return Math.ceil(baseCost * quantity);
+}
+
+/**
+ * Get credit cost for bulk operations
+ * @param feature - The feature key
+ * @param items - Array of items or count
+ * @returns Total credit cost
+ */
+export function getBulkCreditCost(feature: FeatureKey, items: number | any[]): number {
+  const count = Array.isArray(items) ? items.length : items;
+  
+  // Special handling for per-100 operations
+  if (feature === 'keyword_clustering' || feature === 'technical_audit' || feature === 'bulk_url_analyzer') {
+    return Math.ceil((CREDIT_COSTS[feature] || 0) * (count / 100));
+  }
+  
+  return getCreditCost(feature, count);
 }
 
 /**
@@ -67,11 +87,19 @@ export function getCreditCost(feature: FeatureKey, quantity: number = 1): number
  */
 export const FEATURE_CATEGORIES = {
   research: [
+    'keyword_ideas',
     'keyword_research',
     'keyword_autocomplete',
     'keyword_clustering',
     'answer_the_public',
     'paa_extractor',
+  ],
+  serp: [
+    'serp_overview',
+    'serp_analysis',
+    'rank_tracking_per_keyword',
+    'ai_overview_check',
+    'ai_overview_optimization',
   ],
   content: [
     'content_repurpose',
@@ -81,24 +109,29 @@ export const FEATURE_CATEGORIES = {
   ],
   technical: [
     'technical_audit',
-    'site_crawl_per_page',
+    'crawl_fetch',
     'cwv_check',
     'schema_validation',
+    'bulk_url_analyzer',
   ],
   competitive: [
     'competitor_analysis',
     'content_gap_analysis',
-    'backlink_analysis',
+    'backlink_lookup',
+    'competitor_monitoring',
   ],
-  advanced: [
-    'ai_overview_check',
-    'citation_optimization',
-    'bulk_analyzer_per_url',
+  local: [
+    'local_seo_audit',
+  ],
+  reporting: [
+    'scheduled_report',
+    'automated_reporting',
   ],
 } as const;
 
 /**
  * Individual feature pricing (for standalone purchases)
+ * Note: Add-ons will be handled separately in pricing system
  */
 export const INDIVIDUAL_FEATURE_PRICING = {
   answer_the_public_unlimited: {
@@ -141,31 +174,31 @@ export const INDIVIDUAL_FEATURE_PRICING = {
 
 /**
  * Credit purchase packages
+ * Updated pricing: $10 per 1,000 credits (volume discounts available)
  */
 export const CREDIT_PACKAGES = [
   {
-    credits: 100,
+    credits: 1000,
     price: 10,
     bonus: 0,
     popular: false,
   },
   {
-    credits: 500,
-    price: 40,
-    bonus: 50,
+    credits: 5000,
+    price: 45, // Slight discount
+    bonus: 0,
     popular: false,
   },
   {
-    credits: 1000,
-    price: 70,
-    bonus: 150,
+    credits: 10000,
+    price: 80, // Better discount
+    bonus: 1000, // Bonus credits
     popular: true,
   },
   {
-    credits: 5000,
-    price: 300,
-    bonus: 1000,
+    credits: 25000,
+    price: 180, // Best value
+    bonus: 5000,
     popular: false,
   },
 ] as const;
-

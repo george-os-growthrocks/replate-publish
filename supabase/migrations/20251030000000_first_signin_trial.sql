@@ -9,7 +9,7 @@ ADD COLUMN IF NOT EXISTS has_used_trial BOOLEAN DEFAULT false;
 ALTER TABLE user_subscriptions
 ADD COLUMN IF NOT EXISTS is_first_trial BOOLEAN DEFAULT false;
 
--- 3. Ensure Starter plan exists with correct configuration
+-- 3. Ensure Launch plan exists with correct configuration (updated from Starter)
 INSERT INTO subscription_plans (
   name,
   price_monthly,
@@ -22,24 +22,24 @@ INSERT INTO subscription_plans (
   sort_order
 )
 VALUES (
-  'Starter',
+  'Launch',
   29.00,
   290.00,
-  500,
+  1200,
   3,
   1,
-  '["Keyword Research", "Rank Tracking (50 keywords)", "Content Repurpose (50 generations)", "Site Audit (1 site)", "Competitor Analysis (3 competitors)", "Email Support", "500 Credits/month"]'::jsonb,
+  '["Keyword Research", "Keyword Autocomplete", "PAA/ATP", "SERP Overview", "Rank Tracking", "Meta Generator", "Lite Tech Audit", "Sample CWV", "Schema Validator", "AI Overview Checker (Basic)"]'::jsonb,
   true,
-  2
+  1
 )
 ON CONFLICT (name) DO UPDATE SET
   price_monthly = 29.00,
   price_yearly = 290.00,
-  credits_per_month = 500,
+  credits_per_month = 1200,
   max_projects = 3,
   max_team_members = 1,
   is_active = true,
-  sort_order = 2;
+  sort_order = 1;
 
 -- 4. Update handle_new_user() function to assign 7-day trial
 CREATE OR REPLACE FUNCTION public.handle_new_user()
@@ -113,10 +113,10 @@ BEGIN
   END IF;
 
   -- Get Starter plan ID
-  SELECT id INTO starter_plan_id
-  FROM public.subscription_plans
-  WHERE name = 'Starter' AND is_active = true
-  LIMIT 1;
+      SELECT id INTO starter_plan_id
+      FROM public.subscription_plans
+      WHERE name = 'Launch' AND is_active = true
+      LIMIT 1;
 
   -- If Starter plan exists, create 7-day trial
   IF starter_plan_id IS NOT NULL THEN
@@ -150,11 +150,11 @@ BEGIN
       used_credits
     ) VALUES (
       NEW.id,
-      500,  -- Starter plan credits
+      1200,  -- Launch plan credits
       0
     )
     ON CONFLICT (user_id) DO UPDATE SET
-      total_credits = 500,
+      total_credits = 1200,
       used_credits = 0,
       updated_at = NOW();
 

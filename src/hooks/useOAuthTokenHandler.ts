@@ -40,7 +40,7 @@ export function useOAuthTokenHandler() {
                   access_token: providerToken,
                   refresh_token: refreshToken,
                   expires_at: expiresAt ? new Date(parseInt(expiresAt) * 1000).toISOString() : null,
-                  scope: 'https://www.googleapis.com/auth/webmasters.readonly',
+                  scopes: ['https://www.googleapis.com/auth/webmasters.readonly'],
                   updated_at: new Date().toISOString(),
                 }, {
                   onConflict: 'user_id,provider'

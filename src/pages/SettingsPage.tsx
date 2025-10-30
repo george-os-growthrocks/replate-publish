@@ -213,17 +213,17 @@ export default function SettingsPage() {
         <div className="space-y-4">
           <div>
             <Label>Default Date Range</Label>
-            <select className="w-full mt-2 px-3 py-2 border rounded-md">
+            <select className="w-full mt-2 px-3 py-2 border rounded-md" defaultValue="28">
               <option value="7">Last 7 days</option>
-              <option value="28" selected>Last 28 days</option>
+              <option value="28">Last 28 days</option>
               <option value="90">Last 90 days</option>
               <option value="365">Last year</option>
             </select>
           </div>
           <div>
             <Label>Default Device Filter</Label>
-            <select className="w-full mt-2 px-3 py-2 border rounded-md">
-              <option value="ALL" selected>All Devices</option>
+            <select className="w-full mt-2 px-3 py-2 border rounded-md" defaultValue="ALL">
+              <option value="ALL">All Devices</option>
               <option value="DESKTOP">Desktop</option>
               <option value="MOBILE">Mobile</option>
               <option value="TABLET">Tablet</option>
