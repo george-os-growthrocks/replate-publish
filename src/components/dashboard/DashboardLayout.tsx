@@ -41,6 +41,7 @@ import {
   Layers,
   Users,
   Lightbulb,
+  FlaskConical,
   AlertCircle,
   Zap,
   FileSearch,
@@ -314,6 +315,32 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 )}
                 {sidebarCollapsed && (
                   <span className="absolute -top-1 -right-1 h-2 w-2 bg-gradient-to-r from-violet-500 to-indigo-500 rounded-full" />
+                )}
+              </Button>
+
+              {/* SERPProof - TESTING */}
+              <Button
+                variant="ghost"
+                className={cn(
+                  "w-full justify-start rounded-xl text-sm transition-colors relative group",
+                  location.pathname === "/serp-proof"
+                    ? "bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-400 border border-green-500/30"
+                    : "text-muted-foreground hover:bg-gradient-to-r hover:from-green-500/5 hover:to-emerald-500/5 hover:text-foreground",
+                  sidebarCollapsed && "justify-center px-2"
+                )}
+                onClick={() => navigate("/serp-proof")}
+              >
+                <FlaskConical className={cn("h-[18px] w-[18px]", !sidebarCollapsed && "mr-3")} />
+                {!sidebarCollapsed && (
+                  <span className="flex items-center gap-2 flex-1">
+                    <span className="font-medium">SERPProof</span>
+                    <span className="ml-auto px-1.5 py-0.5 text-[9px] font-bold bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-md">
+                      TESTING
+                    </span>
+                  </span>
+                )}
+                {sidebarCollapsed && (
+                  <span className="absolute -top-1 -right-1 h-2 w-2 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full" />
                 )}
               </Button>
             </div>
