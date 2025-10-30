@@ -54,10 +54,13 @@ serve(async (req: Request) => {
     );
 
     let userId: string;
+    let redirectTo: string = 'onboarding';
     try {
       const { payload } = await jose.jwtVerify(state, jwtSecret);
       userId = payload.user_id as string;
+      redirectTo = (payload.redirect_to as string) || 'onboarding';
       console.log('✅ State JWT verified, user_id:', userId);
+      console.log('✅ Will redirect to:', redirectTo);
     } catch (jwtError) {
       console.error('❌ Invalid state JWT:', jwtError);
       const appUrl = Deno.env.get('APP_URL') ?? 'http://localhost:8080';
@@ -145,13 +148,15 @@ serve(async (req: Request) => {
 
     console.log('✅ Tokens stored successfully');
 
-    // Redirect back to onboarding to complete property selection
+    // Redirect back to appropriate page based on where user came from
     const appUrl = Deno.env.get('APP_URL') ?? 'http://localhost:8080';
+    const redirectPath = redirectTo === 'settings' ? '/settings' : '/onboarding';
+    
     return new Response(null, {
       status: 302,
       headers: {
         ...corsHeaders,
-        'Location': `${appUrl}/onboarding?gsc_connected=true`,
+        'Location': `${appUrl}${redirectPath}?gsc_connected=true`,
       },
     });
 

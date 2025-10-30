@@ -1,19 +1,32 @@
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings, User, Bell, Database, Palette, CreditCard, Link as LinkIcon } from "lucide-react";
+import { Settings, User, Bell, Database, Palette, CreditCard, Link as LinkIcon, Loader2, CheckCircle2, XCircle, RefreshCw } from "lucide-react";
 import { useFilters } from "@/contexts/FilterContext";
+import { useNavigate } from "react-router-dom";
 import PropertySelector from "@/components/dashboard/PropertySelector";
 import { SubscriptionSettings } from "@/components/settings/SubscriptionSettings";
 import { ProfileSettings } from "@/components/settings/ProfileSettings";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+
+interface GSCProperty {
+  id: string;
+  site_url: string;
+  permission_level: string;
+}
 
 export default function SettingsPage() {
   const { propertyUrl, setPropertyUrl } = useFilters();
+  const navigate = useNavigate();
+  const [user, setUser] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [gscProperties, setGscProperties] = useState<GSCProperty[]>([]);
 
   // Check if Google Search Console is connected
   const { data: isConnected, refetch } = useQuery({
@@ -21,6 +34,7 @@ export default function SettingsPage() {
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return false;
+      setUser(user);
 
       const { data, error } = await supabase
         .from('user_oauth_tokens')
@@ -29,21 +43,145 @@ export default function SettingsPage() {
         .eq('provider', 'google')
         .maybeSingle();
 
-      return !!data?.access_token;
+      const connected = !!data?.access_token;
+      
+      // Load properties if connected
+      if (connected) {
+        const { data: properties } = await supabase
+          .from('gsc_properties')
+          .select('*')
+          .eq('user_id', user.id);
+        
+        if (properties) {
+          setGscProperties(properties);
+        }
+      }
+
+      return connected;
     }
   });
 
+  useEffect(() => {
+    // Check if user just returned from Google OAuth
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('gsc_connected') === 'true') {
+      toast.success('Google Search Console connected successfully!');
+      refetch();
+      // Clean up URL
+      window.history.replaceState({}, '', '/settings');
+    }
+  }, []);
+
+  const handleConnectGSC = async () => {
+    setIsLoading(true);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Session expired. Please sign in again.");
+        navigate("/auth");
+        return;
+      }
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gsc-oauth-start?user_id=${encodeURIComponent(user.id)}&redirect_to=settings`;
+
+      const response = await fetch(functionUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.redirect_url) {
+          toast.success('Redirecting to Google...');
+          window.location.href = data.redirect_url;
+          return;
+        }
+      }
+
+      throw new Error('Failed to get OAuth URL');
+    } catch (error: any) {
+      console.error("Error connecting GSC:", error);
+      toast.error(error.message || "Failed to connect Google Search Console");
+      setIsLoading(false);
+    }
+  };
+
+  const handleFetchProperties = async () => {
+    setIsLoading(true);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Session expired. Please sign in again.");
+        navigate("/auth");
+        return;
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gsc-sites`,
+        {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({}),
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      if (data.sites && data.sites.length > 0) {
+        await refetch();
+        toast.success(`Found ${data.sites.length} properties. Refreshing...`);
+      } else {
+        toast.warning("No GSC properties found in your account");
+      }
+    } catch (error: any) {
+      console.error("Error fetching properties:", error);
+      toast.error(error.message || "Failed to fetch GSC properties");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const disconnectGoogle = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!confirm("Are you sure you want to disconnect Google Search Console? This will remove access to your GSC data.")) {
+      return;
+    }
 
-    await supabase
-      .from('user_oauth_tokens')
-      .delete()
-      .eq('user_id', user.id)
-      .eq('provider', 'google');
+    setIsLoading(true);
 
-    refetch();
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      await supabase
+        .from('user_oauth_tokens')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('provider', 'google');
+
+      setGscProperties([]);
+      toast.success("Google Search Console disconnected");
+      refetch();
+    } catch (error: any) {
+      console.error("Error disconnecting GSC:", error);
+      toast.error(error.message || "Failed to disconnect GSC");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -92,25 +230,101 @@ export default function SettingsPage() {
             </div>
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                Your Google Search Console connection is managed through Google Sign-in.
+                Connect your Google Search Console account to access SEO data
               </p>
               {isConnected ? (
-                <div className="flex items-center gap-3">
-                  <Button onClick={disconnectGoogle} variant="destructive" size="sm">
-                    Disconnect Google
-                  </Button>
-                  <p className="text-sm text-muted-foreground">
-                    Your Google Search Console is connected and properties are available
-                  </p>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 p-4 bg-green-50 dark:bg-green-950/20 rounded-lg">
+                    <CheckCircle2 className="w-6 h-6 text-green-600 dark:text-green-400" />
+                    <div className="flex-1">
+                      <p className="font-medium text-green-900 dark:text-green-100">
+                        Google Search Console Connected
+                      </p>
+                      <p className="text-sm text-green-700 dark:text-green-300">
+                        {gscProperties.length} property(ies) connected
+                      </p>
+                    </div>
+                  </div>
+
+                  {gscProperties.length > 0 && (
+                    <div className="space-y-2">
+                      <Label>Connected Properties:</Label>
+                      {gscProperties.map((property) => (
+                        <div 
+                          key={property.id}
+                          className="flex items-center justify-between p-3 border rounded-lg"
+                        >
+                          <div>
+                            <p className="font-medium">{property.site_url}</p>
+                            <p className="text-xs text-muted-foreground capitalize">
+                              {property.permission_level} access
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex gap-2">
+                    <Button 
+                      onClick={handleFetchProperties}
+                      variant="outline"
+                      size="sm"
+                      disabled={isLoading}
+                    >
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Refresh Properties
+                    </Button>
+                    <Button 
+                      onClick={handleConnectGSC}
+                      variant="outline"
+                      size="sm"
+                      disabled={isLoading}
+                    >
+                      Reconnect
+                    </Button>
+                    <Button 
+                      onClick={disconnectGoogle}
+                      variant="destructive"
+                      size="sm"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Disconnecting...
+                        </>
+                      ) : (
+                        "Disconnect"
+                      )}
+                    </Button>
+                  </div>
                 </div>
               ) : (
-                <div className="p-4 bg-muted rounded-lg">
-                  <p className="text-sm mb-2">To connect Google Search Console:</p>
-                  <ol className="text-sm text-muted-foreground space-y-1 ml-4">
-                    <li>1. Sign out of your account</li>
-                    <li>2. Sign in again using "Sign in with Google"</li>
-                    <li>3. Your properties will automatically appear</li>
-                  </ol>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg">
+                    <XCircle className="w-6 h-6 text-muted-foreground" />
+                    <div>
+                      <p className="font-medium">Not Connected</p>
+                      <p className="text-sm text-muted-foreground">
+                        Connect your GSC account to access your SEO data
+                      </p>
+                    </div>
+                  </div>
+
+                  <Button onClick={handleConnectGSC} disabled={isLoading}>
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Connecting...
+                      </>
+                    ) : (
+                      <>
+                        <LinkIcon className="w-4 h-4 mr-2" />
+                        Connect Google Search Console
+                      </>
+                    )}
+                  </Button>
                 </div>
               )}
             </div>

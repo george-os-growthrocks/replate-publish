@@ -478,24 +478,34 @@ const Onboarding = () => {
                           ))}
                         </div>
 
-                        <Button 
-                          onClick={handleSelectProperty}
-                          className="w-full" 
-                          size="lg"
-                          disabled={!selectedProperty || isLoading}
-                        >
-                          {isLoading ? (
-                            <>
-                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                              Saving...
-                            </>
-                          ) : (
-                            <>
-                              Continue with Selected Property
-                              <ChevronRight className="w-4 h-4 ml-2" />
-                            </>
-                          )}
-                        </Button>
+                        <div className="space-y-2">
+                          <Button 
+                            onClick={handleSelectProperty}
+                            className="w-full" 
+                            size="lg"
+                            disabled={!selectedProperty || isLoading}
+                          >
+                            {isLoading ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Saving...
+                              </>
+                            ) : (
+                              <>
+                                Continue with Selected Property
+                                <ChevronRight className="w-4 h-4 ml-2" />
+                              </>
+                            )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            onClick={() => setCurrentStep(3)}
+                            className="w-full"
+                            disabled={isLoading}
+                          >
+                            Skip property selection (connect later in Settings)
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </div>

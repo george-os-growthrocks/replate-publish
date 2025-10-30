@@ -54,7 +54,20 @@ const Settings = () => {
   const [isCheckingGSC, setIsCheckingGSC] = useState(false);
 
   useEffect(() => {
-    loadUserData();
+    const loadData = async () => {
+      await loadUserData();
+      
+      // After user data is loaded, check if returning from OAuth
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('gsc_connected') === 'true') {
+        toast.success('Google Search Console connected successfully!');
+        await checkGSCConnection();
+        // Clean up URL
+        window.history.replaceState({}, '', '/settings');
+      }
+    };
+    
+    loadData();
   }, []);
 
   const loadUserData = async () => {
@@ -91,24 +104,43 @@ const Settings = () => {
   const checkGSCConnection = async () => {
     setIsCheckingGSC(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error("Session error:", sessionError);
+        return;
+      }
+      
+      if (!session) {
+        console.log("No session found");
+        return;
+      }
 
-      const { data: tokens } = await supabase
+      const { data: tokens, error: tokensError } = await supabase
         .from("user_oauth_tokens")
         .select("*")
         .eq("user_id", session.user.id)
         .eq("provider", "google")
-        .single();
+        .maybeSingle();
+
+      if (tokensError) {
+        console.error("Error fetching tokens:", tokensError);
+        return;
+      }
 
       setGscConnected(!!tokens);
 
       if (tokens) {
         // Load connected properties
-        const { data: properties } = await supabase
+        const { data: properties, error: propertiesError } = await supabase
           .from("gsc_properties")
           .select("*")
           .eq("user_id", session.user.id);
+
+        if (propertiesError) {
+          console.error("Error fetching properties:", propertiesError);
+          return;
+        }
 
         if (properties) {
           setGscProperties(properties);
@@ -143,6 +175,8 @@ const Settings = () => {
   };
 
   const handleConnectGSC = async () => {
+    setIsLoading(true);
+
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
@@ -151,11 +185,75 @@ const Settings = () => {
         return;
       }
 
-      const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gsc-oauth-start?user_id=${encodeURIComponent(user.id)}`;
-      window.location.href = functionUrl;
+      const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gsc-oauth-start?user_id=${encodeURIComponent(user.id)}&redirect_to=settings`;
+
+      const response = await fetch(functionUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.redirect_url) {
+          toast.success('Redirecting to Google...');
+          window.location.href = data.redirect_url;
+          return;
+        }
+      }
+
+      throw new Error('Failed to get OAuth URL');
     } catch (error: any) {
       console.error("Error connecting GSC:", error);
       toast.error(error.message || "Failed to connect Google Search Console");
+      setIsLoading(false);
+    }
+  };
+
+  const handleFetchProperties = async () => {
+    setIsLoading(true);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Session expired. Please sign in again.");
+        navigate("/auth");
+        return;
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gsc-sites`,
+        {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({}),
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      if (data.sites && data.sites.length > 0) {
+        // Store properties in database via gsc-save-property function
+        // For now, just reload the page to show them
+        await checkGSCConnection();
+        toast.success(`Found ${data.sites.length} properties. Refresh to see them.`);
+      } else {
+        toast.warning("No GSC properties found in your account");
+      }
+    } catch (error: any) {
+      console.error("Error fetching properties:", error);
+      toast.error(error.message || "Failed to fetch GSC properties");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -373,11 +471,18 @@ const Settings = () => {
 
                     <div className="flex gap-2">
                       <Button 
-                        onClick={handleConnectGSC}
+                        onClick={handleFetchProperties}
                         variant="outline"
                         disabled={isLoading}
                       >
                         <RefreshCw className="w-4 h-4 mr-2" />
+                        Refresh Properties
+                      </Button>
+                      <Button 
+                        onClick={handleConnectGSC}
+                        variant="outline"
+                        disabled={isLoading}
+                      >
                         Reconnect
                       </Button>
                       <Button 

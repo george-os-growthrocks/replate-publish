@@ -20,9 +20,10 @@ serve(async (req: Request) => {
     console.log('🚀 GSC OAuth Start - VERSION 3 - NO AUTH');
     console.log('Request URL:', req.url);
 
-    // Extract user_id from query parameter (user is authenticated on frontend)
+    // Extract user_id and optional redirect_to from query parameters
     const url = new URL(req.url);
     const userId = url.searchParams.get('user_id');
+    const redirectTo = url.searchParams.get('redirect_to') || 'onboarding';
 
     if (!userId) {
       console.log('❌ No user_id parameter found in URL');
@@ -33,13 +34,17 @@ serve(async (req: Request) => {
     }
 
     console.log('✅ Using user_id:', userId);
+    console.log('✅ Redirect after OAuth:', redirectTo);
 
     // Create signed state JWT (short-lived, 10 minutes)
     const jwtSecret = new TextEncoder().encode(
       Deno.env.get('SUPABASE_JWT_SECRET') ?? Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const state = await new jose.SignJWT({ user_id: userId })
+    const state = await new jose.SignJWT({ 
+      user_id: userId,
+      redirect_to: redirectTo 
+    })
       .setProtectedHeader({ alg: 'HS256' })
       .setIssuedAt()
       .setExpirationTime('10m')
