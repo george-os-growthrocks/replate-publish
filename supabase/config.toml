@@ -1,5 +1,12 @@
 project_id = "siwzszmukfbzicjjkxro"
 
+# OAuth functions - no JWT verification needed (they use state parameter)
+[functions.gsc-oauth-start]
+verify_jwt = false
+
+[functions.gsc-oauth-callback]
+verify_jwt = false
+
 [functions.gsc-sites]
 verify_jwt = true
 

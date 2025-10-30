@@ -266,23 +266,10 @@ export default function AnalyticsDashboard() {
   };
 
   const connectGoogleAnalytics = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          scopes: 'https://www.googleapis.com/auth/analytics.readonly',
-          redirectTo: `${window.location.origin}/analytics-dashboard`,
-        },
-      });
-
-      if (error) {
-        toast.error("Failed to connect to Google Analytics");
-        console.error(error);
-      }
-    } catch (error) {
-      console.error('GA4 OAuth error:', error);
-      toast.error("Failed to initiate Google connection");
-    }
+    // Redirect to settings page to connect services
+    toast.info("Please connect Google Analytics in Settings");
+    // TODO: Implement separate GA4 OAuth flow similar to GSC
+    // window.location.href = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ga4-oauth-start`;
   };
 
   if (needsAuth) {

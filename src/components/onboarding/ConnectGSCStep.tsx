@@ -17,24 +17,20 @@ export function ConnectGSCStep({ state, onUpdate }: ConnectGSCStepProps) {
   const handleConnect = async () => {
     setIsConnecting(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          scopes: 'https://www.googleapis.com/auth/webmasters.readonly',
-          redirectTo: `${window.location.origin}/dashboard?onboardingStep=3&gsc=1`,
-        },
-      });
+      // Use the new separate GSC OAuth flow
+      const { data: { session } } = await supabase.auth.getSession();
 
-      if (error) {
-        toast.error("Failed to connect to Google");
-        console.error(error);
-      } else {
-        onUpdate({ connectedGSC: true });
+      if (!session) {
+        toast.error("Session expired. Please sign in again.");
+        return;
       }
+
+      // Redirect to GSC OAuth start function with user_id
+      const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gsc-oauth-start?user_id=${encodeURIComponent(session.user.id)}`;
+      window.location.href = functionUrl;
     } catch (error) {
       console.error('Connection error:', error);
       toast.error("Failed to initiate Google connection");
-    } finally {
       setIsConnecting(false);
     }
   };

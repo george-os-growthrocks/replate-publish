@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getFreshGoogleToken } from "../_shared/gsc-token-refresh.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -58,11 +59,15 @@ serve(async (req) => {
     if (userError) throw new Error(`Auth error: ${userError.message}`);
     if (!user) throw new Error('Unauthorized - no user found');
 
-    const { provider_token, siteUrl, startDate, endDate } = await req.json();
+    const { siteUrl, startDate, endDate } = await req.json();
 
-    if (!provider_token) {
-      throw new Error('No Google access token provided. Please sign out and sign in again with Google.');
-    }
+    // Get fresh Google token (auto-refreshes if needed)
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+    
+    const provider_token = await getFreshGoogleToken(supabaseAdmin, user.id);
 
     if (!siteUrl || !startDate || !endDate) {
       throw new Error('Missing required parameters');

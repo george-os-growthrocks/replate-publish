@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
+import { getFreshGoogleToken } from "../_shared/gsc-token-refresh.ts";
 
 // Deno global type
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -16,71 +17,36 @@ serve(async (req: Request) => {
   }
 
   try {
-    // Parse request body first
-    const body = await req.json();
-    let providerToken = body.provider_token;
+    console.log('🚀 GSC Sites - Fetching list of GSC properties');
 
-    console.log('📥 Provider token from request body:', providerToken ? 'Yes' : 'No');
-
-    // If provider_token is provided in body, use it directly (skip user auth)
-    if (providerToken) {
-      console.log('✅ Using provider_token from request body');
-    } else {
-      // No provider_token in body, need to authenticate and get from database
+    // Authenticate user
       const authHeader = req.headers.get('Authorization');
       if (!authHeader) {
-        throw new Error('No authorization header and no provider_token provided');
+      throw new Error('Missing authorization header');
       }
-
-      const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-      const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
       
       const supabaseClient = createClient(
-        supabaseUrl,
-        supabaseKey,
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
         {
-          global: {
-            headers: { Authorization: authHeader },
-          },
+        global: { headers: { Authorization: authHeader } },
+        auth: { persistSession: false, autoRefreshToken: false }
         }
       );
 
       const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
       if (userError) throw new Error(`Auth error: ${userError.message}`);
-      if (!user) throw new Error('Unauthorized - no user found');
+    if (!user) throw new Error('Unauthorized');
 
       console.log('✅ User authenticated:', user.id);
       
-      // Get provider_token from database
-      console.log('🔍 Looking for stored OAuth token in database...');
-      const { data: tokenData, error: tokenError } = await supabaseClient
-        .from('user_oauth_tokens')
-        .select('access_token, refresh_token, expires_at')
-        .eq('user_id', user.id)
-        .eq('provider', 'google')
-        .single();
+    // Get fresh Google token (auto-refreshes if needed)
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
 
-      if (tokenError || !tokenData) {
-        throw new Error('No stored OAuth token found. Please sign in with Google.');
-      }
-
-      console.log('✅ Found stored token in database');
-      
-      // Check if token is expired
-      if (tokenData.expires_at) {
-        const expiresAt = new Date(tokenData.expires_at);
-        const now = new Date();
-        if (expiresAt <= now) {
-          throw new Error('OAuth token expired. Please sign in with Google again.');
-        }
-      }
-      
-      providerToken = tokenData.access_token;
-    }
-
-    if (!providerToken) {
-      throw new Error('No Google access token available.');
-    }
+    const providerToken = await getFreshGoogleToken(supabaseAdmin, user.id);
 
     console.log('🚀 Fetching GSC sites from Google API...');
 

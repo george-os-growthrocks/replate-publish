@@ -15,6 +15,7 @@ import AuthCallback from "./pages/auth/callback";
 import Signup from "./pages/Signup";
 import Login from "./pages/Login";
 import Checkout from "./pages/Checkout";
+import Onboarding from "./pages/Onboarding";
 import Dashboard from "./pages/Dashboard";
 import AboutPage from "./pages/AboutPage";
 import ContactPage from "./pages/ContactPage";
@@ -201,6 +202,7 @@ const App = () => (
                        <Route path="/auth/callback" element={<AuthCallback />} />
                      <Route path="/signup" element={<Signup />} />
                      <Route path="/login" element={<Login />} />
+                     <Route path="/onboarding" element={<Onboarding />} />
                      <Route path="/checkout" element={<Checkout />} />
             
             {/* Protected Dashboard Pages */}

@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
-import { getGoogleToken } from "../_shared/get-google-token.ts";
+import { getFreshGoogleToken } from "../_shared/gsc-token-refresh.ts";
 
 // Deno global type
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -65,7 +65,7 @@ serve(async (req: Request) => {
       
         // Get provider_token from database (with automatic refresh if needed)
         console.log('🔍 Getting Google token (with auto-refresh)...');
-        providerToken = await getGoogleToken(dbClient, userId);
+        providerToken = await getFreshGoogleToken(dbClient, userId);
 
         if (!providerToken) {
           throw new Error('No Google access token available. Please sign in with Google again.');
