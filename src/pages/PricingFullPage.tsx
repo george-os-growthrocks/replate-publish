@@ -266,20 +266,14 @@ export default function PricingFullPage() {
       const { data: { session } } = await supabase.auth.getSession();
 
       if (session?.user) {
-        // User is authenticated, create checkout
-        createCheckout(
-          { planName, billingCycle },
-          {
-            onSuccess: () => {
-              // Redirect handled in useCreateCheckout
-            },
-            onError: () => {
-              // Error handled in useCreateCheckout
-            }
-          }
-        );
+        // User is authenticated - redirect to dashboard for upgrade
+        // Store the selected plan for dashboard to handle
+        localStorage.setItem('selected_upgrade_plan', planName);
+        localStorage.setItem('selected_upgrade_billing', billingCycle);
+        window.location.href = '/dashboard?tab=subscription';
+        return;
       } else {
-        // User is not authenticated, redirect to auth
+        // User is not authenticated, redirect to auth with plan selection
         localStorage.setItem('selected_plan', planName);
         localStorage.setItem('selected_billing', billingCycle);
         window.location.href = '/auth';

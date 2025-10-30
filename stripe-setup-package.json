@@ -1,0 +1,11 @@
+{
+  "name": "stripe-setup",
+  "version": "1.0.0",
+  "description": "Create Stripe products and prices",
+  "scripts": {
+    "create-products": "node create-stripe-products.js"
+  },
+  "dependencies": {
+    "stripe": "^14.21.0"
+  }
+}

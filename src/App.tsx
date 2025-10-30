@@ -87,6 +87,7 @@ import CreditUsageAnalytics from "./pages/CreditUsageAnalytics";
 import Index from "./pages/Index";
 import SocialMediaSEO from "./pages/SocialMediaSEO";
 import SERPPreviewPage from "./pages/SERPPreviewPage";
+import SerpProofPage from "./pages/SerpProofPage";
 import AnalyticsDashboard from "./pages/AnalyticsDashboard";
 import GAReportingDashboard from "./pages/GAReportingDashboard";
 import CompetitiveIntelligence from "./pages/CompetitiveIntelligence";
@@ -235,6 +236,7 @@ const App = () => (
                   <Route path="/ga-reporting" element={<DashboardLayout><GAReportingDashboard /></DashboardLayout>} />
                   <Route path="/projects" element={<DashboardLayout><ProjectsPage /></DashboardLayout>} />
                   <Route path="/credit-analytics" element={<DashboardLayout><CreditUsageAnalytics /></DashboardLayout>} />
+                  <Route path="/serp-proof" element={<DashboardLayout><SerpProofPage /></DashboardLayout>} />
                   <Route path="/settings" element={<DashboardLayout><SettingsPage /></DashboardLayout>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
