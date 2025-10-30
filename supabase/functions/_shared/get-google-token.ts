@@ -1,9 +1,20 @@
 // Shared utility to get Google OAuth token from database or session
 // Import this in any edge function that needs Google API access
 
+import { refreshGoogleToken } from './refresh-google-token.ts';
+
 export async function getGoogleToken(supabaseClient: any, userId: string): Promise<string | null> {
   console.log('🔍 Looking for stored OAuth token in database...');
   
+  // First, try to refresh the token if it's expired or expiring soon
+  try {
+    await refreshGoogleToken(userId, supabaseClient);
+  } catch (error) {
+    console.warn('⚠️ Token refresh failed:', error instanceof Error ? error.message : error);
+    // Continue anyway - maybe token is still valid
+  }
+  
+  // Now fetch the token (potentially refreshed)
   const { data: tokenData, error: tokenError } = await supabaseClient
     .from('user_oauth_tokens')
     .select('access_token, refresh_token, expires_at')
@@ -23,12 +34,12 @@ export async function getGoogleToken(supabaseClient: any, userId: string): Promi
   
   console.log('✅ Found stored token in database');
   
-  // Check if token is expired
+  // Double-check if token is still expired (shouldn't be after refresh)
   if (tokenData.expires_at) {
     const expiresAt = new Date(tokenData.expires_at);
     const now = new Date();
     if (expiresAt <= now) {
-      console.warn('⚠️ Stored token is expired. User needs to re-authenticate.');
+      console.warn('⚠️ Stored token is STILL expired after refresh attempt. User needs to re-authenticate.');
       return null;
     }
   }

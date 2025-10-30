@@ -45,23 +45,24 @@ export function useGscData(options: UseGscDataOptions) {
   return useQuery({
     queryKey: ["gsc-data", propertyUrl, startDate, endDate, dimensions, country, device],
     queryFn: async () => {
-      // Get user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        throw new Error("Please sign in to view data");
-      }
-      
-      // Get OAuth token from database
-      const { data: tokenData, error: tokenError } = await supabase
-        .from('user_oauth_tokens')
-        .select('access_token')
-        .eq('user_id', user.id)
-        .eq('provider', 'google')
-        .maybeSingle();
-      
-      if (tokenError || !tokenData) {
-        throw new Error("No Google connection found. Please sign in with Google.");
-      }
+      try {
+        // Get user
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          throw new Error("Please sign in to view data");
+        }
+        
+        // Get OAuth token from database
+        const { data: tokenData, error: tokenError } = await supabase
+          .from('user_oauth_tokens')
+          .select('access_token')
+          .eq('user_id', user.id)
+          .eq('provider', 'google')
+          .maybeSingle();
+        
+        if (tokenError || !tokenData) {
+          throw new Error("No Google connection found. Please sign in with Google.");
+        }
 
       const dimensionFilterGroups: DimensionFilterGroup[] = [];
 
@@ -134,6 +135,34 @@ export function useGscData(options: UseGscDataOptions) {
       });
 
       return rows;
+      } catch (error: any) {
+        // Handle token expiry and authentication errors
+        const errorMessage = error?.message || String(error);
+        
+        if (
+          errorMessage.includes('token') || 
+          errorMessage.includes('401') || 
+          errorMessage.includes('expired') ||
+          errorMessage.includes('unauthorized')
+        ) {
+          console.error('🔐 Authentication/token error detected:', errorMessage);
+          
+          // Show user-friendly error
+          const toast = await import('sonner').then(m => m.toast);
+          toast.error('Session expired. Please sign in again.', {
+            description: 'Your Google connection needs to be refreshed.',
+            duration: 4000,
+          });
+          
+          // Redirect to auth page after a short delay
+          setTimeout(() => {
+            window.location.href = '/auth';
+          }, 2000);
+        }
+        
+        // Re-throw the error so React Query can handle it
+        throw error;
+      }
     },
     enabled: enabled && !!propertyUrl && !!startDate && !!endDate,
     staleTime: 5 * 60 * 1000, // 5 minutes

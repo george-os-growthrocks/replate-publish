@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
+import { getGoogleToken } from "../_shared/get-google-token.ts";
 
 // Deno global type
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -61,46 +62,16 @@ serve(async (req: Request) => {
           Deno.env.get('SUPABASE_URL') ?? '',
           Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
         );
+      
+        // Get provider_token from database (with automatic refresh if needed)
+        console.log('🔍 Getting Google token (with auto-refresh)...');
+        providerToken = await getGoogleToken(dbClient, userId);
 
-        // Get provider_token from database
-        console.log('🔍 Looking for stored OAuth token in database...');
-        const { data: tokenData, error: tokenError } = await dbClient
-          .from('user_oauth_tokens')
-          .select('access_token, refresh_token, expires_at, scopes')
-          .eq('user_id', userId)
-          .eq('provider', 'google')
-          .single();
-
-        console.log('🔍 Token query result:', {
-          hasData: !!tokenData,
-          error: tokenError?.message,
-          hasAccessToken: !!tokenData?.access_token,
-          expiresAt: tokenData?.expires_at
-        });
-
-        if (tokenError || !tokenData) {
-          throw new Error(`No stored OAuth token found. Token error: ${tokenError?.message || 'No data returned'}`);
+        if (!providerToken) {
+          throw new Error('No Google access token available. Please sign in with Google again.');
         }
 
-        console.log('✅ Found stored token in database');
-
-        // Check if token is expired
-        if (tokenData.expires_at) {
-          const expiresAt = new Date(tokenData.expires_at);
-          const now = new Date();
-          const isExpired = expiresAt <= now;
-          console.log('⏰ Token expiry check:', {
-            expiresAt: expiresAt.toISOString(),
-            now: now.toISOString(),
-            isExpired
-          });
-
-          if (isExpired) {
-            throw new Error('OAuth token expired. Please sign in with Google again.');
-          }
-        }
-
-        providerToken = tokenData.access_token;
+        console.log('✅ Got valid Google access token');
       } catch (jwtError) {
         console.error('❌ JWT decoding error:', jwtError);
         throw new Error(`Authentication failed: ${jwtError instanceof Error ? jwtError.message : 'Invalid token'}`);
@@ -174,9 +145,9 @@ serve(async (req: Request) => {
     const errorStack = error instanceof Error ? error.stack : undefined;
 
     console.error('❌ Final error message:', errorMessage);
-
+    
     return new Response(
-      JSON.stringify({
+      JSON.stringify({ 
         error: errorMessage,
         stack: errorStack,
         timestamp: new Date().toISOString(),
@@ -185,7 +156,7 @@ serve(async (req: Request) => {
           isErrorInstance: error instanceof Error,
           originalError: error
         }
-      }),
+      }), 
       {
         status: 400, // Return 400 for client errors
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

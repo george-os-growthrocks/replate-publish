@@ -57,13 +57,44 @@ serve(async (req) => {
   switch (event.type) {
     case 'checkout.session.completed': {
       const session = event.data.object as Stripe.Checkout.Session;
+      console.log('✅ Checkout session completed:', session.id);
+      
+      // Ensure customer mapping exists
       if (session.customer && session.metadata?.supabase_uid) {
+        console.log('💾 Saving customer mapping:', {
+          user_id: session.metadata.supabase_uid,
+          stripe_customer_id: session.customer
+        });
+        
         await admin.from('stripe_customers').upsert({
           user_id: session.metadata.supabase_uid,
           stripe_customer_id: session.customer as string,
           updated_at: new Date().toISOString(),
         });
+        
+        console.log('✅ Customer mapping saved');
       }
+      
+      // If subscription ID exists, fetch and sync it immediately
+      if (session.subscription && session.metadata?.supabase_uid) {
+        console.log('🔄 Fetching subscription details:', session.subscription);
+        
+        try {
+          const sub = await stripe.subscriptions.retrieve(session.subscription as string);
+          console.log('📦 Subscription retrieved:', {
+            id: sub.id,
+            status: sub.status,
+            items: sub.items.data.length
+          });
+          
+          await upsertSub(sub, session.metadata.supabase_uid);
+          console.log('✅ Subscription synced immediately after checkout');
+        } catch (subError) {
+          console.error('❌ Error syncing subscription after checkout:', subError);
+          // Don't throw - the subscription events will handle this
+        }
+      }
+      
       break;
     }
     case 'customer.subscription.created':

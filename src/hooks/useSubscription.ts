@@ -266,3 +266,36 @@ export function hasFeatureAccess(subscription: UserSubscription | null | undefin
   return true;
 }
 
+/**
+ * Hook to check Stripe subscription status in real-time
+ * This queries the subscriptions table which is the source of truth from Stripe webhooks
+ * Useful for checking if a payment has been processed and synced
+ */
+export function useStripeSubscriptionStatus() {
+  return useQuery({
+    queryKey: ['stripe-subscription-status'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      
+      // Check Stripe subscriptions table (source of truth from webhooks)
+      const { data, error } = await supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+        
+      if (error) {
+        console.error('Error fetching Stripe subscription status:', error);
+        return null;
+      }
+      
+      return data;
+    },
+    refetchInterval: 10000, // Check every 10 seconds for updates
+    staleTime: 5000, // Consider data stale after 5 seconds
+  });
+}
+

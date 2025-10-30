@@ -198,30 +198,30 @@ const MetricsOverview = ({ propertyUrl, startDate, endDate }: MetricsOverviewPro
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {metricCards.map((metric) => {
-          const Icon = metric.icon;
-          const TrendIcon = metric.data.trend === "up" ? TrendingUp : TrendingDown;
-
-          return (
-            <Card key={metric.title} className="p-6 border shadow-soft hover:shadow-medium transition-all">
-              <div className="flex items-center justify-between mb-4">
-                <div className={`h-10 w-10 rounded-lg ${metric.bgColor} flex items-center justify-center`}>
-                  <Icon className={`h-5 w-5 ${metric.color}`} />
-                </div>
-                <div className={`flex items-center gap-1 text-sm ${
-                  metric.data.trend === "up" ? "text-success" : "text-destructive"
-                }`}>
-                  <TrendIcon className="h-4 w-4" />
-                  <span>{Math.abs(metric.data.change)}%</span>
-                </div>
+      {metricCards.map((metric) => {
+        const Icon = metric.icon;
+        const TrendIcon = metric.data.trend === "up" ? TrendingUp : TrendingDown;
+        
+        return (
+          <Card key={metric.title} className="p-6 border shadow-soft hover:shadow-medium transition-all">
+            <div className="flex items-center justify-between mb-4">
+              <div className={`h-10 w-10 rounded-lg ${metric.bgColor} flex items-center justify-center`}>
+                <Icon className={`h-5 w-5 ${metric.color}`} />
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">{metric.title}</p>
-                <p className="text-2xl font-bold">{metric.format(metric.data.value)}</p>
+              <div className={`flex items-center gap-1 text-sm ${
+                metric.data.trend === "up" ? "text-success" : "text-destructive"
+              }`}>
+                <TrendIcon className="h-4 w-4" />
+                <span>{Math.abs(metric.data.change)}%</span>
               </div>
-            </Card>
-          );
-        })}
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">{metric.title}</p>
+              <p className="text-2xl font-bold">{metric.format(metric.data.value)}</p>
+            </div>
+          </Card>
+        );
+      })}
     </div>
   );
 };
