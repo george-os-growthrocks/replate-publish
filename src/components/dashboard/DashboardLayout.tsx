@@ -43,7 +43,6 @@ import {
   Lightbulb,
   FlaskConical,
   AlertCircle,
-  Zap,
   FileSearch,
   Shield,
   FolderOpen,
@@ -432,7 +431,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 {!sidebarCollapsed && <span>Backlinks</span>}
               </Button>
               <Button variant="ghost" className={cn("w-full justify-start rounded-xl text-sm transition-colors", location.pathname === "/link-opportunities" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground", sidebarCollapsed && "justify-center px-2")} onClick={() => navigate("/link-opportunities")}>
-                <Zap className={cn("h-[18px] w-[18px]", !sidebarCollapsed && "mr-3")} />
+                <Target className={cn("h-[18px] w-[18px]", !sidebarCollapsed && "mr-3")} />
                 {!sidebarCollapsed && <span>Opportunities</span>}
               </Button>
             </div>
