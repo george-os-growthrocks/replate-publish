@@ -18,8 +18,10 @@ import {
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer,
+  Legend,
 } from "recharts";
 import { Zap, BarChart3, FolderOpen, Sparkles } from "lucide-react";
+import { motion } from "framer-motion";
 
 export function DashboardCharts() {
   // Fetch daily credit usage for last 30 days
@@ -118,24 +120,77 @@ export function DashboardCharts() {
     { name: 'No activity yet', value: 1, color: '#94a3b8' }
   ];
 
+  // Custom tooltip component
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-card/95 backdrop-blur-sm border border-border rounded-lg shadow-xl p-3"
+        >
+          <p className="text-sm font-semibold mb-1">{label}</p>
+          {payload.map((entry: any, index: number) => (
+            <p key={index} className="text-xs" style={{ color: entry.color }}>
+              {entry.name}: <span className="font-bold">{entry.value}</span>
+            </p>
+          ))}
+        </motion.div>
+      );
+    }
+    return null;
+  };
+
   return (
-    <Card>
-      <CardHeader className="px-4 sm:px-6">
-        <CardTitle className="text-base sm:text-lg">Platform Usage Analytics</CardTitle>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: 0.6 }}
+    >
+      <Card className="shadow-medium hover:shadow-xl transition-shadow">
+        <CardHeader className="px-4 sm:px-6">
+        <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+          <BarChart3 className="w-5 h-5 text-primary" />
+          Platform Usage Analytics
+        </CardTitle>
       </CardHeader>
       <CardContent className="px-4 sm:px-6">
         <Tabs defaultValue="credits" className="space-y-4 sm:space-y-6">
-          <TabsList className="grid w-full grid-cols-3 h-auto">
-            <TabsTrigger value="credits" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 text-xs sm:text-sm">
-              <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          <TabsList className="grid w-full grid-cols-3 h-auto bg-muted/50">
+            <TabsTrigger 
+              value="credits" 
+              className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all"
+            >
+              <motion.div
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+              >
+                <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              </motion.div>
               <span className="hidden xs:inline">Credits</span>
             </TabsTrigger>
-            <TabsTrigger value="features" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 text-xs sm:text-sm">
-              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <TabsTrigger 
+              value="features" 
+              className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all"
+            >
+              <motion.div
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+              >
+                <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              </motion.div>
               <span className="hidden xs:inline">Features</span>
             </TabsTrigger>
-            <TabsTrigger value="projects" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 text-xs sm:text-sm">
-              <FolderOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <TabsTrigger 
+              value="projects" 
+              className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all"
+            >
+              <motion.div
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+              >
+                <FolderOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              </motion.div>
               <span className="hidden xs:inline">Projects</span>
             </TabsTrigger>
           </TabsList>
@@ -165,13 +220,7 @@ export function DashboardCharts() {
                       fontSize={11}
                       tick={{ fontSize: 11 }}
                     />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'hsl(var(--card))', 
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px'
-                      }} 
-                    />
+                    <Tooltip content={<CustomTooltip />} />
                     <Area
                       type="monotone"
                       dataKey="credits"
@@ -209,7 +258,7 @@ export function DashboardCharts() {
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip />
+                    <Tooltip content={<CustomTooltip />} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -264,6 +313,7 @@ export function DashboardCharts() {
         </Tabs>
       </CardContent>
     </Card>
+    </motion.div>
   );
 }
 

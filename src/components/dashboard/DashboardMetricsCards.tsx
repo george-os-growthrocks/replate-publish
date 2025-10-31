@@ -5,6 +5,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Coins, FolderOpen, FileText, Plug, TrendingUp, TrendingDown } from "lucide-react";
 import { AreaChart, Area, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { motion } from "framer-motion";
+import { Counter } from "@/components/ui/counter";
 
 export function DashboardMetricsCards() {
   const { data: credits } = useCredits();
@@ -97,20 +99,41 @@ export function DashboardMetricsCards() {
   // Calculate total content generated this month
   const totalContentGenerated = contentActivity?.reduce((sum: number, item: any) => sum + item.value, 0) || 0;
 
+  const cards = [
+    { id: 'credits', gradient: 'from-primary/5 to-primary/10', border: 'border-primary/20', icon: Coins, color: 'text-primary' },
+    { id: 'projects', gradient: 'from-blue-500/5 to-blue-500/10', border: 'border-blue-500/20', icon: FolderOpen, color: 'text-blue-500' },
+    { id: 'content', gradient: 'from-emerald-500/5 to-emerald-500/10', border: 'border-emerald-500/20', icon: FileText, color: 'text-emerald-500' },
+    { id: 'api', gradient: 'from-amber-500/5 to-amber-500/10', border: 'border-amber-500/20', icon: Plug, color: 'text-amber-500' },
+  ];
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
       {/* Credits Card */}
-      <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
-        <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6 pt-4 sm:pt-6">
-          <CardTitle className="text-xs sm:text-sm font-medium flex items-center gap-1.5 sm:gap-2">
-            <Coins className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary flex-shrink-0" />
-            <span className="truncate">Available Credits</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
-          <div className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">
-            {credits?.available_credits?.toLocaleString() || 0}
-          </div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+        whileHover={{ y: -4 }}
+      >
+        <Card className="relative overflow-hidden bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20 hover:shadow-xl transition-shadow group cursor-pointer">
+          {/* Hover glow effect */}
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          
+          <CardHeader className="relative pb-2 sm:pb-3 px-4 sm:px-6 pt-4 sm:pt-6">
+            <CardTitle className="text-xs sm:text-sm font-medium flex items-center gap-1.5 sm:gap-2">
+              <motion.div
+                animate={{ rotate: [0, 10, -10, 0] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              >
+                <Coins className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary flex-shrink-0" />
+              </motion.div>
+              <span className="truncate">Available Credits</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="relative px-4 sm:px-6 pb-4 sm:pb-6">
+            <div className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">
+              <Counter value={credits?.available_credits || 0} />
+            </div>
           <p className="text-[10px] sm:text-xs text-muted-foreground mb-2 sm:mb-3">
             of {credits?.total_credits?.toLocaleString() || 0} total
           </p>
@@ -135,42 +158,68 @@ export function DashboardMetricsCards() {
           </div>
         </CardContent>
       </Card>
+      </motion.div>
 
       {/* SEO Projects Card */}
-      <Card className="bg-gradient-to-br from-blue-500/5 to-blue-500/10 border-blue-500/20">
-        <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6 pt-4 sm:pt-6">
-          <CardTitle className="text-xs sm:text-sm font-medium flex items-center gap-1.5 sm:gap-2">
-            <FolderOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-500 flex-shrink-0" />
-            <span className="truncate">SEO Projects</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
-          <div className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">
-            {activeProjects}
-          </div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+        whileHover={{ y: -4 }}
+      >
+        <Card className="relative overflow-hidden bg-gradient-to-br from-blue-500/5 to-blue-500/10 border-blue-500/20 hover:shadow-xl transition-shadow group cursor-pointer">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <CardHeader className="relative pb-2 sm:pb-3 px-4 sm:px-6 pt-4 sm:pt-6">
+            <CardTitle className="text-xs sm:text-sm font-medium flex items-center gap-1.5 sm:gap-2">
+              <FolderOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-500 flex-shrink-0" />
+              <span className="truncate">SEO Projects</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="relative px-4 sm:px-6 pb-4 sm:pb-6">
+            <div className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">
+              <Counter value={activeProjects} />
+            </div>
           <p className="text-[10px] sm:text-xs text-muted-foreground mb-2 sm:mb-3">
             {totalProjects} total projects
           </p>
-          <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
-            <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-500 flex-shrink-0" />
+          <motion.div 
+            className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+          >
+            <motion.div
+              animate={{ y: [-2, 2, -2] }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+            >
+              <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-500 flex-shrink-0" />
+            </motion.div>
             <span className="text-green-600 dark:text-green-400 font-semibold">+2</span>
             <span className="text-muted-foreground">this month</span>
-          </div>
+          </motion.div>
         </CardContent>
       </Card>
+      </motion.div>
 
       {/* Content Generated Card */}
-      <Card className="bg-gradient-to-br from-emerald-500/5 to-emerald-500/10 border-emerald-500/20">
-        <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6 pt-4 sm:pt-6">
-          <CardTitle className="text-xs sm:text-sm font-medium flex items-center gap-1.5 sm:gap-2">
-            <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500 flex-shrink-0" />
-            <span className="truncate">Content Generated</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
-          <div className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">
-            {totalContentGenerated}
-          </div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.3 }}
+        whileHover={{ y: -4 }}
+      >
+        <Card className="relative overflow-hidden bg-gradient-to-br from-emerald-500/5 to-emerald-500/10 border-emerald-500/20 hover:shadow-xl transition-shadow group cursor-pointer">
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <CardHeader className="relative pb-2 sm:pb-3 px-4 sm:px-6 pt-4 sm:pt-6">
+            <CardTitle className="text-xs sm:text-sm font-medium flex items-center gap-1.5 sm:gap-2">
+              <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500 flex-shrink-0" />
+              <span className="truncate">Content Generated</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="relative px-4 sm:px-6 pb-4 sm:pb-6">
+            <div className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">
+              <Counter value={totalContentGenerated} />
+            </div>
           <p className="text-[10px] sm:text-xs text-muted-foreground mb-2 sm:mb-3">
             {totalContentGenerated === 0 ? 'No content yet' : 'pieces this month'}
           </p>
@@ -195,32 +244,51 @@ export function DashboardMetricsCards() {
           </div>
         </CardContent>
       </Card>
+      </motion.div>
 
       {/* API Integrations Card */}
-      <Card className="bg-gradient-to-br from-amber-500/5 to-amber-500/10 border-amber-500/20">
-        <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6 pt-4 sm:pt-6">
-          <CardTitle className="text-xs sm:text-sm font-medium flex items-center gap-1.5 sm:gap-2">
-            <Plug className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500 flex-shrink-0" />
-            <span className="truncate">API Integrations</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
-          <div className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">
-            {connectedAPIs} / {apiIntegrations.length}
-          </div>
-          <p className="text-[10px] sm:text-xs text-muted-foreground mb-2 sm:mb-3">
-            connected services
-          </p>
-          <div className="space-y-1">
-            {apiIntegrations.slice(0, 2).map((api, idx) => (
-              <div key={idx} className="flex items-center justify-between text-[10px] sm:text-xs">
-                <span className="text-muted-foreground truncate pr-2">{api.name}</span>
-                <div className={`w-2 h-2 rounded-full flex-shrink-0 ${api.connected ? 'bg-green-500' : 'bg-slate-400'}`} />
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.4 }}
+        whileHover={{ y: -4 }}
+      >
+        <Card className="relative overflow-hidden bg-gradient-to-br from-amber-500/5 to-amber-500/10 border-amber-500/20 hover:shadow-xl transition-shadow group cursor-pointer">
+          <div className="absolute inset-0 bg-gradient-to-br from-amber-500/20 to-amber-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <CardHeader className="relative pb-2 sm:pb-3 px-4 sm:px-6 pt-4 sm:pt-6">
+            <CardTitle className="text-xs sm:text-sm font-medium flex items-center gap-1.5 sm:gap-2">
+              <Plug className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500 flex-shrink-0" />
+              <span className="truncate">API Integrations</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="relative px-4 sm:px-6 pb-4 sm:pb-6">
+            <div className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">
+              {connectedAPIs} / {apiIntegrations.length}
+            </div>
+            <p className="text-[10px] sm:text-xs text-muted-foreground mb-2 sm:mb-3">
+              connected services
+            </p>
+            <div className="space-y-1">
+              {apiIntegrations.slice(0, 2).map((api, idx) => (
+                <motion.div 
+                  key={idx} 
+                  className="flex items-center justify-between text-[10px] sm:text-xs"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.5 + idx * 0.1 }}
+                >
+                  <span className="text-muted-foreground truncate pr-2">{api.name}</span>
+                  <motion.div 
+                    className={`w-2 h-2 rounded-full flex-shrink-0 ${api.connected ? 'bg-green-500' : 'bg-slate-400'}`}
+                    animate={api.connected ? { scale: [1, 1.2, 1] } : {}}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  />
+                </motion.div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
     </div>
   );
 }
