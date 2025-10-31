@@ -345,7 +345,7 @@ const Onboarding = () => {
                   </div>
                 </div>
 
-                <form onSubmit={handleCreateProject} className="space-y-4">
+                <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="projectName">Project Name</Label>
                     <Input
@@ -375,15 +375,15 @@ const Onboarding = () => {
                   </div>
 
                   <Button 
-                    type="submit" 
+                    onClick={() => setCurrentStep(2)}
                     className="w-full" 
                     size="lg"
-                    disabled={isLoading}
+                    disabled={!projectName || !projectDomain || isLoading}
                   >
                     {isLoading ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Creating project...
+                        Please wait...
                       </>
                     ) : (
                       <>
@@ -392,7 +392,7 @@ const Onboarding = () => {
                       </>
                     )}
                   </Button>
-                </form>
+                </div>
               </div>
             </Card>
           )}

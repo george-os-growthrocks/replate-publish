@@ -1190,9 +1190,7 @@ export default function KeywordResearchPage() {
                   </Button>
                 </div>
               )}
-              </div>
-              );
-            })()
+            </div>
           ) : (
             <div className="p-8 text-center text-muted-foreground">
               <p>No keyword selected</p>
