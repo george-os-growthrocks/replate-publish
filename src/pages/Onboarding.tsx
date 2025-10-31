@@ -37,6 +37,7 @@ const Onboarding = () => {
   const [projectName, setProjectName] = useState("");
   const [projectDomain, setProjectDomain] = useState("");
   const [selectedProperty, setSelectedProperty] = useState<string | null>(null);
+  const [projectId, setProjectId] = useState<string | null>(null);
 
   useEffect(() => {
     checkAuth();
@@ -95,26 +96,24 @@ const Onboarding = () => {
     }
   };
 
-  const handleFinishOnboarding = async (e: React.FormEvent) => {
+  const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!projectName || !projectDomain || !selectedProperty) {
-      toast.error("Please fill in all fields and select a property");
+    if (!projectName || !projectDomain) {
+      toast.error("Please fill in all fields");
       return;
     }
 
     setIsLoading(true);
 
     try {
-      // Create project with selected GSC property
+      // Create project
       const { data: project, error: projectError } = await supabase
         .from("projects")
         .insert({
           user_id: user.id,
           name: projectName,
           domain: projectDomain,
-          gsc_connected: true,
-          gsc_site_url: selectedProperty,
           plan: "free",
         })
         .select()
@@ -122,26 +121,60 @@ const Onboarding = () => {
 
       if (projectError) throw projectError;
 
-      // Save GSC property connection
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const selectedProp = gscProperties.find(p => p.siteUrl === selectedProperty);
-        
-        await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gsc-save-property`,
-          {
-            method: "POST",
-            headers: {
-              "Authorization": `Bearer ${session.access_token}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              project_id: project.id,
-              site_url: selectedProperty,
-              permission_level: selectedProp?.permissionLevel || "full",
-            }),
-          }
-        );
+      setProjectId(project.id);
+      toast.success("Project created successfully!");
+      setCurrentStep(2);
+    } catch (error: any) {
+      console.error("Error creating project:", error);
+      toast.error(error.message || "Failed to create project");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleFinishOnboarding = async () => {
+    if (!projectId) {
+      toast.error("Project not found. Please go back and create a project.");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Update project with GSC property if selected
+      if (selectedProperty) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          const selectedProp = gscProperties.find(p => p.siteUrl === selectedProperty);
+          
+          // Update project with GSC info
+          const { error: updateError } = await supabase
+            .from("projects")
+            .update({
+              gsc_connected: true,
+              gsc_site_url: selectedProperty,
+            })
+            .eq("id", projectId);
+
+          if (updateError) throw updateError;
+
+          // Save GSC property connection
+          await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gsc-save-property`,
+            {
+              method: "POST",
+              headers: {
+                "Authorization": `Bearer ${session.access_token}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                project_id: projectId,
+                site_url: selectedProperty,
+                permission_level: selectedProp?.permissionLevel || "full",
+              }),
+            }
+          );
+        }
       }
 
       // Mark onboarding as completed (this also activates 7-day trial)
@@ -266,6 +299,15 @@ const Onboarding = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSelectProperty = async () => {
+    if (!selectedProperty) {
+      toast.error("Please select a property");
+      return;
+    }
+
+    setCurrentStep(3);
   };
 
 
